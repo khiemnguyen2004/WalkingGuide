@@ -1,0 +1,15 @@
+const { EntitySchema } = require("typeorm");
+
+module.exports = new EntitySchema({
+  name: "Tour",
+  tableName: "tours",
+  columns: {
+    id: { primary: true, type: "int", generated: true },
+    user_id: { type: "int" },
+    name: { type: "varchar", length: 255, nullable: false },
+    description: { type: "text" },
+    total_cost: { type: "float", default: 0 },
+    created_at: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" },
+    updated_at: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" },
+  }
+});
