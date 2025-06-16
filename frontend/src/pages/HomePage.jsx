@@ -69,31 +69,27 @@ function HomePage() {
           <>
             <section className="cards-section mb-5">
               <h2 className="h4 mb-3 fw-bold">Điểm đến nổi bật</h2>
-              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 cards-wrapper">
-                {places.length === 0 ? (
-                  <p className="text-muted">Không có địa điểm nào để hiển thị.</p>
-                ) : (
-                  places.map((p) => (
-                    <Link
-                      key={p.id}
-                      to={`/places/${p.id}`}
-                      className="card text-decoration-none"
-                    >
-                      <img
-                        src={p.image_url || "/default-place.jpg"}
-                        alt={p.name}
-                        className="card-img-top"
-                      />
-                      <div className="card-body card-info">
-                        <h3 className="card-title text-primary">{p.name}</h3>
-                        <p className="card-text text-muted">
-                          {p.description ? `${p.description.substring(0, 100)}...` : "Chưa có mô tả"}
-                        </p>
-                        <p className="card-text text-muted small">Đánh giá: {p.rating.toFixed(1)}/5</p>
-                      </div>
-                    </Link>
-                  ))
-                )}
+              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {places.map((p) => (
+                  <div className="col" key={p.id}>
+                    <div className="card h-100">
+                      <Link to={`/places/${p.id}`} className="text-decoration-none">
+                        <img
+                          src={p.image_url || "/default-place.jpg"}
+                          alt={p.name}
+                          className="card-img-top"
+                        />
+                        <div className="card-body">
+                          <h3 className="card-title text-primary">{p.name}</h3>
+                          <p className="card-text text-muted">
+                            {p.description ? `${p.description.substring(0, 100)}...` : "Chưa có mô tả"}
+                          </p>
+                          <p className="card-text text-muted small">Đánh giá: {p.rating.toFixed(1)}/5</p>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
             </section>
             <section className="cards-section mb-5">
