@@ -1,13 +1,37 @@
+import React from "react";
 import { Link } from "react-router-dom";
 
-function Navbar() {
+function Navbar({ activePage }) {
   return (
-    <nav>
-      <Link to="/">Trang chủ</Link> |{" "}
-      <Link to="/users">Người dùng</Link> |{" "}
-      <Link to="/places">Địa điểm</Link> |{" "}
-      <Link to="/tours">Tour</Link> |{" "}
-      <Link to="/articles">Bài viết</Link>
+    <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+      <div className="container">
+        <div className="navbar-nav d-flex flex-row gap-3">
+          <Link
+            to="/"
+            className={`nav-link ${activePage === "home" ? "active fw-bold" : ""}`}
+          >
+            Trang chủ
+          </Link>
+          <Link
+            to="/places"
+            className={`nav-link ${activePage === "places" ? "active fw-bold" : ""}`}
+          >
+            Địa điểm
+          </Link>
+          <Link
+            to="/tours"
+            className={`nav-link ${activePage === "tours" ? "active fw-bold" : ""}`}
+          >
+            Tours
+          </Link>
+          <Link
+            to="/articles"
+            className={`nav-link ${activePage === "articles" ? "active fw-bold" : ""}`}
+          >
+            Bài viết
+          </Link>
+        </div>
+      </div>
     </nav>
   );
 }
