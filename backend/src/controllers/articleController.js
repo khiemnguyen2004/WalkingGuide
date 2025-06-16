@@ -1,14 +1,14 @@
-const express = require("express");
-const router = express.Router();
-const articleService = require("../services/articleService");
+const { AppDataSource } = require("../data-source");
 
-router.get("/", async (req, res) => res.json(await articleService.findAll()));
-router.get("/:id", async (req, res) => {
-  const result = await articleService.findById(req.params.id);
-  result ? res.json(result) : res.status(404).json({ message: "Not found" });
-});
-router.post("/", async (req, res) => res.status(201).json(await articleService.create(req.body)));
-router.put("/:id", async (req, res) => res.json(await articleService.update(req.params.id, req.body)));
-router.delete("/:id", async (req, res) => { await articleService.remove(req.params.id); res.status(204).end(); });
-
-module.exports = router;
+module.exports = {
+  getAllArticles: async (req, res) => {
+    try {
+      const articleRepo = AppDataSource.getRepository("Article");
+      const articles = await articleRepo.find();
+      res.json(articles);
+    } catch (err) {
+      console.error("Lỗi khi lấy bài viết:", err);
+      res.status(500).json({ message: "Lỗi server khi lấy bài viết" });
+    }
+  },
+};

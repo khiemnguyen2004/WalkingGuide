@@ -1,0 +1,43 @@
+.home-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: sans-serif;
+}
+header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.cards-section {
+  margin-bottom: 40px;
+}
+.cards-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+.card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  transition: transform 0.2s;
+}
+.card:hover {
+  transform: translateY(-4px);
+}
+.card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+.card-info {
+  padding: 12px;
+}
+.card-info h3 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}

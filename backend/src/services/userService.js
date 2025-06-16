@@ -1,14 +1,25 @@
-// src/services/userService.js
-const AppDataSource = require("../data-source");
-const userRepo = AppDataSource.getRepository("User");
+const { AppDataSource } = require("../data-source");
 
 module.exports = {
-  findAll: () => userRepo.find(),
-  findById: (id) => userRepo.findOneBy({ id }),
-  create: (data) => userRepo.save(userRepo.create(data)),
-  update: async (id, data) => {
-    await userRepo.update(id, data);
-    return userRepo.findOneBy({ id });
+  findAll: async () => {
+    const userRepo = AppDataSource.getRepository("User");
+    return await userRepo.find();
   },
-  remove: (id) => userRepo.delete(id),
+  findById: async (id) => {
+    const userRepo = AppDataSource.getRepository("User");
+    return await userRepo.findOneBy({ id });
+  },
+  create: async (data) => {
+    const userRepo = AppDataSource.getRepository("User");
+    return await userRepo.save(userRepo.create(data));
+  },
+  update: async (id, data) => {
+    const userRepo = AppDataSource.getRepository("User");
+    await userRepo.update(id, data);
+    return await userRepo.findOneBy({ id });
+  },
+  remove: async (id) => {
+    const userRepo = AppDataSource.getRepository("User");
+    return await userRepo.delete(id);
+  },
 };

@@ -1,18 +1,25 @@
 const express = require("express");
-const AppDataSource = require("./data-source");
+const { AppDataSource } = require("./data-source");
 
 const app = express();
 const userRoutes = require("./routes/userRoutes");
+const placeRoutes = require("./routes/placeRoutes");
+const articleRoutes = require("./routes/articleRoutes");
+const tourRoutes = require("./routes/tourRoutes");
+
 
 const cors = require("cors");
 app.use(cors());
 
 app.use(express.json());
-app.use("/api/users", userRoutes);
 
 AppDataSource.initialize()
   .then(() => {
     console.log("Data Source has been initialized!");
+    app.use("/api/users", userRoutes);
+    app.use("/api", placeRoutes);
+    app.use("/api", articleRoutes);
+    app.use("/api", tourRoutes);
     app.listen(3000, () => console.log("Server is running on port 3000"));
   })
   .catch((err) => {

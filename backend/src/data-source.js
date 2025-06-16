@@ -36,6 +36,6 @@ const AppDataSource = new DataSource({
   subscribers: [],
 });
 
-module.exports = AppDataSource;
+module.exports = { AppDataSource };
 console.log("Entities loaded:", AppDataSource.options.entities.map(e => e.name));
 

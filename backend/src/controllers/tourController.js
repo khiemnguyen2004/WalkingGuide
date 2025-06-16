@@ -1,13 +1,15 @@
-const express = require("express");
-const router = express.Router();
-const tourService = require("../services/tourService");
+const { AppDataSource } = require("../data-source");
 
-router.get("/", async (req, res) => res.json(await tourService.findAll()));
-router.get("/:id", async (req, res) => {
-  const result = await tourService.findById(req.params.id);
-  result ? res.json(result) : res.status(404).json({ message: "Not found" });
-});
-router.post("/", async (req, res) => res.status(201).json(await tourService.create(req.body)));
-router.put("/:id", async (req, res) => res.json(await tourService.update(req.params.id, req.body)));
-router.delete("/:id", async (req, res) => { await tourService.remove(req.params.id); res.status(204).end(); });
-module.exports = router;
+const tourRepo = AppDataSource.getRepository("Tour");
+
+module.exports = {
+  getAllTours: async (req, res) => {
+    try {
+      const tours = await tourRepo.find();
+      res.json(tours);
+    } catch (err) {
+      console.error("Lỗi khi lấy danh sách tour:", err);
+      res.status(500).json({ error: "Lỗi server" });
+    }
+  }
+};

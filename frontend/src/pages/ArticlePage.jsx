@@ -14,10 +14,11 @@ function ArticlePage() {
     <div>
       <h1>Danh sách bài viết</h1>
       <ul>
-        {articles.map(article => (
-          <li key={article.id}>
-            {article.title} - {article.author}
-          </li>
+        {articles.map((article) => (
+        <div key={article.id} className="article-card">
+            <h2>{article.title}</h2>
+            <p>{article.content}</p>
+        </div>
         ))}
       </ul>
     </div>
