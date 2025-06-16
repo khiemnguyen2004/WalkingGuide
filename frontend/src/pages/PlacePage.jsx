@@ -1,19 +1,23 @@
-import React, { useEffect, useState } from "react";
-import placeApi from "../api/placeApi";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 function PlacePage() {
   const [places, setPlaces] = useState([]);
 
   useEffect(() => {
-    placeApi.getAll().then(res => setPlaces(res.data)).catch(console.error);
+    axios.get("http://localhost:3000/api/places")
+      .then(res => setPlaces(res.data))
+      .catch(err => console.error("Lỗi khi tải địa điểm:", err));
   }, []);
 
   return (
     <div>
       <h1>Danh sách địa điểm</h1>
       <ul>
-        {places.map(p => (
-          <li key={p.id}>{p.name}</li>
+        {places.map(place => (
+          <li key={place.id}>
+            {place.name} - {place.location}
+          </li>
         ))}
       </ul>
     </div>

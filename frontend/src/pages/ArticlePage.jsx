@@ -1,19 +1,23 @@
-import React, { useEffect, useState } from "react";
-import articleApi from "../api/articleApi";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 function ArticlePage() {
   const [articles, setArticles] = useState([]);
 
   useEffect(() => {
-    articleApi.getAll().then(res => setArticles(res.data)).catch(console.error);
+    axios.get("http://localhost:3000/api/articles")
+      .then(res => setArticles(res.data))
+      .catch(err => console.error("Lỗi khi tải bài viết:", err));
   }, []);
 
   return (
     <div>
-      <h1>Bài viết</h1>
+      <h1>Danh sách bài viết</h1>
       <ul>
-        {articles.map(a => (
-          <li key={a.id}>{a.title}</li>
+        {articles.map(article => (
+          <li key={article.id}>
+            {article.title} - {article.author}
+          </li>
         ))}
       </ul>
     </div>

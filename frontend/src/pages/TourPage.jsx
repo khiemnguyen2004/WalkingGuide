@@ -1,19 +1,23 @@
-import React, { useEffect, useState } from "react";
-import tourApi from "../api/tourApi";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 function TourPage() {
   const [tours, setTours] = useState([]);
 
   useEffect(() => {
-    tourApi.getAll().then(res => setTours(res.data)).catch(console.error);
+    axios.get("http://localhost:3000/api/tours")
+      .then(res => setTours(res.data))
+      .catch(err => console.error("Lỗi khi tải tour:", err));
   }, []);
 
   return (
     <div>
       <h1>Danh sách tour</h1>
       <ul>
-        {tours.map(t => (
-          <li key={t.id}>{t.name}</li>
+        {tours.map(tour => (
+          <li key={tour.id}>
+            {tour.title} - {tour.description}
+          </li>
         ))}
       </ul>
     </div>
