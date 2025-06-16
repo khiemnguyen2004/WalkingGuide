@@ -4,6 +4,9 @@ const AppDataSource = require("./data-source");
 const app = express();
 const userRoutes = require("./routes/userRoutes");
 
+const cors = require("cors");
+app.use(cors());
+
 app.use(express.json());
 app.use("/api/users", userRoutes);
 
