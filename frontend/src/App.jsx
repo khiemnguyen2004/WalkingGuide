@@ -10,7 +10,6 @@ import ArticlePage from "./pages/ArticlePage";
 function App() {
   return (
     <Router>
-      <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/users" element={<UserPage />} />
