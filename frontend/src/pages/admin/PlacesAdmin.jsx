@@ -8,6 +8,7 @@ function PlacesAdmin() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [editId, setEditId] = useState(null);
 
   useEffect(() => {
     fetchPlaces();
@@ -27,6 +28,32 @@ function PlacesAdmin() {
       image_url: imageUrl,
     });
     fetchPlaces();
+    setName("");
+    setDescription("");
+    setLatitude("");
+    setLongitude("");
+    setImageUrl("");
+  };
+
+  const handleEdit = (place) => {
+    setEditId(place.id);
+    setName(place.name);
+    setDescription(place.description);
+    setLatitude(place.latitude);
+    setLongitude(place.longitude);
+    setImageUrl(place.image_url);
+  };
+
+  const handleUpdate = async () => {
+    await axios.put(`http://localhost:3000/api/places/${editId}`, {
+      name,
+      description,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      image_url: imageUrl,
+    });
+    fetchPlaces();
+    setEditId(null);
     setName("");
     setDescription("");
     setLatitude("");
@@ -78,7 +105,30 @@ function PlacesAdmin() {
           className="form-control mb-2"
           placeholder="Link ảnh (image_url)"
         />
-        <button onClick={handleCreate} className="btn btn-success">Thêm</button>
+        {editId ? (
+          <>
+            <button onClick={handleUpdate} className="btn btn-warning me-2">
+              Cập nhật
+            </button>
+            <button
+              onClick={() => {
+                setEditId(null);
+                setName("");
+                setDescription("");
+                setLatitude("");
+                setLongitude("");
+                setImageUrl("");
+              }}
+              className="btn btn-secondary"
+            >
+              Hủy
+            </button>
+          </>
+        ) : (
+          <button onClick={handleCreate} className="btn btn-success">
+            Thêm
+          </button>
+        )}
       </div>
 
       <table className="table table-bordered">
@@ -103,7 +153,18 @@ function PlacesAdmin() {
               <td>{p.longitude}</td>
               <td>{p.image_url}</td>
               <td>
-                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.id)}>Xóa</button>
+                <button
+                  className="btn btn-primary btn-sm me-2"
+                  onClick={() => handleEdit(p)}
+                >
+                  Sửa
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => handleDelete(p.id)}
+                >
+                  Xóa
+                </button>
               </td>
             </tr>
           ))}

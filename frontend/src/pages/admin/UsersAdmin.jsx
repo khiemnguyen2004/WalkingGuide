@@ -7,6 +7,7 @@ function UsersAdmin() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("USER");
   const [password, setPassword] = useState("");
+  const [editId, setEditId] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -25,6 +26,29 @@ function UsersAdmin() {
       role,
     });
     fetchUsers();
+    setFullName("");
+    setEmail("");
+    setPassword("");
+    setRole("USER");
+  };
+
+  const handleEdit = (user) => {
+    setEditId(user.id);
+    setFullName(user.full_name);
+    setEmail(user.email);
+    setRole(user.role);
+    setPassword(""); // Do not prefill password for security
+  };
+
+  const handleUpdate = async () => {
+    await axios.put(`http://localhost:3000/api/users/${editId}`, {
+      full_name: fullName,
+      email,
+      password: password || undefined, // Only send if changed
+      role,
+    });
+    fetchUsers();
+    setEditId(null);
     setFullName("");
     setEmail("");
     setPassword("");
@@ -70,7 +94,29 @@ function UsersAdmin() {
           <option value="USER">USER</option>
           <option value="ADMIN">ADMIN</option>
         </select>
-        <button onClick={handleCreate} className="btn btn-success">Thêm</button>
+        {editId ? (
+          <>
+            <button onClick={handleUpdate} className="btn btn-warning me-2">
+              Cập nhật
+            </button>
+            <button
+              onClick={() => {
+                setEditId(null);
+                setFullName("");
+                setEmail("");
+                setPassword("");
+                setRole("USER");
+              }}
+              className="btn btn-secondary"
+            >
+              Hủy
+            </button>
+          </>
+        ) : (
+          <button onClick={handleCreate} className="btn btn-success">
+            Thêm
+          </button>
+        )}
       </div>
 
       <table className="table table-bordered">
@@ -91,7 +137,18 @@ function UsersAdmin() {
               <td>{u.email}</td>
               <td>{u.role}</td>
               <td>
-                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(u.id)}>Xóa</button>
+                <button
+                  className="btn btn-primary btn-sm me-2"
+                  onClick={() => handleEdit(u)}
+                >
+                  Sửa
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => handleDelete(u.id)}
+                >
+                  Xóa
+                </button>
               </td>
             </tr>
           ))}

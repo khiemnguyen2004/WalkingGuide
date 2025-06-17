@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { AppDataSource } = require("../data-source");
+const placeController = require("../controllers/placeController");
 
 router.get("/", async (req, res) => {
   try {
@@ -12,5 +13,6 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: "Lỗi server khi lấy địa điểm" });
   }
 });
+router.put("/:id", placeController.update);
 
 module.exports = router;

@@ -136,6 +136,9 @@ function HomePage() {
                           ) : ""}
                           <div className="card-body card-info">
                             <h3 className="card-title text-primary">{a.title}</h3>
+                            <p className="card-text text-muted">
+                            {a.content ? `${a.content.substring(0, 100)}...` : "Chưa có nội dung"}
+                          </p>
                           </div>
                         </Link>
                       </div>

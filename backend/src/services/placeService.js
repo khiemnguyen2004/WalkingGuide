@@ -1,4 +1,4 @@
-const AppDataSource = require("../data-source");
+const { AppDataSource } = require("../data-source");
 const Place = require("../models/Place");
 
 const placeRepository = AppDataSource.getRepository("Place");

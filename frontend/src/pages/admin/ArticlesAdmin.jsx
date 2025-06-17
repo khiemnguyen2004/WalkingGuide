@@ -8,6 +8,8 @@ function ArticlesAdmin() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState(null);
+  const [editId, setEditId] = useState(null);
+  const [editImageUrl, setEditImageUrl] = useState("");
 
   useEffect(() => {
     fetchArticles();
@@ -45,6 +47,37 @@ function ArticlesAdmin() {
     setImageFile(null);
   };
 
+  const handleEdit = (article) => {
+    setEditId(article.article_id);
+    setTitle(article.title);
+    setContent(article.content);
+    setEditImageUrl(article.image_url);
+    setImageFile(null);
+  };
+
+  const handleUpdate = async () => {
+    let uploadedImageUrl = editImageUrl;
+    if (imageFile) {
+      const formData = new FormData();
+      formData.append("file", imageFile);
+      const uploadRes = await axios.post("http://localhost:3000/api/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      uploadedImageUrl = uploadRes.data.url;
+    }
+    await axios.put(`http://localhost:3000/api/articles/${editId}`, {
+      title,
+      content,
+      image_url: uploadedImageUrl,
+    });
+    fetchArticles();
+    setEditId(null);
+    setTitle("");
+    setContent("");
+    setImageFile(null);
+    setEditImageUrl("");
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc muốn xóa bài viết này?")) {
       await axios.delete(`http://localhost:3000/api/articles/${id}`);
@@ -75,7 +108,14 @@ function ArticlesAdmin() {
           onChange={e => setImageFile(e.target.files[0])}
           className="form-control mb-2"
         />
-        <button onClick={handleCreate} className="btn btn-success">Thêm</button>
+        {editId ? (
+          <>
+            <button onClick={handleUpdate} className="btn btn-warning me-2">Cập nhật</button>
+            <button onClick={() => { setEditId(null); setTitle(""); setContent(""); setImageFile(null); setEditImageUrl(""); }} className="btn btn-secondary">Hủy</button>
+          </>
+        ) : (
+          <button onClick={handleCreate} className="btn btn-success">Thêm</button>
+        )}
       </div>
 
       <table className="table table-bordered">
@@ -104,6 +144,7 @@ function ArticlesAdmin() {
                 ) : ""}
               </td>
               <td>
+                <button className="btn btn-primary btn-sm me-2" onClick={() => handleEdit(a)}>Sửa</button>
                 <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a.article_id)}>Xóa</button>
               </td>
             </tr>

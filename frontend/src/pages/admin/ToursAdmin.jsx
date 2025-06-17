@@ -7,6 +7,7 @@ function ToursAdmin() {
   const [tours, setTours] = useState([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [editId, setEditId] = useState(null);
 
   useEffect(() => {
     fetchTours();
@@ -28,6 +29,23 @@ function ToursAdmin() {
       user_id: user.id,
     });
     fetchTours();
+    setName("");
+    setDescription("");
+  };
+
+  const handleEdit = (tour) => {
+    setEditId(tour.id);
+    setName(tour.name);
+    setDescription(tour.description);
+  };
+
+  const handleUpdate = async () => {
+    await axios.put(`http://localhost:3000/api/tours/${editId}`, {
+      name,
+      description,
+    });
+    fetchTours();
+    setEditId(null);
     setName("");
     setDescription("");
   };
@@ -56,7 +74,27 @@ function ToursAdmin() {
           className="form-control mb-2"
           placeholder="Mô tả"
         />
-        <button onClick={handleCreate} className="btn btn-success">Thêm</button>
+        {editId ? (
+          <>
+            <button onClick={handleUpdate} className="btn btn-warning me-2">
+              Cập nhật
+            </button>
+            <button
+              onClick={() => {
+                setEditId(null);
+                setName("");
+                setDescription("");
+              }}
+              className="btn btn-secondary"
+            >
+              Hủy
+            </button>
+          </>
+        ) : (
+          <button onClick={handleCreate} className="btn btn-success">
+            Thêm
+          </button>
+        )}
       </div>
 
       <table className="table table-bordered">
@@ -75,7 +113,18 @@ function ToursAdmin() {
               <td>{t.name}</td>
               <td>{t.description}</td>
               <td>
-                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(t.id)}>Xóa</button>
+                <button
+                  className="btn btn-primary btn-sm me-2"
+                  onClick={() => handleEdit(t)}
+                >
+                  Sửa
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => handleDelete(t.id)}
+                >
+                  Xóa
+                </button>
               </td>
             </tr>
           ))}
