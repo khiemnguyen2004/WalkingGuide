@@ -24,6 +24,9 @@ function Header() {
       <div className="d-flex me-5 w-100 justify-content-end align-items-center">
         {user ? (
         <>
+            <Link to="/" className="btn btn-warning btn-sm me-2">
+            Trang chủ
+            </Link>
             <span>Xin chào, {user.full_name}</span>
             <button onClick={handleLogout} className="btn btn-light btn-sm ms-2">
             Đăng xuất

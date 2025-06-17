@@ -94,24 +94,24 @@ function HomePage() {
             </section>
             <section className="cards-section mb-5">
               <h2 className="h4 mb-3 fw-bold">Chuyến đi & Lịch trình</h2>
-              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 cards-wrapper">
+              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 {tours.length === 0 ? (
                   <p className="text-muted">Không có tour nào để hiển thị.</p>
                 ) : (
                   tours.map((t) => (
-                    <Link
-                      key={t.id}
-                      to={`/tours/${t.id}`}
-                      className="card text-decoration-none"
-                    >
-                      <div className="card-body card-info">
-                        <h3 className="card-title text-primary">{t.name}</h3>
-                        <p className="card-text text-muted">
-                          {t.description ? `${t.description.substring(0, 100)}...` : "Chưa có mô tả"}
-                        </p>
-                        <p className="card-text text-muted small">Chi phí: {t.total_cost} USD</p>
+                    <div className="col" key={t.id}>
+                      <div className="card h-100">
+                        <Link to={`/tours/${t.id}`} className="text-decoration-none">
+                          <div className="card-body card-info">
+                            <h3 className="card-title text-primary">{t.name}</h3>
+                            <p className="card-text text-muted">
+                              {t.description ? `${t.description.substring(0, 100)}...` : "Chưa có mô tả"}
+                            </p>
+                            <p className="card-text text-muted small">Chi phí: {t.total_cost} USD</p>
+                          </div>
+                        </Link>
                       </div>
-                    </Link>
+                    </div>
                   ))
                 )}
               </div>
@@ -119,25 +119,27 @@ function HomePage() {
 
             <section className="cards-section mb-5">
               <h2 className="h4 mb-3 fw-bold">Bài viết mới nhất</h2>
-              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 cards-wrapper">
+              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 {articles.length === 0 ? (
                   <p className="text-muted">Không có bài viết nào để hiển thị.</p>
                 ) : (
                   articles.map((a) => (
-                    <Link
-                      key={a.article_id}
-                      to={`/articles/${a.article_id}`}
-                      className="card text-decoration-none"
-                    >
-                      <img
-                        src={a.image_url || "/default-article.jpg"}
-                        alt={a.title}
-                        className="card-img-top"
-                      />
-                      <div className="card-body card-info">
-                        <h3 className="card-title text-primary">{a.title}</h3>
+                    <div className="col" key={a.article_id}>
+                      <div className="card h-100">
+                        <Link to={`/articles/${a.article_id}`} className="text-decoration-none">
+                          {a.image_url ? (
+                            <img
+                              src={a.image_url.startsWith('http') ? a.image_url : `http://localhost:3000${a.image_url}`}
+                              alt="Ảnh"
+                              className="card-img-top"
+                            />
+                          ) : ""}
+                          <div className="card-body card-info">
+                            <h3 className="card-title text-primary">{a.title}</h3>
+                          </div>
+                        </Link>
                       </div>
-                    </Link>
+                    </div>
                   ))
                 )}
               </div>

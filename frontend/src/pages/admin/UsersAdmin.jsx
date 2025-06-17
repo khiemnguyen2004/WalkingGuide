@@ -6,6 +6,7 @@ function UsersAdmin() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("USER");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -20,12 +21,13 @@ function UsersAdmin() {
     await axios.post("http://localhost:3000/api/users", {
       full_name: fullName,
       email,
-      password: "123456", // Mặc định, cần thay đổi UI sau
+      password, // required
       role,
     });
     fetchUsers();
     setFullName("");
     setEmail("");
+    setPassword("");
     setRole("USER");
   };
 
@@ -52,6 +54,13 @@ function UsersAdmin() {
           onChange={(e) => setEmail(e.target.value)}
           className="form-control mb-2"
           placeholder="Email"
+        />
+        <input
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="form-control mb-2"
+          placeholder="Mật khẩu"
+          type="password"
         />
         <select
           value={role}
