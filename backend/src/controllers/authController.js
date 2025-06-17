@@ -1,56 +1,69 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const pool = require('../config/db');
+const { AppDataSource } = require("../data-source");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-// Đăng ký
+const userRepository = AppDataSource.getRepository("User");
+
 exports.register = async (req, res) => {
-  const { email, full_name, password } = req.body;
-
-  if (!email || !password || !full_name) {
-    return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin' });
-  }
-
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const { full_name, email, password } = req.body;
 
-    const result = await pool.query(
-      'INSERT INTO users (email, password_hash, full_name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name, role',
-      [email, hashedPassword, full_name, 'USER']
-    );
+    const existingUser = await userRepository.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email đã được sử dụng." });
+    }
 
-    res.status(201).json({ message: 'Đăng ký thành công', user: result.rows[0] });
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const newUser = userRepository.create({
+      full_name,
+      email,
+      password_hash,
+      role: "USER",
+    });
+
+    await userRepository.save(newUser);
+    res.status(201).json({ message: "Đăng ký thành công." });
   } catch (err) {
-    console.error('Lỗi đăng ký:', err);
-    res.status(500).json({ message: 'Lỗi máy chủ' });
+    console.error("Đăng ký lỗi:", err);
+    res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };
 
-// Đăng nhập
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Vui lòng nhập email và mật khẩu' });
-  }
-
   try {
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    const user = result.rows[0];
+    const { email, password } = req.body;
 
-    if (!user) return res.status(401).json({ message: 'Email không tồn tại' });
+    const user = await userRepository.findOne({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ message: "Sai email hoặc mật khẩu." });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) return res.status(401).json({ message: 'Sai mật khẩu' });
+    if (!isMatch) {
+      return res.status(401).json({ message: "Sai email hoặc mật khẩu." });
+    }
 
     const token = jwt.sign(
-      { userId: user.id, role: user.role },
+      {
+        userId: user.id,
+        role: user.role,
+      },
       process.env.JWT_SECRET,
-      { expiresIn: '1d' }
+      { expiresIn: "7d" }
     );
 
-    res.json({ message: 'Đăng nhập thành công', token });
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (err) {
-    console.error('Lỗi đăng nhập:', err);
-    res.status(500).json({ message: 'Lỗi máy chủ' });
+    console.error("Đăng nhập lỗi:", err);
+    res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };

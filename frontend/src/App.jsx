@@ -5,12 +5,16 @@ import UserPage from "./pages/UserPage";
 import PlacePage from "./pages/PlacePage";
 import TourPage from "./pages/TourPage";
 import ArticlePage from "./pages/ArticlePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/users" element={<UserPage />} />
         <Route path="/places" element={<PlacePage />} />
         <Route path="/tours" element={<TourPage />} />

@@ -1,4 +1,5 @@
 const express = require("express");
+require("dotenv").config(); 
 const { AppDataSource } = require("./data-source");
 
 const app = express();
@@ -6,6 +7,7 @@ const userRoutes = require("./routes/userRoutes");
 const placeRoutes = require("./routes/placeRoutes");
 const articleRoutes = require("./routes/articleRoutes");
 const tourRoutes = require("./routes/tourRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 
 const cors = require("cors");
@@ -20,6 +22,7 @@ AppDataSource.initialize()
     app.use("/api", placeRoutes);
     app.use("/api", articleRoutes);
     app.use("/api", tourRoutes);
+    app.use("/api/auth", authRoutes);
     app.listen(3000, () => console.log("Server is running on port 3000"));
   })
   .catch((err) => {

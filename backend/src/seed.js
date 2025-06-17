@@ -3,6 +3,8 @@ const Place = require('./models/Place');
 const Tag = require('./models/Tag');
 const PlaceTag = require('./models/Place_Tag');
 const Article = require('./models/Article');
+const User = require('./models/User');
+const bcrypt = require("bcryptjs");
 
 async function seed() {
   try {
@@ -13,23 +15,15 @@ async function seed() {
     const tagRepo = AppDataSource.getRepository("Tag");
     const placeTagRepo = AppDataSource.getRepository("PlaceTag");
     const articleRepo = AppDataSource.getRepository("Article");
+    const userRepo = AppDataSource.getRepository("User");
 
-  // ===== Thêm địa điểm Hòn Chồng =====
-let nhaThoNui = await placeRepo.findOneBy({ name: "Nhà Thờ Núi" });
-if (!nhaThoNui) {
-  nhaThoNui = await placeRepo.save({
-    name: "Nhà Thờ Núi",
-    description: "Nhà thờ đá cổ kính nằm trên đỉnh đồi nhỏ trung tâm TP Nha Trang.",
-    latitude: 12.2451,
-    longitude: 109.1909,
-    image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRbpl3RYR2z3_nb8om4cFs9lkmeNtuFVpUBQ&s",
-    rating: 4.6,
-  });
-  console.log("Thêm Nhà Thờ Núi thành công!");
-}
-
-
-
+  const userToDelete = await userRepo.findOneBy({ id: 1 });
+  if (userToDelete) {
+    await userRepo.remove(userToDelete);
+    console.log("🗑️ Đã xóa người dùng có ID = 1");
+  } else {
+    console.log("ℹ️ Không tìm thấy người dùng có ID = 1 để xóa");
+  }
   } catch (err) {
     console.error("Lỗi seed:", err);
   } finally {
