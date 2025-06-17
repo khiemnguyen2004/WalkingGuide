@@ -19,9 +19,9 @@ AppDataSource.initialize()
   .then(() => {
     console.log("Data Source has been initialized!");
     app.use("/api/users", userRoutes);
-    app.use("/api", placeRoutes);
-    app.use("/api", articleRoutes);
-    app.use("/api", tourRoutes);
+    app.use("/api/places", placeRoutes);
+    app.use("/api/articles", articleRoutes);
+    app.use("/api/tours", tourRoutes);
     app.use("/api/auth", authRoutes);
     app.listen(3000, () => console.log("Server is running on port 3000"));
   })

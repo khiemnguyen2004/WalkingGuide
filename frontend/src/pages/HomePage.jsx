@@ -24,7 +24,7 @@ function HomePage() {
           axios.get("http://localhost:3000/api/tours"),
           axios.get("http://localhost:3000/api/articles"),
         ]);
-        console.log("Places:", placesRes.data); // Kiểm tra dữ liệu
+        console.log("Places:", placesRes.data);
         setPlaces(placesRes.data);
         setTours(toursRes.data);
         setArticles(articlesRes.data);

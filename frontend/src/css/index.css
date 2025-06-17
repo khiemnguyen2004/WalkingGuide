@@ -4,3 +4,10 @@ body {
   padding: 0;
   box-sizing: border-box;
 }
+.list-group-item a{
+  color: black;
+  margin-right:10px;
+}
+.list-group-item a:hover{
+  color: #646cff;
+}

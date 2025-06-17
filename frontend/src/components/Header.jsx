@@ -17,6 +17,11 @@ function Header() {
       <div className="container text-center">
         <h1 className="h3 fw-bold">Walking Guide</h1>
         <p className="mt-2">Khám phá địa điểm, chuyến đi và bài viết hấp dẫn</p>
+        {user?.role === "ADMIN" && (
+          <Link to="/admin" className="btn btn-warning btn-sm me-2">
+            Trang quản trị
+          </Link>
+        )}
         {user ? (
           <>
             <span>Xin chào, {user.full_name}</span>

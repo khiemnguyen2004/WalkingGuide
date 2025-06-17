@@ -1,4 +1,3 @@
-// src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import UserPage from "./pages/UserPage";
@@ -7,6 +6,12 @@ import TourPage from "./pages/TourPage";
 import ArticlePage from "./pages/ArticlePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import AdminDashboard from "./pages/AdminDashboard";
+import ArticlesAdmin from "./pages/admin/ArticlesAdmin";
+import UsersAdmin from "./pages/admin/UsersAdmin";
+import PlacesAdmin from "./pages/admin/PlacesAdmin";
+import ToursAdmin from "./pages/admin/ToursAdmin";
+import { PrivateRoute, AdminRoute } from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -15,10 +20,15 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/users" element={<UserPage />} />
-        <Route path="/places" element={<PlacePage />} />
-        <Route path="/tours" element={<TourPage />} />
-        <Route path="/articles" element={<ArticlePage />} />
+        <Route path="/users" element={<PrivateRoute><UserPage /></PrivateRoute>} />
+        <Route path="/places" element={<PrivateRoute><PlacePage /></PrivateRoute>} />
+        <Route path="/tours" element={<PrivateRoute><TourPage /></PrivateRoute>} />
+        <Route path="/articles" element={<PrivateRoute><ArticlePage /></PrivateRoute>} />
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/users" element={<AdminRoute><UsersAdmin /></AdminRoute>} />
+        <Route path="/admin/places" element={<AdminRoute><PlacesAdmin /></AdminRoute>} />
+        <Route path="/admin/articles" element={<AdminRoute><ArticlesAdmin /></AdminRoute>} />
+        <Route path="/admin/tours" element={<AdminRoute><ToursAdmin /></AdminRoute>} />
       </Routes>
     </Router>
   );

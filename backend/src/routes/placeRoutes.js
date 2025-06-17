@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { AppDataSource } = require("../data-source");
 
-router.get("/places", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const placeRepository = AppDataSource.getRepository("Place");
     const places = await placeRepository.find();
