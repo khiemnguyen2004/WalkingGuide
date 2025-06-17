@@ -37,14 +37,14 @@ function UsersAdmin() {
     setFullName(user.full_name);
     setEmail(user.email);
     setRole(user.role);
-    setPassword(""); // Do not prefill password for security
+    setPassword(user.password_hash);
   };
 
   const handleUpdate = async () => {
     await axios.put(`http://localhost:3000/api/users/${editId}`, {
       full_name: fullName,
       email,
-      password: password || undefined, // Only send if changed
+      password_hash: password || undefined,
       role,
     });
     fetchUsers();
