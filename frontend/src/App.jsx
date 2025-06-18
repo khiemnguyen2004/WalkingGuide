@@ -12,6 +12,9 @@ import UsersAdmin from "./pages/admin/UsersAdmin";
 import PlacesAdmin from "./pages/admin/PlacesAdmin";
 import ToursAdmin from "./pages/admin/ToursAdmin";
 import { PrivateRoute, AdminRoute } from "./components/ProtectedRoute";
+import ManualPlanner from "./components/ManualPlanner";
+import TourList from "./components/TourList";
+
 
 function App() {
   return (
@@ -29,6 +32,8 @@ function App() {
         <Route path="/admin/places" element={<AdminRoute><PlacesAdmin /></AdminRoute>} />
         <Route path="/admin/articles" element={<AdminRoute><ArticlesAdmin /></AdminRoute>} />
         <Route path="/admin/tours" element={<AdminRoute><ToursAdmin /></AdminRoute>} />
+        <Route path="/admin/manual-planner" element={<AdminRoute><ManualPlanner /></AdminRoute>} />
+        <Route path="/my-tours" element={<PrivateRoute><TourList /></PrivateRoute>} />
       </Routes>
     </Router>
   );

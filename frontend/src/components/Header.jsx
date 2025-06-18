@@ -22,6 +22,11 @@ function Header() {
             Trang quản trị
           </Link>
         )}
+        {user && (
+          <Link to="/my-tours" className="btn btn-success btn-sm me-2">
+            Tour của tôi
+          </Link>
+        )}
         {user ? (
           <>
             <span>Xin chào, {user.full_name}</span>

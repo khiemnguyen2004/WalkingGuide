@@ -1,6 +1,7 @@
 const { AppDataSource } = require("../data-source");
 
 const tourRepo = AppDataSource.getRepository("Tour");
+const tourStepRepo = AppDataSource.getRepository("TourStep");
 
 module.exports = {
   getAllTours: async (req, res) => {
@@ -12,17 +13,66 @@ module.exports = {
       res.status(500).json({ error: "Lỗi server" });
     }
   },
+  getUserTours: async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const tours = await tourRepo.find({
+        where: {
+          user_id: userId,
+        },
+      });
+      res.json(tours);
+    } catch (err) {
+      console.error("Lỗi khi lấy tour người dùng:", err);
+      res.status(500).json({ error: "Lỗi server" });
+    }
+  },
 
+  cloneTour: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.body.user_id;
+
+      const tour = await tourRepo.findOneBy({ id: parseInt(id) });
+      if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
+
+      const newTour = await tourRepo.save({
+        name: tour.name,
+        description: tour.description,
+        user_id: userId,
+        total_cost: tour.total_cost,
+      });
+
+      res.status(201).json(newTour);
+    } catch (err) {
+      console.error("Lỗi khi clone tour:", err);
+      res.status(500).json({ error: "Lỗi server khi clone tour" });
+    }
+  },
   createTour: async (req, res) => {
     try {
-      const { name, description, user_id } = req.body;
+      const { name, description, user_id, total_cost = 0, steps = [] } = req.body;
 
       if (!name || !user_id) {
         return res.status(400).json({ error: "Thiếu tên tour hoặc user_id" });
       }
 
-      const newTour = await tourRepo.save({ name, description, user_id });
-      res.status(201).json(newTour);
+      // 1. Tạo tour
+      const newTour = await tourRepo.save({ name, description, total_cost, user_id });
+
+      // 2. Lưu các bước của tour nếu có
+      const savedSteps = [];
+      for (const step of steps) {
+        const saved = await tourStepRepo.save({
+          tour_id: newTour.id,
+          place_id: step.place_id,
+          step_order: step.step_order,
+          stay_duration: step.stay_duration || 60,
+        });
+        savedSteps.push(saved);
+      }
+
+      res.status(201).json({ tour: newTour, steps: savedSteps });
     } catch (err) {
       console.error("Lỗi khi tạo tour:", err);
       res.status(500).json({ error: "Lỗi server khi tạo tour" });
@@ -58,4 +108,3 @@ module.exports = {
     }
   },
 };
-

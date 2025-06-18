@@ -6,6 +6,7 @@ import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import Map from "../components/Map.jsx";
+import ManualPlanner from "../components/ManualPlanner.jsx";
 import "../css/HomePage.css";
 
 function HomePage() {
@@ -43,6 +44,7 @@ function HomePage() {
       <Header />
       <Navbar activePage="home" />
       <main className="container px-4 py-5 flex-grow-1">
+        <ManualPlanner />
             <section className="mb-5">
               <h2 className="h4 mb-3 fw-bold">Bản đồ địa điểm</h2>
               <div className="card">
@@ -60,6 +62,8 @@ function HomePage() {
                   </ErrorBoundary>
                 </div>
               </div>
+            </section>
+            <section className="mb-5">
             </section>
         {loading ? (
           <p className="text-muted text-center">Đang tải dữ liệu...</p>
@@ -95,10 +99,10 @@ function HomePage() {
             <section className="cards-section mb-5">
               <h2 className="h4 mb-3 fw-bold">Chuyến đi & Lịch trình</h2>
               <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                {tours.length === 0 ? (
+                {tours.filter(t => t.user_id === 4).length === 0 ? (
                   <p className="text-muted">Không có tour nào để hiển thị.</p>
                 ) : (
-                  tours.map((t) => (
+                  tours.filter(t => t.user_id === 4).map((t) => (
                     <div className="col" key={t.id}>
                       <div className="card h-100">
                         <Link to={`/tours/${t.id}`} className="text-decoration-none">
