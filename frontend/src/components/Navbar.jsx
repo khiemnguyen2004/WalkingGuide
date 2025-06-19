@@ -1,53 +1,49 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const Navbar = ({ activePage }) => (
-  <nav className="luxury-navbar navbar navbar-expand-lg">
-    <div className="container">
-      <ul className="navbar-nav mx-auto flex-row gap-3">
-        <li className="nav-item">
+const Navbar = ({ activePage, isAuthenticated }) => (
+  <aside className="luxury-sidebar d-none d-lg-block luxury-sidebar-collapsed">
+    <nav>
+      <ul className="luxury-sidebar-nav list-unstyled mb-0">
+        <li>
           <Link
-            to="/"
-            className={`nav-link${
-              activePage === "home" ? " active" : ""
+            to="/explore"
+            className={`luxury-sidebar-link${
+              activePage === "explore" ? " active" : ""
             }`}
+            style={{ textDecoration: "none" }}
           >
-            Trang chủ
+            <i className="bi bi-map luxury-sidebar-icon" />
+            <span className="luxury-sidebar-label">Explore Map</span>
           </Link>
         </li>
-        <li className="nav-item">
+        <li>
           <Link
-            to="/places"
-            className={`nav-link${
-              activePage === "places" ? " active" : ""
+            to="/plan"
+            className={`luxury-sidebar-link${
+              activePage === "plan" ? " active" : ""
             }`}
+            style={{ textDecoration: "none" }}
           >
-            Địa điểm
+            <i className="bi bi-calendar2-check luxury-sidebar-icon" />
+            <span className="luxury-sidebar-label">Plan Trip</span>
           </Link>
         </li>
-        <li className="nav-item">
+        <li>
           <Link
-            to="/tours"
-            className={`nav-link${
-              activePage === "tours" ? " active" : ""
+            to="/mytrip"
+            className={`luxury-sidebar-link${
+              activePage === "mytrip" ? " active" : ""
             }`}
+            style={{ textDecoration: "none" }}
           >
-            Lộ trình
-          </Link>
-        </li>
-        <li className="nav-item">
-          <Link
-            to="/articles"
-            className={`nav-link${
-              activePage === "articles" ? " active" : ""
-            }`}
-          >
-            Bài viết
+            <i className="bi bi-suitcase luxury-sidebar-icon" />
+            <span className="luxury-sidebar-label">My Trip</span>
           </Link>
         </li>
       </ul>
-    </div>
-  </nav>
+    </nav>
+  </aside>
 );
 
 export default Navbar;

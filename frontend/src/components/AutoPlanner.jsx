@@ -40,46 +40,46 @@ const AutoPlanner = () => {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Tạo lộ trình tự động bằng AI</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label className="block mb-1 font-medium">Số ngày <span className="text-red-500">*</span></label>
+    <div className="container py-4">
+      <h2>Tạo lộ trình tự động bằng AI</h2>
+      <div className="row g-3 mb-3">
+        <div className="col-md-4">
+          <label className="form-label">Số ngày <span className="text-danger">*</span></label>
           <input
             type="number"
             min={1}
             placeholder="Nhập số ngày"
             value={days}
             onChange={(e) => setDays(e.target.value)}
-            className="p-2 border rounded w-full"
+            className="form-control"
             required
           />
         </div>
-        <div>
-          <label className="block mb-1 font-medium">Sở thích (cách nhau bởi dấu phẩy)</label>
+        <div className="col-md-4">
+          <label className="form-label">Sở thích (cách nhau bởi dấu phẩy)</label>
           <input
             type="text"
             placeholder="Ví dụ: biển, núi, lịch sử"
             value={interests}
             onChange={(e) => setInterests(e.target.value)}
-            className="p-2 border rounded w-full"
+            className="form-control"
           />
         </div>
-        <div>
-          <label className="block mb-1 font-medium">Ngân sách (VND)</label>
+        <div className="col-md-4">
+          <label className="form-label">Ngân sách (VND)</label>
           <input
             type="number"
             min={0}
             placeholder="Nhập ngân sách dự kiến"
             value={budget}
             onChange={(e) => setBudget(e.target.value)}
-            className="p-2 border rounded w-full"
+            className="form-control"
           />
         </div>
       </div>
       <button
         onClick={generateTour}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+        className="btn btn-main mb-2"
       >
         Tạo Tour
       </button>
@@ -103,26 +103,28 @@ const AutoPlanner = () => {
               alert("Lỗi khi lưu tour vào hệ thống!");
             }
           }}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded ml-2 mt-2"
+          className="btn btn-main"
         >
           Lưu tour này vào hệ thống
         </button>
       )}
-      {error && <p className="text-red-500 mt-3">{error}</p>}
+      {error && <p className="text-danger mt-3">{error}</p>}
       {tourData && (
-        <div className="mt-6">
-          <h3 className="text-xl font-semibold mb-2">Tour: {tourData.tour.name}</h3>
-          <p className="text-gray-700 mb-4">{tourData.tour.description}</p>
-          <h4 className="text-lg font-bold mb-2">Các địa điểm:</h4>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mt-4">
+          <h3 className="h5 fw-bold mb-2">Tour: {tourData.tour.name}</h3>
+          <p className="mb-3">{tourData.tour.description}</p>
+          <h4 className="h6 fw-bold mb-2">Các địa điểm:</h4>
+          <div className="row g-2">
             {tourData.steps.map((step, index) => {
               const place = step.place;
               return (
-                <div key={index} className="border p-3 rounded shadow">
-                  <img src={place.image_url} alt={place.name} className="w-full h-40 object-cover rounded mb-2" />
-                  <h5 className="text-lg font-semibold">{place.name}</h5>
-                  <p className="text-gray-600 text-sm mb-1">Đánh giá: {place.rating}</p>
-                  <p className="text-sm">{place.description?.slice(0, 100)}...</p>
+                <div className="col-md-6 col-lg-4" key={index}>
+                  <div className="card mb-2">
+                    <div className="card-body p-2">
+                      <div className="fw-bold">{place?.name}</div>
+                      <div className="small text-muted">Thời gian ở lại: {step.stay_duration} phút</div>
+                    </div>
+                  </div>
                 </div>
               );
             })}

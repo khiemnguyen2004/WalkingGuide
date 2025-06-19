@@ -11,12 +11,15 @@ import AutoPlanner from "../components/AutoPlanner.jsx";
 import "../css/HomePage.css";
 import "../css/luxury-home.css";
 
+
 function HomePage() {
   const [places, setPlaces] = useState([]);
   const [tours, setTours] = useState([]);
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showManual, setShowManual] = useState(false);
+  const [showAuto, setShowAuto] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,30 +42,47 @@ function HomePage() {
     fetchData();
   }, []);
 
+  const onlyOneOpen = showManual || showAuto;
+
   return (
     <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
       <Header />
       <Navbar activePage="home" />
       <main className="container px-4 py-5 flex-grow-1">
-        <div className="mb-8 herosection text-center">
-          <h1 className="display-4 fw-bold text-center mb-2 text-dark" style={{letterSpacing: 1}}>WALKING GUIDE</h1>
-          <p className="lead text-center text-secondary mb-5">Khám phá, trải nghiệm, và tận hưởng những hành trình tuyệt vời nhất.</p>
-        </div>
-        <div className="row mb-5 g-4 luxury-planner-row">
-          <div className="col-12 col-lg-6">
-            <div className="luxury-card luxury-planner-card p-4 mb-4 animate__animated animate__fadeInLeft">
-              <ManualPlanner />
+        <div className={`row mb-5 g-4 luxury-planner-row${onlyOneOpen ? ' justify-content-center' : ''}`}> 
+          <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showManual || !onlyOneOpen ? 'block' : 'none' }}>
+            <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showManual && onlyOneOpen ? ' full-width' : ''}`}>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <h2 className="h5 fw-bold mb-0">Tự tạo lộ trình</h2>
+                <button className="btn btn-link p-0" onClick={() => { setShowManual(v => !v); if (!showManual) setShowAuto(false); }} aria-label="Toggle Manual Planner">
+                  <i className={`bi ${showManual ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
+                </button>
+              </div>
+              <p className="text-center text-muted mb-3">Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ <b>thủ công</b> để tự tạo tour theo ý thích của mình.</p>
+              {showManual && <ManualPlanner />}
             </div>
           </div>
-          <div className="col-12 col-lg-6">
-            <div className="luxury-card luxury-planner-card p-4 mb-4 animate__animated animate__fadeInRight">
-              <AutoPlanner />
+          <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showAuto || !onlyOneOpen ? 'block' : 'none' }}>
+            <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showAuto && onlyOneOpen ? ' full-width' : ''}`}>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <h2 className="h5 fw-bold mb-0">Tạo lộ trình tự động</h2>
+                <button className="btn btn-link p-0" onClick={() => { setShowAuto(v => !v); if (!showAuto) setShowManual(false); }} aria-label="Toggle Auto Planner">
+                  <i className={`bi ${showAuto ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
+                </button>
+              </div>
+              <p className="text-center text-muted mb-3">Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ <b>tự động</b> để chúng tôi đề xuất tour cho bạn!</p>
+              {showAuto && <AutoPlanner />}
             </div>
           </div>
         </div>
         <section className="mb-6">
-          <h2 className="h4 mb-3 fw-bold luxury-section-title">Bản đồ địa điểm</h2>
-          <div className="card shadow-lg border-0 rounded-4">
+          <h2 className="h4 mb-3 fw-bold luxury-section-title">
+            Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!{' '}
+            <a href="#map-section" className="arrow-link ms-2" style={{textDecoration: 'none'}}>
+              <i className="bi bi-arrow-right" style={{fontSize: 24, verticalAlign: 'middle'}}></i>
+            </a>
+          </h2>
+          <div id="map-section" className="card shadow-lg border-0 rounded-4">
             <div className="card-body p-4" style={{ height: "24rem" }}>
               <ErrorBoundary>
                 <Map
@@ -86,7 +106,9 @@ function HomePage() {
         ) : (
           <>
             <section className="cards-section mb-6">
-              <h2 className="h4 mb-4 fw-bold luxury-section-title">Điểm đến nổi bật</h2>
+              <h2 className="h4 mb-4 fw-bold luxury-section-title">
+                Điểm đến nổi bật
+              </h2>
               <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5">
                 {places.map((p) => (
                   <div className="col" key={p.id}>
@@ -99,17 +121,28 @@ function HomePage() {
                           src={p.image_url || "/default-place.jpg"}
                           alt={p.name}
                           className="card-img-top luxury-img-top"
-                          style={{height: 220, objectFit: 'cover', borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem'}}
+                          style={{
+                            height: 220,
+                            objectFit: "cover",
+                            borderTopLeftRadius: "1.5rem",
+                            borderTopRightRadius: "1.5rem",
+                          }}
                         />
                         <div className="card-body luxury-card-body">
-                          <h3 className="card-title text-primary mb-2" style={{fontWeight: 600}}>{p.name}</h3>
+                          <h3
+                            className="card-title text-primary mb-2"
+                            style={{ fontWeight: 600 }}
+                          >
+                            {p.name}
+                          </h3>
                           <p className="card-text text-muted mb-2 luxury-desc">
                             {p.description
                               ? `${p.description.substring(0, 100)}...`
                               : "Chưa có mô tả"}
                           </p>
                           <p className="card-text text-muted small mb-0 luxury-rating">
-                            <span className="luxury-star">★</span> {p.rating.toFixed(1)}/5
+                            <span className="luxury-star">★</span>{" "}
+                            {p.rating.toFixed(1)}/5
                           </p>
                         </div>
                       </Link>
@@ -120,7 +153,9 @@ function HomePage() {
             </section>
             <hr className="my-5 luxury-divider" />
             <section className="cards-section mb-6">
-              <h2 className="h4 mb-4 fw-bold luxury-section-title">Chuyến đi & Lịch trình</h2>
+              <h2 className="h4 mb-4 fw-bold luxury-section-title">
+                Chuyến đi & Lịch trình
+              </h2>
               <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5">
                 {tours.length === 0 ? (
                   <p className="text-muted">Không có tour nào để hiển thị.</p>
@@ -133,14 +168,20 @@ function HomePage() {
                           className="text-decoration-none"
                         >
                           <div className="card-body luxury-card-body">
-                            <h3 className="card-title text-primary mb-2" style={{fontWeight: 600}}>{t.name}</h3>
+                            <h3
+                              className="card-title text-primary mb-2"
+                              style={{ fontWeight: 600 }}
+                            >
+                              {t.name}
+                            </h3>
                             <p className="card-text text-muted mb-2 luxury-desc">
                               {t.description
                                 ? `${t.description.substring(0, 100)}...`
                                 : "Chưa có mô tả"}
                             </p>
                             <p className="card-text text-muted small mb-0 luxury-rating">
-                              <span className="luxury-money">💰</span> {t.total_cost} VND
+                              <span className="luxury-money">💰</span> {t.total_cost}{" "}
+                              VND
                             </p>
                           </div>
                         </Link>
@@ -152,7 +193,9 @@ function HomePage() {
             </section>
             <hr className="my-5 luxury-divider" />
             <section className="cards-section mb-6">
-              <h2 className="h4 mb-4 fw-bold luxury-section-title">Bài viết mới nhất</h2>
+              <h2 className="h4 mb-4 fw-bold luxury-section-title">
+                Bài viết mới nhất
+              </h2>
               <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5">
                 {articles.length === 0 ? (
                   <p className="text-muted">Không có bài viết nào để hiển thị.</p>
@@ -173,13 +216,23 @@ function HomePage() {
                               }
                               alt="Ảnh"
                               className="card-img-top luxury-img-top"
-                              style={{height: 220, objectFit: 'cover', borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem'}}
+                              style={{
+                                height: 220,
+                                objectFit: "cover",
+                                borderTopLeftRadius: "1.5rem",
+                                borderTopRightRadius: "1.5rem",
+                              }}
                             />
                           ) : (
                             ""
                           )}
                           <div className="card-body luxury-card-body">
-                            <h3 className="card-title text-primary mb-2" style={{fontWeight: 600}}>{a.title}</h3>
+                            <h3
+                              className="card-title text-primary mb-2"
+                              style={{ fontWeight: 600 }}
+                            >
+                              {a.title}
+                            </h3>
                             <p className="card-text text-muted mb-2 luxury-desc">
                               {a.content
                                 ? `${a.content.substring(0, 100)}...`

@@ -123,10 +123,10 @@ function ManualPlanner() {
           </div>
         </div>
       ))}
-      <button className="btn btn-outline-primary me-2" onClick={handleAddStep}>
+      <button className="btn btn-main me-5" onClick={handleAddStep}>
         + Thêm địa điểm
       </button>
-      <button className="btn btn-success" onClick={handleSubmit}>
+      <button className="btn btn-main" onClick={handleSubmit}>
         Tạo tour
       </button>
     </div>
