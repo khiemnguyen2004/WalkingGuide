@@ -48,57 +48,59 @@ function HomePage() {
     <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
       <Header />
       <Navbar activePage="home" />
-      <main className="container px-4 py-5 flex-grow-1">
-        <div className={`row mb-5 g-4 luxury-planner-row${onlyOneOpen ? ' justify-content-center' : ''}`}> 
-          <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showManual || !onlyOneOpen ? 'block' : 'none' }}>
-            <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showManual && onlyOneOpen ? ' full-width' : ''}`}>
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <h2 className="h5 fw-bold mb-0">Tự tạo lộ trình</h2>
-                <button className="btn btn-link p-0" onClick={() => { setShowManual(v => !v); if (!showManual) setShowAuto(false); }} aria-label="Toggle Manual Planner">
-                  <i className={`bi ${showManual ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
-                </button>
+      <main className="container px-4 py-4 flex-grow-1">
+        <div className="bg-planner-map">
+          <div className={`row mb-5 g-4 luxury-planner-row${onlyOneOpen ? ' justify-content-center' : ''}`}> 
+            <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showManual || !onlyOneOpen ? 'block' : 'none' }}>
+              <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showManual && onlyOneOpen ? ' full-width' : ''}`}>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h2 className="h5 fw-bold mb-0">Tự tạo lộ trình</h2>
+                  <button className="btn btn-link p-0" onClick={() => { setShowManual(v => !v); if (!showManual) setShowAuto(false); }} aria-label="Toggle Manual Planner">
+                    <i className={`bi ${showManual ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
+                  </button>
+                </div>
+                <p className="text-center text-muted mb-3">Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ <b>thủ công</b> để tự tạo tour theo ý thích của mình.</p>
+                {showManual && <ManualPlanner />}
               </div>
-              <p className="text-center text-muted mb-3">Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ <b>thủ công</b> để tự tạo tour theo ý thích của mình.</p>
-              {showManual && <ManualPlanner />}
+            </div>
+            <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showAuto || !onlyOneOpen ? 'block' : 'none' }}>
+              <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showAuto && onlyOneOpen ? ' full-width' : ''}`}>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h2 className="h5 fw-bold mb-0">Tạo lộ trình tự động</h2>
+                  <button className="btn btn-link p-0" onClick={() => { setShowAuto(v => !v); if (!showAuto) setShowManual(false); }} aria-label="Toggle Auto Planner">
+                    <i className={`bi ${showAuto ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
+                  </button>
+                </div>
+                <p className="text-center text-muted mb-3">Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ <b>tự động</b> để chúng tôi đề xuất tour cho bạn!</p>
+                {showAuto && <AutoPlanner />}
+              </div>
             </div>
           </div>
-          <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showAuto || !onlyOneOpen ? 'block' : 'none' }}>
-            <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showAuto && onlyOneOpen ? ' full-width' : ''}`}>
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <h2 className="h5 fw-bold mb-0">Tạo lộ trình tự động</h2>
-                <button className="btn btn-link p-0" onClick={() => { setShowAuto(v => !v); if (!showAuto) setShowManual(false); }} aria-label="Toggle Auto Planner">
-                  <i className={`bi ${showAuto ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
-                </button>
+          <section className="mb-6">
+            <h2 className="h4 mb-3 fw-bold luxury-section-title">
+              Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!{' '}
+              <a href="#map-section" className="arrow-link ms-2" style={{textDecoration: 'none'}}>
+                <i className="bi bi-arrow-right" style={{fontSize: 24, verticalAlign: 'middle'}}></i>
+              </a>
+            </h2>
+            <div id="map-section" className="card shadow-lg border-0 rounded-4">
+              <div className="card-body" style={{ height: "24rem" }}>
+                <ErrorBoundary>
+                  <Map
+                    locations={places.map((p) => ({
+                      id: p.id,
+                      name: p.name,
+                      lat: p.latitude,
+                      lng: p.longitude,
+                    }))}
+                    className="w-100 h-100"
+                  />
+                </ErrorBoundary>
               </div>
-              <p className="text-center text-muted mb-3">Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ <b>tự động</b> để chúng tôi đề xuất tour cho bạn!</p>
-              {showAuto && <AutoPlanner />}
             </div>
-          </div>
+          </section>
         </div>
-        <section className="mb-6">
-          <h2 className="h4 mb-3 fw-bold luxury-section-title">
-            Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!{' '}
-            <a href="#map-section" className="arrow-link ms-2" style={{textDecoration: 'none'}}>
-              <i className="bi bi-arrow-right" style={{fontSize: 24, verticalAlign: 'middle'}}></i>
-            </a>
-          </h2>
-          <div id="map-section" className="card shadow-lg border-0 rounded-4">
-            <div className="card-body p-4" style={{ height: "24rem" }}>
-              <ErrorBoundary>
-                <Map
-                  locations={places.map((p) => ({
-                    id: p.id,
-                    name: p.name,
-                    lat: p.latitude,
-                    lng: p.longitude,
-                  }))}
-                  className="w-100 h-100"
-                />
-              </ErrorBoundary>
-            </div>
-          </div>
-        </section>
-        <hr className="my-5 luxury-divider" />
+        {/* <hr className="my-5 luxury-divider" /> */}
         {loading ? (
           <p className="text-muted text-center">Đang tải dữ liệu...</p>
         ) : error ? (

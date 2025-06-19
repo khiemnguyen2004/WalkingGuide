@@ -13,7 +13,7 @@ function Header() {
   };
 
   return (
-    <header className="luxury-navbar luxury-header navbar navbar-expand-lg" style={{borderBottomLeftRadius: '1.5rem', borderBottomRightRadius: '1.5rem', marginBottom: 0}}>
+    <header className="luxury-navbar luxury-header navbar navbar-expand-lg" style={{marginBottom: 0}}>
       <div className="container d-flex align-items-center justify-content-between">
         <div className="d-flex align-items-center">
           <img src="/src/images/banner.png" alt="Walking Guide Banner" style={{ height: 100, marginRight: 28, borderRadius: 12 }} />

@@ -29,13 +29,13 @@ function Map({ locations = [], className }) {
   }
 
   return (
-    <div className={className} style={{ height: "24rem", width: "100%", background: "#e9ecef" }}>
+    <div className={className} style={{ height: "24rem", width: "100%", background: "#e9ecef", borderRadius: "1.5rem", overflow: "hidden" }}>
       {validLocations.length === 0 ? (
         <div className="text-center text-muted h-100 d-flex align-items-center justify-content-center">
           Không có địa điểm hợp lệ để hiển thị
         </div>
       ) : (
-        <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
+        <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%", borderRadius: "1.5rem" }}>
           <TileLayer
             attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
