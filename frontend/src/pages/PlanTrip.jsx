@@ -1,7 +1,7 @@
 // PlanTrip.jsx
 import React, { useState } from "react";
 import ManualPlanner from "../components/ManualPlanner";
-import AIPlanner from "./AIPlanner";
+import AIPlanner from "../components/AutoPlanner";
 
 function PlanTrip() {
   const [mode, setMode] = useState("manual");

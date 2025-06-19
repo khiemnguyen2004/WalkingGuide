@@ -9,6 +9,7 @@ const articleRoutes = require("./routes/articleRoutes");
 const tourRoutes = require("./routes/tourRoutes");
 const authRoutes = require("./routes/authRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 
 const cors = require("cors");
@@ -25,6 +26,7 @@ AppDataSource.initialize()
     app.use("/api/tours", tourRoutes);
     app.use("/api/auth", authRoutes);
     app.use("/api/upload", uploadRoutes);
+    app.use("/api/ai", aiRoutes);
     app.use("/uploads", express.static("uploads"));
     app.listen(3000, () => console.log("Server is running on port 3000"));
   })

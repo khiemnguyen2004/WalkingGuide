@@ -14,6 +14,7 @@ import ToursAdmin from "./pages/admin/ToursAdmin";
 import { PrivateRoute, AdminRoute } from "./components/ProtectedRoute";
 import ManualPlanner from "./components/ManualPlanner";
 import TourList from "./components/TourList";
+import AutoPlanner from "./components/AutoPlanner";
 
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         <Route path="/admin/tours" element={<AdminRoute><ToursAdmin /></AdminRoute>} />
         <Route path="/admin/manual-planner" element={<AdminRoute><ManualPlanner /></AdminRoute>} />
         <Route path="/my-tours" element={<PrivateRoute><TourList /></PrivateRoute>} />
+        <Route path="/ai/generate-tour" element={<PrivateRoute><AutoPlanner /></PrivateRoute>} />
       </Routes>
     </Router>
   );
