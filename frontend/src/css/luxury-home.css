@@ -166,3 +166,100 @@
     margin-bottom: 2rem;
   }
 }
+
+.luxury-header {
+  background: linear-gradient(90deg, #5b9df9 0%, #b6e0fe 100%);
+  color: #fff;
+  box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.10);
+  border-bottom-left-radius: 1.5rem;
+  border-bottom-right-radius: 1.5rem;
+  padding: 1.2rem 0 1.2rem 0;
+  letter-spacing: 1.5px;
+  font-size: 1.7rem;
+  font-weight: 700;
+  text-align: center;
+  animation: fadeInBg 1.2s;
+}
+
+.luxury-navbar {
+  background: linear-gradient(90deg, #e3f0ff 0%, #b6e0fe 60%, #5b9df9 100%);
+  box-shadow: 0 2px 12px 0 rgba(31, 38, 135, 0.08);
+  border-radius: 0 0 1.2rem 1.2rem;
+  padding: 0.7rem 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  animation: fadeInBg 1.2s;
+}
+
+.luxury-navbar a, .luxury-navbar .nav-link {
+  color: #223a5f !important;
+  margin: 0 1.1rem;
+  transition: color 0.3s, text-shadow 0.3s;
+}
+
+.luxury-navbar a:hover, .luxury-navbar .nav-link:hover {
+  color: #3498db !important;
+  text-shadow: 0 2px 8px #b6e0fe88;
+  text-decoration: underline;
+}
+
+.luxury-footer {
+  background: linear-gradient(90deg, #5b9df9 0%, #b6e0fe 100%);
+  color: #fff;
+  box-shadow: 0 -2px 16px 0 rgba(31, 38, 135, 0.10);
+  border-top-left-radius: 1.5rem;
+  border-top-right-radius: 1.5rem;
+  padding: 1.2rem 0 1.2rem 0;
+  text-align: center;
+  font-size: 1.1rem;
+  letter-spacing: 1.2px;
+  font-weight: 500;
+  margin-top: 2rem;
+  animation: fadeInBg 1.2s;
+}
+
+.herosection {
+  background: linear-gradient(120deg, #b6e0fe 0%, #5b9df9 100%);
+  border-radius: 2rem;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.13);
+  padding: 3.5rem 2rem 2.5rem 2rem;
+  margin-bottom: 3rem;
+  color: #223a5f;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInBg 1.2s;
+}
+
+.herosection h1, .herosection .display-4 {
+  color: #1a2a47;
+  font-size: 3.8rem;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  margin-bottom: 1.2rem;
+  text-shadow: 0 4px 24px #b6e0fe55;
+  animation: slideInLeft 0.8s;
+}
+
+.herosection p.lead {
+  color: #2266bb;
+  font-size: 1.55rem;
+  font-style: italic;
+  font-weight: 500;
+  margin-bottom: 0;
+  animation: fadeInCard 1.1s;
+}
+
+@media (max-width: 767px) {
+  .herosection {
+    padding: 2rem 0.5rem 1.5rem 0.5rem;
+    border-radius: 1.2rem;
+  }
+  .herosection h1, .herosection .display-4 {
+    font-size: 2.3rem;
+  }
+  .herosection p.lead {
+    font-size: 1.1rem;
+  }
+}

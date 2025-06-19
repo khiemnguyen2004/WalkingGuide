@@ -44,7 +44,7 @@ function HomePage() {
       <Header />
       <Navbar activePage="home" />
       <main className="container px-4 py-5 flex-grow-1">
-        <div className="mb-8">
+        <div className="mb-8 herosection text-center">
           <h1 className="display-4 fw-bold text-center mb-2 text-dark" style={{letterSpacing: 1}}>WALKING GUIDE</h1>
           <p className="lead text-center text-secondary mb-5">Khám phá, trải nghiệm, và tận hưởng những hành trình tuyệt vời nhất.</p>
         </div>
