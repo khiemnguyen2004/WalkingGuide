@@ -10,6 +10,15 @@ const AutoPlanner = () => {
   const [error, setError] = useState("");
   const { user } = useContext(AuthContext);
 
+  if (!user) {
+    return (
+      <div className="container py-4">
+        <h2>Tạo lộ trình tự động bằng AI</h2>
+        <div className="alert alert-warning mt-3">Bạn cần đăng nhập để sử dụng chức năng này.</div>
+      </div>
+    );
+  }
+
   const generateTour = async () => {
     if (!user?.id || isNaN(Number(user.id)) || !days || isNaN(days) || parseInt(days) < 1) {
       setError("Vui lòng nhập đầy đủ thông tin!");
@@ -102,35 +111,22 @@ const AutoPlanner = () => {
       {error && <p className="text-red-500 mt-3">{error}</p>}
       {tourData && (
         <div className="mt-6">
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 className="text-2xl font-bold text-blue-700 mb-2">{tourData.tour.name}</h3>
-            <p className="text-gray-700 mb-4 text-lg">{tourData.tour.description}</p>
-            <div className="flex flex-wrap gap-4 mb-4">
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">Tổng chi phí: {tourData.tour.total_cost || 0} VND</span>
-              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Số ngày: {days}</span>
-              {interests && (
-                <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">Sở thích: {interests}</span>
-              )}
-            </div>
-          </div>
-          <h4 className="text-lg font-bold mb-3 text-gray-800">Lộ trình các địa điểm:</h4>
-          <ol className="space-y-4">
+          <h3 className="text-xl font-semibold mb-2">Tour: {tourData.tour.name}</h3>
+          <p className="text-gray-700 mb-4">{tourData.tour.description}</p>
+          <h4 className="text-lg font-bold mb-2">Các địa điểm:</h4>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {tourData.steps.map((step, index) => {
               const place = step.place;
               return (
-                <li key={index} className="bg-gray-50 rounded-lg p-4 flex items-center gap-4 shadow-sm">
-                  <span className="font-bold text-xl text-blue-600 mr-2">{index + 1}.</span>
-                  <img src={place.image_url} alt={place.name} className="w-24 h-24 object-cover rounded mr-4 border" />
-                  <div className="flex-1">
-                    <h5 className="text-lg font-semibold mb-1 text-blue-900">{place.name}</h5>
-                    <p className="text-gray-600 text-sm mb-1">Đánh giá: {place.rating}</p>
-                    <p className="text-sm text-gray-700 mb-1">{place.description?.slice(0, 120)}...</p>
-                    <span className="inline-block bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs mt-1">Thời gian ở lại: {step.stay_duration} phút</span>
-                  </div>
-                </li>
+                <div key={index} className="border p-3 rounded shadow">
+                  <img src={place.image_url} alt={place.name} className="w-full h-40 object-cover rounded mb-2" />
+                  <h5 className="text-lg font-semibold">{place.name}</h5>
+                  <p className="text-gray-600 text-sm mb-1">Đánh giá: {place.rating}</p>
+                  <p className="text-sm">{place.description?.slice(0, 100)}...</p>
+                </div>
               );
             })}
-          </ol>
+          </div>
         </div>
       )}
     </div>

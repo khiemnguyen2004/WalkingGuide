@@ -15,7 +15,9 @@ import { PrivateRoute, AdminRoute } from "./components/ProtectedRoute";
 import ManualPlanner from "./components/ManualPlanner";
 import TourList from "./components/TourList";
 import AutoPlanner from "./components/AutoPlanner";
-
+import ArticleDetail from './pages/details/ArticleDetail';
+import PlaceDetail from './pages/details/PlaceDetail';
+import TourDetail from './pages/details/TourDetail';
 
 function App() {
   return (
@@ -36,6 +38,9 @@ function App() {
         <Route path="/admin/manual-planner" element={<AdminRoute><ManualPlanner /></AdminRoute>} />
         <Route path="/my-tours" element={<PrivateRoute><TourList /></PrivateRoute>} />
         <Route path="/ai/generate-tour" element={<PrivateRoute><AutoPlanner /></PrivateRoute>} />
+        <Route path="/articles/:id" element={<ArticleDetail />} />
+        <Route path="/places/:id" element={<PlaceDetail />} />
+        <Route path="/tours/:id" element={<TourDetail />} />
       </Routes>
     </Router>
   );

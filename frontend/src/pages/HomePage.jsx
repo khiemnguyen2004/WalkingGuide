@@ -9,6 +9,7 @@ import Map from "../components/Map.jsx";
 import ManualPlanner from "../components/ManualPlanner.jsx";
 import AutoPlanner from "../components/AutoPlanner.jsx";
 import "../css/HomePage.css";
+import "../css/luxury-home.css";
 
 function HomePage() {
   const [places, setPlaces] = useState([]);
@@ -26,12 +27,10 @@ function HomePage() {
           axios.get("http://localhost:3000/api/tours"),
           axios.get("http://localhost:3000/api/articles"),
         ]);
-        console.log("Places:", placesRes.data);
         setPlaces(placesRes.data);
         setTours(toursRes.data);
         setArticles(articlesRes.data);
       } catch (err) {
-        console.error("Error:", err);
         setError("Không thể tải dữ liệu. Vui lòng thử lại.");
       } finally {
         setLoading(false);
@@ -41,15 +40,29 @@ function HomePage() {
   }, []);
 
   return (
-    <div className="min-vh-100 d-flex flex-column bg-light home-container">
+    <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
       <Header />
       <Navbar activePage="home" />
       <main className="container px-4 py-5 flex-grow-1">
-        <ManualPlanner />
-        <AutoPlanner />
-        <section className="mb-5">
-          <h2 className="h4 mb-3 fw-bold">Bản đồ địa điểm</h2>
-          <div className="card">
+        <div className="mb-8">
+          <h1 className="display-4 fw-bold text-center mb-2 text-dark" style={{letterSpacing: 1}}>WALKING GUIDE</h1>
+          <p className="lead text-center text-secondary mb-5">Khám phá, trải nghiệm, và tận hưởng những hành trình tuyệt vời nhất.</p>
+        </div>
+        <div className="row mb-5 g-4 luxury-planner-row">
+          <div className="col-12 col-lg-6">
+            <div className="luxury-card luxury-planner-card p-4 mb-4 animate__animated animate__fadeInLeft">
+              <ManualPlanner />
+            </div>
+          </div>
+          <div className="col-12 col-lg-6">
+            <div className="luxury-card luxury-planner-card p-4 mb-4 animate__animated animate__fadeInRight">
+              <AutoPlanner />
+            </div>
+          </div>
+        </div>
+        <section className="mb-6">
+          <h2 className="h4 mb-3 fw-bold luxury-section-title">Bản đồ địa điểm</h2>
+          <div className="card shadow-lg border-0 rounded-4">
             <div className="card-body p-4" style={{ height: "24rem" }}>
               <ErrorBoundary>
                 <Map
@@ -65,19 +78,19 @@ function HomePage() {
             </div>
           </div>
         </section>
-        <section className="mb-5"></section>
+        <hr className="my-5 luxury-divider" />
         {loading ? (
           <p className="text-muted text-center">Đang tải dữ liệu...</p>
         ) : error ? (
           <p className="text-danger text-center">{error}</p>
         ) : (
           <>
-            <section className="cards-section mb-5">
-              <h2 className="h4 mb-3 fw-bold">Điểm đến nổi bật</h2>
-              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <section className="cards-section mb-6">
+              <h2 className="h4 mb-4 fw-bold luxury-section-title">Điểm đến nổi bật</h2>
+              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5">
                 {places.map((p) => (
                   <div className="col" key={p.id}>
-                    <div className="card h-100">
+                    <div className="card h-100 shadow border-0 rounded-4 luxury-card">
                       <Link
                         to={`/places/${p.id}`}
                         className="text-decoration-none"
@@ -85,17 +98,18 @@ function HomePage() {
                         <img
                           src={p.image_url || "/default-place.jpg"}
                           alt={p.name}
-                          className="card-img-top"
+                          className="card-img-top luxury-img-top"
+                          style={{height: 220, objectFit: 'cover', borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem'}}
                         />
-                        <div className="card-body">
-                          <h3 className="card-title text-primary">{p.name}</h3>
-                          <p className="card-text text-muted">
+                        <div className="card-body luxury-card-body">
+                          <h3 className="card-title text-primary mb-2" style={{fontWeight: 600}}>{p.name}</h3>
+                          <p className="card-text text-muted mb-2 luxury-desc">
                             {p.description
                               ? `${p.description.substring(0, 100)}...`
                               : "Chưa có mô tả"}
                           </p>
-                          <p className="card-text text-muted small">
-                            Đánh giá: {p.rating.toFixed(1)}/5
+                          <p className="card-text text-muted small mb-0 luxury-rating">
+                            <span className="luxury-star">★</span> {p.rating.toFixed(1)}/5
                           </p>
                         </div>
                       </Link>
@@ -104,49 +118,48 @@ function HomePage() {
                 ))}
               </div>
             </section>
-            <section className="cards-section mb-5">
-              <h2 className="h4 mb-3 fw-bold">Chuyến đi & Lịch trình</h2>
-              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                {tours.filter((t) => t.user_id === 4).length === 0 ? (
+            <hr className="my-5 luxury-divider" />
+            <section className="cards-section mb-6">
+              <h2 className="h4 mb-4 fw-bold luxury-section-title">Chuyến đi & Lịch trình</h2>
+              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5">
+                {tours.length === 0 ? (
                   <p className="text-muted">Không có tour nào để hiển thị.</p>
                 ) : (
-                  tours
-                    .filter((t) => t.user_id === 4)
-                    .map((t) => (
-                      <div className="col" key={t.id}>
-                        <div className="card h-100">
-                          <Link
-                            to={`/tours/${t.id}`}
-                            className="text-decoration-none"
-                          >
-                            <div className="card-body card-info">
-                              <h3 className="card-title text-primary">{t.name}</h3>
-                              <p className="card-text text-muted">
-                                {t.description
-                                  ? `${t.description.substring(0, 100)}...`
-                                  : "Chưa có mô tả"}
-                              </p>
-                              <p className="card-text text-muted small">
-                                Chi phí: {t.total_cost} USD
-                              </p>
-                            </div>
-                          </Link>
-                        </div>
+                  tours.map((t) => (
+                    <div className="col" key={t.id}>
+                      <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                        <Link
+                          to={`/tours/${t.id}`}
+                          className="text-decoration-none"
+                        >
+                          <div className="card-body luxury-card-body">
+                            <h3 className="card-title text-primary mb-2" style={{fontWeight: 600}}>{t.name}</h3>
+                            <p className="card-text text-muted mb-2 luxury-desc">
+                              {t.description
+                                ? `${t.description.substring(0, 100)}...`
+                                : "Chưa có mô tả"}
+                            </p>
+                            <p className="card-text text-muted small mb-0 luxury-rating">
+                              <span className="luxury-money">💰</span> {t.total_cost} VND
+                            </p>
+                          </div>
+                        </Link>
                       </div>
-                    ))
+                    </div>
+                  ))
                 )}
               </div>
             </section>
-
-            <section className="cards-section mb-5">
-              <h2 className="h4 mb-3 fw-bold">Bài viết mới nhất</h2>
-              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <hr className="my-5 luxury-divider" />
+            <section className="cards-section mb-6">
+              <h2 className="h4 mb-4 fw-bold luxury-section-title">Bài viết mới nhất</h2>
+              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5">
                 {articles.length === 0 ? (
                   <p className="text-muted">Không có bài viết nào để hiển thị.</p>
                 ) : (
                   articles.map((a) => (
                     <div className="col" key={a.article_id}>
-                      <div className="card h-100">
+                      <div className="card h-100 shadow border-0 rounded-4 luxury-card">
                         <Link
                           to={`/articles/${a.article_id}`}
                           className="text-decoration-none"
@@ -159,14 +172,15 @@ function HomePage() {
                                   : `http://localhost:3000${a.image_url}`
                               }
                               alt="Ảnh"
-                              className="card-img-top"
+                              className="card-img-top luxury-img-top"
+                              style={{height: 220, objectFit: 'cover', borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem'}}
                             />
                           ) : (
                             ""
                           )}
-                          <div className="card-body card-info">
-                            <h3 className="card-title text-primary">{a.title}</h3>
-                            <p className="card-text text-muted">
+                          <div className="card-body luxury-card-body">
+                            <h3 className="card-title text-primary mb-2" style={{fontWeight: 600}}>{a.title}</h3>
+                            <p className="card-text text-muted mb-2 luxury-desc">
                               {a.content
                                 ? `${a.content.substring(0, 100)}...`
                                 : "Chưa có nội dung"}

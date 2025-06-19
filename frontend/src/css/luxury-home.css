@@ -1,0 +1,168 @@
+:root {
+  --luxury-gradient: linear-gradient(135deg, #f8fafc 0%, #b6e0fe 50%, #5b9df9 100%);
+  --luxury-card-gradient: linear-gradient(120deg, #b6e0fe 0%, #5b9df9 100%);
+  --luxury-title: #3c69b0;
+  --luxury-accent: #3498db;
+  --luxury-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+.luxury-home-container {
+  background: var(--luxury-gradient);
+  min-height: 100vh;
+  animation: fadeInBg 1.2s ease;
+}
+
+@keyframes fadeInBg {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.luxury-section-title {
+  color: var(--luxury-title);
+  letter-spacing: 1.5px;
+  font-size: 2rem;
+  border-left: 6px solid var(--luxury-accent);
+  padding-left: 0.75rem;
+  background: linear-gradient(90deg, #fff 80%, #b6e0fe22 100%);
+  border-radius: 0 1rem 1rem 0;
+  margin-bottom: 1.5rem;
+  animation: slideInLeft 0.8s;
+  padding: 10px;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.luxury-card {
+  background: var(--luxury-card-gradient);
+  box-shadow: var(--luxury-shadow);
+  border-radius: 1.5rem;
+  transition: transform 0.3s cubic-bezier(.4,2,.6,1), box-shadow 0.3s;
+  animation: fadeInCard 0.7s;
+}
+
+.luxury-card:hover {
+  transform: translateY(-8px) scale(1.03) rotate(-1deg);
+  box-shadow: 0 16px 40px 0 rgba(31, 38, 135, 0.18);
+}
+
+@keyframes fadeInCard {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.luxury-img-top {
+  border-top-left-radius: 1.5rem;
+  border-top-right-radius: 1.5rem;
+  transition: filter 0.4s;
+}
+
+.luxury-card:hover .luxury-img-top {
+  filter: brightness(1.08) saturate(1.2) drop-shadow(0 2px 8px #3498db44);
+}
+
+.luxury-card-body {
+  background: rgba(255,255,255,0.85);
+  border-radius: 0 0 1.5rem 1.5rem;
+  padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+  min-height: 160px;
+  transition: background 0.3s;
+  color: #223a5f;
+}
+
+.luxury-card:hover .luxury-card-body {
+  background: rgba(255,255,255,0.97);
+}
+
+.luxury-card .card-title {
+  transition: color 0.3s;
+}
+
+.luxury-card .card-title:hover, .luxury-card:hover .card-title, .luxury-card .card-text:hover {
+  color: #3498db;
+  cursor: pointer;
+}
+
+.luxury-card .text-decoration-none:hover {
+  text-decoration: underline;
+}
+
+.luxury-divider {
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, #3498db 0%, #b6e0fe 100%);
+  margin: 2.5rem 0;
+  opacity: 0.7;
+  border-radius: 1rem;
+  animation: fadeInDivider 1s;
+}
+
+@keyframes fadeInDivider {
+  from { width: 0; opacity: 0; }
+  to { width: 100%; opacity: 0.7; }
+}
+
+.luxury-star {
+  color: #5b9df9;
+  font-size: 1.1em;
+  margin-right: 2px;
+  animation: starPulse 1.2s infinite alternate;
+}
+
+@keyframes starPulse {
+  from { filter: brightness(0.8); }
+  to { filter: brightness(1.2); }
+}
+
+.luxury-money {
+  color: #3498db;
+  font-size: 1.1em;
+  margin-right: 2px;
+  animation: moneyPulse 1.2s infinite alternate;
+}
+
+@keyframes moneyPulse {
+  from { filter: brightness(0.8); }
+  to { filter: brightness(1.2); }
+}
+
+.luxury-desc {
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: #4b4b4b;
+  margin-bottom: 0.5rem;
+}
+
+.luxury-rating {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.luxury-planner-row {
+  margin-bottom: 3rem;
+}
+
+.luxury-planner-card {
+  background: linear-gradient(120deg, #e3f0ff 0%, #b6e0fe 60%, #5b9df9 100%);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.13);
+  border-radius: 1.5rem;
+  transition: box-shadow 0.3s, transform 0.3s;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  animation: fadeInCard 0.7s;
+}
+
+.luxury-planner-card:hover {
+  box-shadow: 0 16px 40px 0 rgba(31, 38, 135, 0.18);
+  transform: translateY(-6px) scale(1.02);
+}
+
+@media (max-width: 991px) {
+  .luxury-planner-card {
+    min-height: 0;
+    margin-bottom: 2rem;
+  }
+}

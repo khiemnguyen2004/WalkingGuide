@@ -107,4 +107,18 @@ module.exports = {
       res.status(500).json({ error: "Lỗi server" });
     }
   },
+
+  getById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tour = await tourRepo.findOneBy({ id: parseInt(id) });
+      if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
+      // Fetch steps for this tour
+      const steps = await tourStepRepo.find({ where: { tour_id: tour.id } });
+      res.json({ ...tour, steps });
+    } catch (err) {
+      console.error("Lỗi khi lấy chi tiết tour:", err);
+      res.status(500).json({ error: "Lỗi server khi lấy chi tiết tour" });
+    }
+  },
 };
