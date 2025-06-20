@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Header from '../../components/Header.jsx';
+import Navbar from '../../components/Navbar.jsx';
+import Footer from '../../components/Footer.jsx';
 
 const PlaceDetail = () => {
   const [place, setPlace] = useState(null);
@@ -47,28 +50,43 @@ const PlaceDetail = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-4 text-gray-800">{place.name}</h1>
-      {place.image_url && (
-        <img
-          src={place.image_url}
-          alt={place.name}
-          className="w-full h-64 object-cover rounded-lg mb-4"
-        />
-      )}
-      <div className="text-gray-600 mb-4">
-        <p>Địa chỉ: {place.address}</p>
-        <p>Đánh giá: {place.rating}</p>
-      </div>
-      <div className="prose prose-lg">
-        <p>{place.description}</p>
-      </div>
-      <button
-        onClick={() => navigate(-1)}
-        className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-      >
-        Quay lại
-      </button>
+    <div className="min-vh-100 d-flex flex-column luxury-home-container">
+      <Header />
+      <Navbar />
+      <main className="flex-grow-1">
+        <div className="container mx-auto p-4 max-w-3xl">
+          <div style={{ background: 'rgba(245, 250, 255, 0.95)', borderRadius: '1.5rem', boxShadow: '0 4px 24px 0 rgba(31, 38, 135, 0.10)', padding: '2.5rem 2rem', margin: '2rem 0' }}>
+            <h1 className="text-3xl font-bold mb-4 text-gray-800 text-center">{place.name}</h1>
+            {place.image_url && (
+              <div className="d-flex justify-content-center mb-4">
+                <img
+                  src={place.image_url}
+                  alt={place.name}
+                  style={{ maxWidth: '420px', maxHeight: '260px', width: '100%', objectFit: 'cover', borderRadius: '1rem', boxShadow: '0 2px 12px #b6e0fe55' }}
+                />
+              </div>
+            )}
+            <div className="text-gray-600 mb-4 d-flex flex-wrap gap-4 justify-content-center" style={{ fontSize: '1.05rem' }}>
+              <span>Địa chỉ: <b>{place.address}</b></span>
+              <span>Đánh giá: <b>{place.rating}</b></span>
+              {place.created_at && <span>Ngày thêm: {new Date(place.created_at).toLocaleDateString()}</span>}
+            </div>
+            <div className="prose prose-lg mb-4" style={{ color: '#223a5f', fontSize: '1.15rem', lineHeight: 1.7 }}>
+              <p>{place.description}</p>
+            </div>
+            <div className="d-flex justify-content-center">
+              <button
+                onClick={() => navigate(-1)}
+                className="mt-6 btn btn-main"
+                style={{ minWidth: 140 }}
+              >
+                Quay lại
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 };

@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useContext } from "react";
+import AdminHeader from "../../components/AdminHeader.jsx";
+import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
 import { AuthContext } from "../../contexts/AuthContext.jsx";
+import LexicalEditor from "../../components/LexicalEditor";
 
 function ArticlesAdmin() {
   const { user } = useContext(AuthContext);
@@ -86,71 +89,81 @@ function ArticlesAdmin() {
   };
 
   return (
-    <div className="container py-4">
-      <h2>Quản lý bài viết</h2>
+    <div className="min-vh-100 d-flex flex-row" style={{background: '#f6f8fa'}}>
+      <AdminSidebar alwaysExpanded />
+      <div className="flex-grow-1 d-flex flex-column admin-dashboard" style={{marginLeft: 220, minHeight: '100vh', padding: 0, background: '#f6f8fa'}}>
+        <AdminHeader />
+        <main className="flex-grow-1" style={{padding: 0, maxWidth: '100%', width: '100%', margin: 0}}>
+          <div className="admin-dashboard-cards-row">
+            <div className="container py-4">
+              <h2>Quản lý bài viết</h2>
 
-      <div className="mb-3">
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="form-control mb-2"
-          placeholder="Tiêu đề"
-        />
-        <input
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="form-control mb-2"
-          placeholder="Nội dung"
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={e => setImageFile(e.target.files[0])}
-          className="form-control mb-2"
-        />
-        {editId ? (
-          <>
-            <button onClick={handleUpdate} className="btn btn-warning me-2">Cập nhật</button>
-            <button onClick={() => { setEditId(null); setTitle(""); setContent(""); setImageFile(null); setEditImageUrl(""); }} className="btn btn-secondary">Hủy</button>
-          </>
-        ) : (
-          <button onClick={handleCreate} className="btn btn-success">Thêm</button>
-        )}
+              <div className="mb-3">
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="form-control mb-2"
+                  placeholder="Tiêu đề"
+                />
+                <LexicalEditor
+                  value={content}
+                  onChange={setContent}
+                  placeholder="Nội dung"
+                  className="mb-2"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={e => setImageFile(e.target.files[0])}
+                  className="form-control mb-2"
+                />
+                {editId ? (
+                  <>
+                    <button onClick={handleUpdate} className="btn admin-main-btn me-2">Cập nhật</button>
+                    <button onClick={() => { setEditId(null); setTitle(""); setContent(""); setImageFile(null); setEditImageUrl(""); }} className="btn admin-btn-secondary">Hủy</button>
+                  </>
+                ) : (
+                  <button onClick={handleCreate} className="btn admin-main-btn">Thêm</button>
+                )}
+              </div>
+
+              <table className="table table-bordered">
+                <thead>
+                  <tr>
+                    <th style={{width: 60}}>ID</th>
+                    <th style={{width: 180}}>Tiêu đề</th>
+                    <th style={{width: 220}}>Nội dung</th>
+                    <th style={{width: 100}}>Ảnh</th>
+                    <th style={{width: 100, textAlign: 'center'}}>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {articles.map((a) => (
+                    <tr key={a.article_id}>
+                      <td>{a.article_id}</td>
+                      <td>{a.title}</td>
+                      <td title={a.content}>{a.content ? a.content.length > 60 ? a.content.substring(0, 60) + "..." : a.content : ""}</td>
+                      <td>
+                        {a.image_url ? (
+                          <img
+                            src={a.image_url.startsWith('http') ? a.image_url : `http://localhost:3000${a.image_url}`}
+                            alt="Ảnh"
+                            style={{ maxWidth: 80, maxHeight: 60 }}
+                          />
+                        ) : ""}
+                      </td>
+                      <td style={{textAlign: 'center'}}>
+                        <button className="btn admin-main-btn btn-sm me-2" onClick={() => handleEdit(a)}>Sửa</button>
+                        <button className="btn admin-btn-danger btn-sm" onClick={() => handleDelete(a.article_id)}>Xóa</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
       </div>
-
-      <table className="table table-bordered">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Tiêu đề</th>
-            <th>Nội dung</th>
-            <th>Ảnh</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {articles.map((a) => (
-            <tr key={a.article_id}>
-              <td>{a.article_id}</td>
-              <td>{a.title}</td>
-              <td>{a.content ? a.content.length > 100 ? a.content.substring(0, 100) + "..." : a.content : ""}</td>
-              <td>
-                {a.image_url ? (
-                  <img
-                    src={a.image_url.startsWith('http') ? a.image_url : `http://localhost:3000${a.image_url}`}
-                    alt="Ảnh"
-                    style={{ maxWidth: 80, maxHeight: 60 }}
-                  />
-                ) : ""}
-              </td>
-              <td>
-                <button className="btn btn-primary btn-sm me-2" onClick={() => handleEdit(a)}>Sửa</button>
-                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a.article_id)}>Xóa</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

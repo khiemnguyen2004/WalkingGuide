@@ -1,102 +1,60 @@
 import React, { useContext } from "react";
-import { Link } from "react-router-dom";
+import AdminHeader from "../components/AdminHeader.jsx";
+import AdminSidebar from "../components/AdminSidebar.jsx";
 import { AuthContext } from "../contexts/AuthContext.jsx";
-import { useNavigate } from "react-router-dom";
-import Footer from "../components/Footer.jsx";
-import '../css/index.css';
-
-
-
-function Header() {
-  const { user, logout } = useContext(AuthContext);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();         
-    navigate("/login");
-  };
-  return (
-    <header className="bg-primary text-white py-3 shadow d-flex">
-      <div className="container d-flex align-items-center ms-5">
-        <i className="bi bi-shield-lock me-2 fs-3"></i>
-        <h1 className="h3 mb-0">Bảng Quản Trị</h1>
-      </div>
-      <div className="d-flex me-5 w-100 justify-content-end align-items-center">
-        {user ? (
-        <>
-            <Link to="/" className="btn btn-warning btn-sm me-2">
-            Trang chủ
-            </Link>
-            <span>Xin chào, {user.full_name}</span>
-            <button onClick={handleLogout} className="btn btn-light btn-sm ms-2">
-            Đăng xuất
-            </button>
-        </>
-        ) : (
-        <Link to="/login" className="btn btn-light btn-sm mt-2">Đăng nhập</Link>
-        )}
-      </div>
-    </header>
-  );
-}
-
-function Navbar() {
-  return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-      <div className="container">
-        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav">
-            <li className="list-group-item d-flex align-items-center gap-2">
-            <i className="bi bi-person fs-5"></i>
-            <Link to="/admin/users" className="text-decoration-none">Quản lý người dùng</Link>
-            </li>
-            <li className="list-group-item d-flex align-items-center gap-2">
-            <i className="bi bi-geo-alt fs-5"></i>
-            <Link to="/admin/places" className="text-decoration-none">Quản lý địa điểm</Link>
-            </li>
-            <li className="list-group-item d-flex align-items-center gap-2">
-            <i className="bi bi-newspaper fs-5"></i>
-            <Link to="/admin/articles" className="text-decoration-none">Quản lý bài viết</Link>
-            </li>
-            <li className="list-group-item d-flex align-items-center gap-2">
-            <i className="bi bi-map fs-5"></i>
-            <Link to="/admin/tours" className="text-decoration-none">Quản lý lộ trình</Link>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-  );
-}
+import { Link } from "react-router-dom";
+import "../css/luxury-home.css";
 
 function AdminDashboard() {
+  const { user } = useContext(AuthContext);
   return (
-    <div className="d-flex flex-column min-vh-100">
-      <Header />
-      <Navbar />
-      <main className="container py-5 flex-grow-1">
-        <p className="lead">Chào mừng bạn đến với bảng điều khiển quản trị viên.</p>
-        <div className="card shadow mt-4">
-          <ul className="list-group list-group-flush">
-            <li className="list-group-item d-flex align-items-center gap-2">
-              <i className="bi bi-person fs-5"></i> Quản lý người dùng
-            </li>
-            <li className="list-group-item d-flex align-items-center gap-2">
-              <i className="bi bi-geo-alt fs-5"></i> Quản lý địa điểm
-            </li>
-            <li className="list-group-item d-flex align-items-center gap-2">
-              <i className="bi bi-newspaper fs-5"></i> Quản lý bài viết
-            </li>
-            <li className="list-group-item d-flex align-items-center gap-2">
-              <i className="bi bi-map fs-5"></i> Quản lý lộ trình
-            </li>
-          </ul>
-        </div>
-      </main>
-      <Footer />
+    <div className="min-vh-100 d-flex flex-row" style={{background: '#f6f8fa'}}>
+      <AdminSidebar alwaysExpanded />
+      <div className="flex-grow-1 d-flex flex-column luxury-home-container admin-dashboard" style={{marginLeft: 220, minHeight: '100vh', padding: 0, background: '#f6f8fa'}}>
+        <AdminHeader />
+        <main className="flex-grow-1" style={{padding: 0, maxWidth: '100%', width: '100%', margin: 0}}>
+          <h2 className="text-center fw-bold mb-3" style={{fontSize: '2rem', color: '#1a5bb8'}}>Bảng Quản Trị</h2>
+          <p className="text-center mb-4" style={{color: '#223a5f'}}>Chào mừng, {user?.full_name || 'Admin'}!</p>
+          <div className="admin-dashboard-cards-row">
+            <div className="col">
+              <Link to="/admin/users" className="text-decoration-none">
+                <div className="card admin-dashboard-card h-100 shadow border-0 rounded-4 bg-white text-center hover-shadow">
+                  <i className="bi bi-person fs-1 mb-2 text-primary"></i>
+                  <div className="fw-bold mb-1">Quản lý người dùng</div>
+                  <div className="text-muted small">Xem, chỉnh sửa, và xóa người dùng</div>
+                </div>
+              </Link>
+            </div>
+            <div className="col">
+              <Link to="/admin/places" className="text-decoration-none">
+                <div className="card admin-dashboard-card h-100 shadow border-0 rounded-4 bg-white text-center hover-shadow">
+                  <i className="bi bi-geo-alt fs-1 mb-2 text-primary"></i>
+                  <div className="fw-bold mb-1">Quản lý địa điểm</div>
+                  <div className="text-muted small">Thêm, sửa, xóa địa điểm du lịch</div>
+                </div>
+              </Link>
+            </div>
+            <div className="col">
+              <Link to="/admin/articles" className="text-decoration-none">
+                <div className="card admin-dashboard-card h-100 shadow border-0 rounded-4 bg-white text-center hover-shadow">
+                  <i className="bi bi-newspaper fs-1 mb-2 text-primary"></i>
+                  <div className="fw-bold mb-1">Quản lý bài viết</div>
+                  <div className="text-muted small">Kiểm duyệt và quản lý bài viết</div>
+                </div>
+              </Link>
+            </div>
+            <div className="col">
+              <Link to="/admin/tours" className="text-decoration-none">
+                <div className="card admin-dashboard-card h-100 shadow border-0 rounded-4 bg-white text-center hover-shadow">
+                  <i className="bi bi-map fs-1 mb-2 text-primary"></i>
+                  <div className="fw-bold mb-1">Quản lý lộ trình</div>
+                  <div className="text-muted small">Xem, chỉnh sửa, và xóa lộ trình</div>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

@@ -49,9 +49,17 @@ const TourDetail = () => {
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <h1 className="text-3xl font-bold mb-4 text-gray-800">{tour.name}</h1>
-      <div className="text-gray-600 mb-4">
-        <p>Người tạo: {tour.user_id}</p>
-        <p>Chi phí: {tour.total_cost}</p>
+      {tour.image_url && (
+        <img
+          src={tour.image_url}
+          alt={tour.name}
+          className="w-full h-64 object-cover rounded-lg mb-4"
+        />
+      )}
+      <div className="text-gray-600 mb-4 d-flex flex-wrap gap-4">
+        <span>Người tạo: <b>{tour.user_id}</b></span>
+        <span>Chi phí: <b>{tour.total_cost}</b></span>
+        {tour.created_at && <span>Ngày tạo: {new Date(tour.created_at).toLocaleDateString()}</span>}
       </div>
       <div className="prose prose-lg mb-4">
         <p>{tour.description}</p>
@@ -70,7 +78,7 @@ const TourDetail = () => {
       )}
       <button
         onClick={() => navigate(-1)}
-        className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        className="mt-6 btn btn-main"
       >
         Quay lại
       </button>

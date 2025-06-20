@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import AdminHeader from "../../components/AdminHeader.jsx";
+import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
 
 function UsersAdmin() {
@@ -63,97 +65,123 @@ function UsersAdmin() {
   };
 
   return (
-    <div className="container py-4">
-      <h2>Quản lý người dùng</h2>
-
-      <div className="mb-3">
-        <input
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className="form-control mb-2"
-          placeholder="Họ tên"
-        />
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="form-control mb-2"
-          placeholder="Email"
-        />
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="form-control mb-2"
-          placeholder="Mật khẩu"
-          type="password"
-        />
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="form-select mb-2"
+    <div className="min-vh-100 d-flex flex-row" style={{ background: "#f6f8fa" }}>
+      <AdminSidebar alwaysExpanded />
+      <div
+        className="flex-grow-1 d-flex flex-column admin-dashboard"
+        style={{
+          marginLeft: 220,
+          minHeight: "100vh",
+          padding: 0,
+          background: "#f6f8fa",
+        }}
+      >
+        <AdminHeader />
+        <main
+          className="flex-grow-1"
+          style={{
+            padding: 0,
+            maxWidth: "100%",
+            width: "100%",
+            margin: 0,
+          }}
         >
-          <option value="USER">USER</option>
-          <option value="ADMIN">ADMIN</option>
-        </select>
-        {editId ? (
-          <>
-            <button onClick={handleUpdate} className="btn btn-warning me-2">
-              Cập nhật
-            </button>
-            <button
-              onClick={() => {
-                setEditId(null);
-                setFullName("");
-                setEmail("");
-                setPassword("");
-                setRole("USER");
-              }}
-              className="btn btn-secondary"
-            >
-              Hủy
-            </button>
-          </>
-        ) : (
-          <button onClick={handleCreate} className="btn btn-success">
-            Thêm
-          </button>
-        )}
-      </div>
+          <div className="admin-dashboard-cards-row">
+            <div className="container py-4">
+              <h2>Quản lý người dùng</h2>
 
-      <table className="table table-bordered">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Họ tên</th>
-            <th>Email</th>
-            <th>Vai trò</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u.id}>
-              <td>{u.id}</td>
-              <td>{u.full_name}</td>
-              <td>{u.email}</td>
-              <td>{u.role}</td>
-              <td>
-                <button
-                  className="btn btn-primary btn-sm me-2"
-                  onClick={() => handleEdit(u)}
+              <div className="mb-3">
+                <input
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="form-control mb-2"
+                  placeholder="Họ tên"
+                />
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="form-control mb-2"
+                  placeholder="Email"
+                />
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="form-control mb-2"
+                  placeholder="Mật khẩu"
+                  type="password"
+                />
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="form-select mb-2"
                 >
-                  Sửa
-                </button>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDelete(u.id)}
-                >
-                  Xóa
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+                {editId ? (
+                  <>
+                    <button onClick={handleUpdate} className="btn admin-main-btn me-2">
+                      Cập nhật
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditId(null);
+                        setFullName("");
+                        setEmail("");
+                        setPassword("");
+                        setRole("USER");
+                      }}
+                      className="btn admin-btn-secondary"
+                    >
+                      Hủy
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={handleCreate} className="btn admin-main-btn">
+                    Thêm
+                  </button>
+                )}
+              </div>
+
+              <table className="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th style={{textAlign: 'center'}}>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u) => (
+                    <tr key={u.id}>
+                      <td>{u.id}</td>
+                      <td>{u.full_name}</td>
+                      <td>{u.email}</td>
+                      <td>{u.role}</td>
+                      <td style={{textAlign: 'center'}}>
+                        <button
+                          className="btn admin-main-btn btn-sm me-2"
+                          onClick={() => handleEdit(u)}
+                        >
+                          Sửa
+                        </button>
+                        <button
+                          className="btn admin-btn-danger btn-sm"
+                          onClick={() => handleDelete(u.id)}
+                        >
+                          Xóa
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
