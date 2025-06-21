@@ -438,3 +438,38 @@
 .luxury-detail-main {
   margin-top: 68px;
 }
+
+/* Ensure all content inside luxury-card and luxury-planner-card fits and does not overflow */
+.luxury-card, .luxury-planner-card {
+  box-sizing: border-box;
+  overflow: hidden;
+  max-width: 100%;
+}
+.luxury-card *, .luxury-planner-card * {
+  box-sizing: border-box;
+  max-width: 100%;
+  word-break: break-word;
+}
+.luxury-planner-card form, .luxury-planner-card .container, .luxury-planner-card .row, .luxury-planner-card .col-md-4, .luxury-planner-card .col-md-5, .luxury-planner-card .col-md-3 {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.luxury-planner-card input, .luxury-planner-card textarea, .luxury-planner-card select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.luxury-planner-card .btn-main {
+  width: 100%;
+  min-width: 120px;
+  max-width: 220px;
+  margin: 10px auto 0 auto;
+  display: block;
+}
+.luxury-planner-card h2, .luxury-planner-card h4, .luxury-planner-card label {
+  word-break: break-word;
+  max-width: 100%;
+}
