@@ -1,23 +1,18 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext.jsx";
+import Header from "./Header.jsx";
+import Navbar from "./Navbar.jsx";
+import Footer from "./Footer.jsx";
+import "../css/luxury-home.css";
 
-const AutoPlanner = () => {
+const AutoPlanner = ({ noLayout }) => {
   const [days, setDays] = useState(1);
   const [interests, setInterests] = useState("");
   const [budget, setBudget] = useState("");
   const [tourData, setTourData] = useState(null);
   const [error, setError] = useState("");
   const { user } = useContext(AuthContext);
-
-  if (!user) {
-    return (
-      <div className="container py-4">
-        <h2>Tạo lộ trình tự động bằng AI</h2>
-        <div className="alert alert-warning mt-3">Bạn cần đăng nhập để sử dụng chức năng này.</div>
-      </div>
-    );
-  }
 
   const generateTour = async () => {
     if (!user?.id || isNaN(Number(user.id)) || !days || isNaN(days) || parseInt(days) < 1) {
@@ -39,9 +34,27 @@ const AutoPlanner = () => {
     }
   };
 
-  return (
-    <div className="container py-4">
-      <h2>Tạo lộ trình tự động bằng AI</h2>
+  if (!user) {
+    const content = (
+      <div className="container py-4">
+        <h2>Tạo lộ trình tự động bằng AI</h2>
+        <div className="alert alert-warning mt-3">Bạn cần đăng nhập để sử dụng chức năng này.</div>
+      </div>
+    );
+    if (noLayout) return content;
+    return (
+      <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
+        <Header />
+        <Navbar activePage="plan" />
+        <main className="container py-4 flex-grow-1">{content}</main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const mainContent = (
+    <>
+      <h2 className="luxury-section-title mb-4">Tạo lộ trình tự động bằng AI</h2>
       <div className="row g-3 mb-3">
         <div className="col-md-4">
           <label className="form-label">Số ngày <span className="text-danger">*</span></label>
@@ -131,6 +144,19 @@ const AutoPlanner = () => {
           </div>
         </div>
       )}
+    </>
+  );
+
+  if (noLayout) return mainContent;
+
+  return (
+    <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
+      <Header />
+      <Navbar activePage="plan" />
+      <main className="container py-4 flex-grow-1">
+        {mainContent}
+      </main>
+      <Footer />
     </div>
   );
 };

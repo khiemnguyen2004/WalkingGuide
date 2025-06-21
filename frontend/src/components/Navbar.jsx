@@ -14,7 +14,7 @@ const Navbar = ({ activePage, isAuthenticated }) => (
             style={{ textDecoration: "none" }}
           >
             <i className="bi bi-map luxury-sidebar-icon" />
-            <span className="luxury-sidebar-label">Explore Map</span>
+            <span className="luxury-sidebar-label">Khám phá</span>
           </Link>
         </li>
         <li>
@@ -26,19 +26,19 @@ const Navbar = ({ activePage, isAuthenticated }) => (
             style={{ textDecoration: "none" }}
           >
             <i className="bi bi-calendar2-check luxury-sidebar-icon" />
-            <span className="luxury-sidebar-label">Plan Trip</span>
+            <span className="luxury-sidebar-label">Lên kế hoạch</span>
           </Link>
         </li>
         <li>
           <Link
-            to="/mytrip"
+            to="/my-tours"
             className={`luxury-sidebar-link${
-              activePage === "mytrip" ? " active" : ""
+              activePage === "mytours" ? " active" : ""
             }`}
             style={{ textDecoration: "none" }}
           >
-            <i className="bi bi-suitcase luxury-sidebar-icon" />
-            <span className="luxury-sidebar-label">My Trip</span>
+            <i className="bi bi-person-walking luxury-sidebar-icon" />
+            <span className="luxury-sidebar-label">Tour của tôi</span>
           </Link>
         </li>
       </ul>

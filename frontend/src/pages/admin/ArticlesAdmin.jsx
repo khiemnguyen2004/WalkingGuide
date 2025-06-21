@@ -3,7 +3,7 @@ import AdminHeader from "../../components/AdminHeader.jsx";
 import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
 import { AuthContext } from "../../contexts/AuthContext.jsx";
-import LexicalEditor from "../../components/LexicalEditor";
+import CKEditorField from "../../components/CKEditorField";
 
 function ArticlesAdmin() {
   const { user } = useContext(AuthContext);
@@ -105,11 +105,10 @@ function ArticlesAdmin() {
                   className="form-control mb-2"
                   placeholder="Tiêu đề"
                 />
-                <LexicalEditor
+                <CKEditorField
                   value={content}
                   onChange={setContent}
                   placeholder="Nội dung"
-                  className="mb-2"
                 />
                 <input
                   type="file"

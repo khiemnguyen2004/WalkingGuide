@@ -1,8 +1,12 @@
 import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext.jsx";
+import Header from "./Header.jsx";
+import Navbar from "./Navbar.jsx";
+import Footer from "./Footer.jsx";
+import "../css/luxury-home.css";
 
-function ManualPlanner() {
+function ManualPlanner({ noLayout }) {
   const [places, setPlaces] = useState([]);
   const [tourName, setTourName] = useState("");
   const [description, setDescription] = useState("");
@@ -48,18 +52,26 @@ function ManualPlanner() {
   };
 
   if (!user) {
-    return (
+    const content = (
       <div className="container py-4">
         <h2>Lên lộ trình du lịch thủ công</h2>
         <div className="alert alert-warning mt-3">Bạn cần đăng nhập để sử dụng chức năng này.</div>
       </div>
     );
+    if (noLayout) return content;
+    return (
+      <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
+        <Header />
+        <Navbar activePage="plan" />
+        <main className="container py-4 flex-grow-1">{content}</main>
+        <Footer />
+      </div>
+    );
   }
 
-  return (
-    <div className="container py-4">
-      <h2>Lên lộ trình du lịch thủ công</h2>
-
+  const mainContent = (
+    <>
+      <h2 className="luxury-section-title mb-4">Lên lộ trình du lịch thủ công</h2>
       <label className="form-label">Tên tour</label>
       <input
         className="form-control mb-2"
@@ -82,7 +94,6 @@ function ManualPlanner() {
         onChange={(e) => setTotalCost(e.target.value)}
         placeholder="Tổng chi phí (VND)"
       />
-
       <h4>Các bước trong tour</h4>
       {steps.map((step, i) => (
         <div key={i} className="row mb-2">
@@ -129,6 +140,19 @@ function ManualPlanner() {
       <button className="btn btn-main" onClick={handleSubmit}>
         Tạo tour
       </button>
+    </>
+  );
+
+  if (noLayout) return mainContent;
+
+  return (
+    <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
+      <Header />
+      <Navbar activePage="plan" />
+      <main className="container py-4 flex-grow-1">
+        {mainContent}
+      </main>
+      <Footer />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import AdminHeader from "../../components/AdminHeader.jsx";
 import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
-import LexicalEditor from "../../components/LexicalEditor";
+import CKEditorField from "../../components/CKEditorField";
 import "../../css/AdminLayout.css";
 
 function PlacesAdmin() {
@@ -126,7 +126,7 @@ function PlacesAdmin() {
                   className="form-control mb-2"
                   placeholder="Tên địa điểm"
                 />
-                <LexicalEditor
+                <CKEditorField
                   value={description}
                   onChange={setDescription}
                   placeholder="Mô tả"
@@ -201,7 +201,9 @@ function PlacesAdmin() {
                     <tr key={p.id}>
                       <td>{p.id}</td>
                       <td>{p.name}</td>
-                      <td>{p.description}</td>
+                      <td>
+                        <div style={{maxWidth: 300, maxHeight: 120, overflow: 'auto'}} dangerouslySetInnerHTML={{ __html: p.description }} />
+                      </td>
                       <td>{p.latitude}</td>
                       <td>{p.longitude}</td>
                       <td>

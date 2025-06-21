@@ -60,7 +60,7 @@ function HomePage() {
                   </button>
                 </div>
                 <p className="text-center text-muted mb-3">Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ <b>thủ công</b> để tự tạo tour theo ý thích của mình.</p>
-                {showManual && <ManualPlanner />}
+                {showManual && <ManualPlanner noLayout />}
               </div>
             </div>
             <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showAuto || !onlyOneOpen ? 'block' : 'none' }}>
@@ -72,7 +72,7 @@ function HomePage() {
                   </button>
                 </div>
                 <p className="text-center text-muted mb-3">Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ <b>tự động</b> để chúng tôi đề xuất tour cho bạn!</p>
-                {showAuto && <AutoPlanner />}
+                {showAuto && <AutoPlanner noLayout />}
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ function HomePage() {
                           </h3>
                           <p className="card-text text-muted mb-2 luxury-desc">
                             {p.description
-                              ? `${p.description.substring(0, 100)}...`
+                              ? `${p.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`
                               : "Chưa có mô tả"}
                           </p>
                           <p className="card-text text-muted small mb-0 luxury-rating">
@@ -178,7 +178,7 @@ function HomePage() {
                             </h3>
                             <p className="card-text text-muted mb-2 luxury-desc">
                               {t.description
-                                ? `${t.description.substring(0, 100)}...`
+                                ? `${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`
                                 : "Chưa có mô tả"}
                             </p>
                             <p className="card-text text-muted small mb-0 luxury-rating">
@@ -237,7 +237,7 @@ function HomePage() {
                             </h3>
                             <p className="card-text text-muted mb-2 luxury-desc">
                               {a.content
-                                ? `${a.content.substring(0, 100)}...`
+                                ? `${a.content.replace(/<[^>]+>/g, '').substring(0, 100)}...`
                                 : "Chưa có nội dung"}
                             </p>
                           </div>

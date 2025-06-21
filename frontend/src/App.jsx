@@ -18,6 +18,7 @@ import AutoPlanner from "./components/AutoPlanner";
 import ArticleDetail from './pages/details/ArticleDetail';
 import PlaceDetail from './pages/details/PlaceDetail';
 import TourDetail from './pages/details/TourDetail';
+import MyTours from "./pages/MyTours";
 
 function App() {
   return (
@@ -35,8 +36,8 @@ function App() {
         <Route path="/admin/places" element={<AdminRoute><PlacesAdmin /></AdminRoute>} />
         <Route path="/admin/articles" element={<AdminRoute><ArticlesAdmin /></AdminRoute>} />
         <Route path="/admin/tours" element={<AdminRoute><ToursAdmin /></AdminRoute>} />
-        <Route path="/admin/manual-planner" element={<AdminRoute><ManualPlanner /></AdminRoute>} />
-        <Route path="/my-tours" element={<PrivateRoute><TourList /></PrivateRoute>} />
+        <Route path="/manual-planner" element={<PrivateRoute><ManualPlanner /></PrivateRoute>} />
+        <Route path="/my-tours" element={<PrivateRoute><MyTours /></PrivateRoute>} />
         <Route path="/ai/generate-tour" element={<PrivateRoute><AutoPlanner /></PrivateRoute>} />
         <Route path="/articles/:id" element={<ArticleDetail />} />
         <Route path="/places/:id" element={<PlaceDetail />} />

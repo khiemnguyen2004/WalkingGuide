@@ -3,7 +3,7 @@ import AdminHeader from "../../components/AdminHeader.jsx";
 import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
 import { AuthContext } from "../../contexts/AuthContext.jsx";
-import LexicalEditor from "../../components/LexicalEditor";
+import CKEditorField from "../../components/CKEditorField";
 
 function ToursAdmin() {
   const { user } = useContext(AuthContext);
@@ -93,7 +93,7 @@ function ToursAdmin() {
                   className="form-control mb-2"
                   placeholder="Tên tour"
                 />
-                <LexicalEditor
+                <CKEditorField
                   value={description}
                   onChange={setDescription}
                   placeholder="Mô tả"

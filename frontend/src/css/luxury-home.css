@@ -195,7 +195,10 @@
   text-decoration: none;
   transition: color 0.3s, text-shadow 0.3s;
 }
-
+.luxury-planner-card .btn-main{
+  width: 200px;
+  margin-top:10px;
+}
 .luxury-navbar {
   background: linear-gradient(90deg, #b6e0fe  0%, #e3f0ff 60%, #5b9df9 100%);
   box-shadow: 0 2px 12px 0 rgba(31, 38, 135, 0.08);

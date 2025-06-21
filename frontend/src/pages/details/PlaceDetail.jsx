@@ -72,7 +72,7 @@ const PlaceDetail = () => {
               {place.created_at && <span>Ngày thêm: {new Date(place.created_at).toLocaleDateString()}</span>}
             </div>
             <div className="prose prose-lg mb-4" style={{ color: '#223a5f', fontSize: '1.15rem', lineHeight: 1.7 }}>
-              <p>{place.description}</p>
+              <div dangerouslySetInnerHTML={{ __html: place.description }} />
             </div>
             <div className="d-flex justify-content-center">
               <button

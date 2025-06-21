@@ -62,7 +62,7 @@ const TourDetail = () => {
         {tour.created_at && <span>Ngày tạo: {new Date(tour.created_at).toLocaleDateString()}</span>}
       </div>
       <div className="prose prose-lg mb-4">
-        <p>{tour.description}</p>
+        <div dangerouslySetInnerHTML={{ __html: tour.description }} />
       </div>
       {tour.steps && tour.steps.length > 0 && (
         <div>

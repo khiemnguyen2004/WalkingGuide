@@ -1,0 +1,56 @@
+import React, { useState, useContext } from "react";
+import axios from "axios";
+import { AuthContext } from "../contexts/AuthContext";
+
+function LoginForm({ onSuccess, onSwitch }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { login } = useContext(AuthContext);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post("http://localhost:3000/api/auth/login", {
+        email,
+        password,
+      });
+      login(res.data.user);
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      setError(err.response?.data?.message || "Đăng nhập thất bại");
+    }
+  };
+
+  return (
+    <form onSubmit={handleLogin} className="w-100">
+      {error && <div className="alert alert-danger">{error}</div>}
+      <div className="mb-3">
+        <label className="form-label">Email:</label>
+        <input
+          type="email"
+          className="form-control"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div className="mb-3">
+        <label className="form-label">Mật khẩu:</label>
+        <input
+          type="password"
+          className="form-control"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <button type="submit" className="btn btn-main w-100">Đăng nhập</button>
+      <p className="mt-3 text-center">
+        Chưa có tài khoản? <button type="button" className="btn btn-link p-0" onClick={onSwitch}>Đăng ký</button>
+      </p>
+    </form>
+  );
+}
+
+export default LoginForm;
