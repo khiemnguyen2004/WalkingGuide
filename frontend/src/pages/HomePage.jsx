@@ -52,9 +52,12 @@ function HomePage() {
         <div className="bg-planner-map">
           <div className={`row mb-5 g-4 luxury-planner-row${onlyOneOpen ? ' justify-content-center' : ''}`}> 
             <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showManual || !onlyOneOpen ? 'block' : 'none' }}>
-              <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showManual && onlyOneOpen ? ' full-width' : ''}`}>
+              <div className={`luxury-card luxury-planner-card manual-homepage p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showManual && onlyOneOpen ? ' full-width' : ''}`}>
                 <div className="d-flex justify-content-between align-items-center mb-2">
-                  <h2 className="h5 fw-bold mb-0">Tự tạo lộ trình</h2>
+                  <div className="d-flex align-items-center gap-2">
+                    <h2 className="h5 fw-bold mb-0">Tự tạo lộ trình</h2>
+                    <i className="bi bi-car-front" style={{fontSize: 20, marginLeft: 6, color: '#1a2a47'}} aria-label="manual icon"></i>
+                  </div>
                   <button className="btn btn-link p-0" onClick={() => { setShowManual(v => !v); if (!showManual) setShowAuto(false); }} aria-label="Toggle Manual Planner">
                     <i className={`bi ${showManual ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
                   </button>
@@ -66,7 +69,10 @@ function HomePage() {
             <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showAuto || !onlyOneOpen ? 'block' : 'none' }}>
               <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showAuto && onlyOneOpen ? ' full-width' : ''}`}>
                 <div className="d-flex justify-content-between align-items-center mb-2">
-                  <h2 className="h5 fw-bold mb-0">Tạo lộ trình tự động</h2>
+                  <div className="d-flex align-items-center gap-2">
+                    <h2 className="h5 fw-bold mb-0">Tạo lộ trình tự động</h2>
+                    <i className="bi bi-robot" style={{fontSize: 20, marginLeft: 6, color: '#1a2a47'}} aria-label="autopilot icon"></i>
+                  </div>
                   <button className="btn btn-link p-0" onClick={() => { setShowAuto(v => !v); if (!showAuto) setShowManual(false); }} aria-label="Toggle Auto Planner">
                     <i className={`bi ${showAuto ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
                   </button>
@@ -132,7 +138,7 @@ function HomePage() {
                         />
                         <div className="card-body luxury-card-body">
                           <h3
-                            className="card-title text-primary mb-2"
+                            className="card-title mb-2"
                             style={{ fontWeight: 600 }}
                           >
                             {p.name}
@@ -171,7 +177,7 @@ function HomePage() {
                         >
                           <div className="card-body luxury-card-body">
                             <h3
-                              className="card-title text-primary mb-2"
+                              className="card-title mb-2"
                               style={{ fontWeight: 600 }}
                             >
                               {t.name}
@@ -230,7 +236,7 @@ function HomePage() {
                           )}
                           <div className="card-body luxury-card-body">
                             <h3
-                              className="card-title text-primary mb-2"
+                              className="card-title mb-2"
                               style={{ fontWeight: 600 }}
                             >
                               {a.title}

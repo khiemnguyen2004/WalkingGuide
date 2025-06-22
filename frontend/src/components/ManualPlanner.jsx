@@ -54,7 +54,7 @@ function ManualPlanner({ noLayout }) {
   if (!user) {
     const content = (
       <div className="container py-4">
-        <h2>Lên lộ trình du lịch thủ công</h2>
+        <h2>Tự tạo lộ trình cho riêng bạn</h2>
         <div className="alert alert-warning mt-3">Bạn cần đăng nhập để sử dụng chức năng này.</div>
       </div>
     );
@@ -71,7 +71,7 @@ function ManualPlanner({ noLayout }) {
 
   const mainContent = (
     <>
-      <h2 className="luxury-section-title mb-4">Lên lộ trình du lịch thủ công</h2>
+      <h2 className="luxury-section-title mb-4">Tự tạo lộ trình cho riêng bạn</h2>
       <label className="form-label">Tên tour</label>
       <input
         className="form-control mb-2"
@@ -134,9 +134,10 @@ function ManualPlanner({ noLayout }) {
           </div>
         </div>
       ))}
-      <button className="btn btn-main me-5" onClick={handleAddStep}>
+      <button className="btn btn-main btn-add-location" onClick={handleAddStep}>
         + Thêm địa điểm
       </button>
+      <br />
       <button className="btn btn-main" onClick={handleSubmit}>
         Tạo tour
       </button>

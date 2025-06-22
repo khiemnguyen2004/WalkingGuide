@@ -87,6 +87,7 @@
 
 .luxury-card .card-title {
   transition: color 0.3s;
+  color: #1a5bb8;
 }
 
 .luxury-card .card-title:hover, .luxury-card:hover .card-title, .luxury-card .card-text:hover {
@@ -114,7 +115,7 @@
 }
 
 .luxury-star {
-  color: #5b9df9;
+  color: #c9bf00;
   font-size: 1.1em;
   margin-right: 2px;
   animation: starPulse 1.2s infinite alternate;
@@ -197,7 +198,6 @@
 }
 .luxury-planner-card .btn-main{
   width: 200px;
-  margin-top:10px;
 }
 .luxury-navbar {
   background: linear-gradient(90deg, #b6e0fe  0%, #e3f0ff 60%, #5b9df9 100%);
@@ -309,6 +309,7 @@
   background: transparent;
   transition: background 0.3s, color 0.3s, box-shadow 0.3s;
   white-space: nowrap;
+  justify-content: center;
 }
 
 .luxury-sidebar-link .luxury-sidebar-label {
@@ -325,10 +326,9 @@
   margin-left: 0.8rem;
 }
 
-.luxury-sidebar-link .luxury-sidebar-icon {
-  font-size: 1.4rem;
-  min-width: 24px;
-  text-align: center;
+.luxury-sidebar-link .luxury-sidebar-icon ::before {
+  font-size: 1.5rem;
+  min-width: 30px;
 }
 
 .luxury-sidebar-link.active, .luxury-sidebar-link:hover {
@@ -466,10 +466,111 @@
   width: 100%;
   min-width: 120px;
   max-width: 220px;
-  margin: 10px auto 0 auto;
+  /* margin: 10px auto 0 auto; */
   display: block;
 }
 .luxury-planner-card h2, .luxury-planner-card h4, .luxury-planner-card label {
   word-break: break-word;
   max-width: 100%;
 }
+
+/* Luxury style for Leaflet zoom controls */
+.leaflet-control-zoom {
+  border-radius: 0.7rem;
+  box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.08);
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+  background: #fff;
+  color: #223a5f;
+  font-size: 1.7rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.7rem;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: none;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.leaflet-control-zoom-in:hover,
+.leaflet-control-zoom-out:hover {
+  color: #1a5bb8;
+  box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.10);
+}
+.leaflet-control-zoom-in span,
+.leaflet-control-zoom-out span {
+  display: none;
+}
+.leaflet-control-zoom-in:after {
+  content: '\002B'; /* Unicode plus sign */
+  font-size: 1.5em;
+  font-weight: 700;
+  display: block;
+  line-height: 1;
+}
+.leaflet-control-zoom-out:after {
+  content: '\2212'; /* Unicode minus sign */
+  font-size: 1.5em;
+  font-weight: 700;
+  display: block;
+  line-height: 1;
+}
+.leaflet-bar {
+  border: none !important;
+}
+
+/* ManualPlanner in homepage: make form more compact and visually balanced */
+.luxury-planner-card.manual-homepage {
+  padding: 2rem 1.5rem 1.5rem 1.5rem !important;
+  min-height: 0;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.10);
+}
+.luxury-planner-card.manual-homepage h2 {
+  font-size: 1.35rem;
+  margin-bottom: 1.2rem;
+}
+.luxury-planner-card.manual-homepage label {
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+}
+.luxury-planner-card.manual-homepage input,
+.luxury-planner-card.manual-homepage textarea,
+.luxury-planner-card.manual-homepage select {
+  font-size: 0.98rem;
+  padding: 0.45rem 0.7rem;
+  margin-bottom: 0.7rem;
+}
+.luxury-planner-card.manual-homepage .row {
+  margin-bottom: 0.5rem;
+}
+.luxury-planner-card.manual-homepage .btn-main {
+  width: 100%;
+  max-width: 180px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.luxury-planner-card.manual-homepage .btn-add-location {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 767px) {
+  .luxury-planner-card.manual-homepage {
+    padding: 1.1rem 0.5rem 1rem 0.5rem !important;
+    max-width: 100%;
+  }
+}
+/* End ManualPlanner homepage tweaks */

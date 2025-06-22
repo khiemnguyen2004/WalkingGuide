@@ -19,9 +19,9 @@ const Navbar = ({ activePage, isAuthenticated }) => (
         </li>
         <li>
           <Link
-            to="/plan"
+            to="/manual-planner"
             className={`luxury-sidebar-link${
-              activePage === "plan" ? " active" : ""
+              activePage === "/manual-planner" ? " active" : ""
             }`}
             style={{ textDecoration: "none" }}
           >

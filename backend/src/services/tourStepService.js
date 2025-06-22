@@ -1,3 +1,5 @@
+const { AppDataSource } = require("../data-source");
+
 const tourStepRepo = AppDataSource.getRepository("TourStep");
 
 module.exports = {

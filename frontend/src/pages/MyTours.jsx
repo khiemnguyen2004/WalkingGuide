@@ -6,6 +6,8 @@ import Footer from "../components/Footer.jsx";
 import { AuthContext } from "../contexts/AuthContext.jsx";
 import { Link } from "react-router-dom";
 import "../css/luxury-home.css";
+import tourStepApi from "../api/tourStepApi";
+import placeApi from "../api/placeApi";
 
 function MyTours() {
   const { user } = useContext(AuthContext);
@@ -17,6 +19,8 @@ function MyTours() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [tourToDelete, setTourToDelete] = useState(null);
   const [deleteError, setDeleteError] = useState("");
+  const [tourSteps, setTourSteps] = useState([]); // steps for selected tour
+  const [places, setPlaces] = useState({}); // { [placeId]: placeObj }
 
   useEffect(() => {
     if (!user) return;
@@ -28,6 +32,36 @@ function MyTours() {
       .catch(() => setError("Không thể tải danh sách tour."))
       .finally(() => setLoading(false));
   }, [user]);
+
+  // Fetch steps and places when selected tour changes
+  useEffect(() => {
+    if (!selected) return;
+    let isMounted = true;
+    async function fetchStepsAndPlaces() {
+      try {
+        const res = await tourStepApi.getByTourId(selected.id);
+        if (!isMounted) return;
+        setTourSteps(res.data);
+        // Fetch all places for steps
+        const placeIds = res.data.map(s => s.place_id);
+        const uniqueIds = [...new Set(placeIds)];
+        const placeMap = {};
+        for (const pid of uniqueIds) {
+          if (!places[pid]) {
+            const pres = await placeApi.getById(pid);
+            placeMap[pid] = pres.data;
+          } else {
+            placeMap[pid] = places[pid];
+          }
+        }
+        setPlaces(prev => ({ ...prev, ...placeMap }));
+      } catch (e) {
+        // Optionally handle error
+      }
+    }
+    fetchStepsAndPlaces();
+    return () => { isMounted = false; };
+  }, [selected]);
 
   return (
     <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
@@ -181,6 +215,18 @@ function MyTours() {
                     <div dangerouslySetInnerHTML={{ __html: selected.description }} />
                   </div>
                   {/* Optionally, show steps or other details here */}
+                  {tourSteps && tourSteps.length > 0 && (
+                    <div className="mt-3 luxury-journey-card">
+                      <h5 className="mb-3 text-primary" style={{fontWeight:700}}>Hành trình của bạn</h5>
+                      <ol className="mb-0" style={{fontSize:'1.08rem'}}>
+                        {tourSteps.sort((a, b) => a.step_order - b.step_order).map((step, idx) => (
+                          <li key={step.id} className="mb-2">
+                            <b>{places[step.place_id]?.name || `Địa điểm #${step.place_id}`}</b> <span className="text-muted">(ở lại {step.stay_duration} phút)</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

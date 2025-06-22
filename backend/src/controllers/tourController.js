@@ -6,7 +6,12 @@ const tourStepRepo = AppDataSource.getRepository("TourStep");
 module.exports = {
   getAllTours: async (req, res) => {
     try {
-      const tours = await tourRepo.find();
+      // Only return tours created by ADMIN
+      const tours = await tourRepo
+        .createQueryBuilder("tour")
+        .innerJoin("users", "user", "tour.user_id = user.id")
+        .where("user.role = :role", { role: "ADMIN" })
+        .getMany();
       res.json(tours);
     } catch (err) {
       console.error("Lỗi khi lấy danh sách tour:", err);
