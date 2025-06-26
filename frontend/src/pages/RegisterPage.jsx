@@ -30,7 +30,6 @@ function RegisterPage() {
   return (
     <div className="min-vh-100 d-flex flex-column luxury-home-container">
       <Header />
-      <Navbar activePage="register" />
       <main className="container d-flex flex-column align-items-center justify-content-center flex-grow-1 py-5">
         <div className="card shadow border-0 rounded-4 p-4 luxury-card" style={{ maxWidth: 420, width: '100%', background: 'rgba(255,255,255,0.97)' }}>
           <h2 className="mb-4 text-center" style={{color: '#1a5bb8', fontWeight: 700}}>Đăng ký tài khoản</h2>

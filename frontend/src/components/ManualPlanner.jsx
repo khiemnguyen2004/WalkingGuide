@@ -5,6 +5,7 @@ import Header from "./Header.jsx";
 import Navbar from "./Navbar.jsx";
 import Footer from "./Footer.jsx";
 import "../css/luxury-home.css";
+import { useNavigate } from "react-router-dom";
 
 function ManualPlanner({ noLayout }) {
   const [places, setPlaces] = useState([]);
@@ -16,6 +17,9 @@ function ManualPlanner({ noLayout }) {
   const { user, logout } = useContext(AuthContext);
   const [start_time, setStart_time] = useState("");
   const [end_time, setEnd_time] = useState("");
+  const navigate = useNavigate();
+  const [createdTour, setCreatedTour] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const userId = user ? user.id : null;
 
@@ -26,13 +30,17 @@ function ManualPlanner({ noLayout }) {
   }, []);
 
   const handleAddStep = () => {
-    setSteps([...steps, { 
-      place_id: "", 
-      step_order: steps.length + 1, 
-      stay_duration: 60, 
-      start_time: "", 
-      end_time: "" 
-    }]);
+    setSteps([
+      ...steps,
+      {
+        place_id: "",
+        step_order: steps.length + 1,
+        stay_duration: 60,
+        start_time: "",
+        end_time: "",
+        day: 1 // default to day 1
+      }
+    ]);
   };
 
   const handleRemoveStep = (index) => {
@@ -65,8 +73,8 @@ function ManualPlanner({ noLayout }) {
 
   const handleChangeStep = (index, field, value) => {
     const newSteps = [...steps];
-    if (field === "stay_duration" || field === "step_order") {
-      newSteps[index][field] = parseInt(value) || 0;
+    if (field === "stay_duration" || field === "step_order" || field === "day") {
+      newSteps[index][field] = parseInt(value) || 1;
     } else {
       newSteps[index][field] = value;
     }
@@ -89,7 +97,7 @@ function ManualPlanner({ noLayout }) {
 
     setIsSubmitting(true);
     try {
-      await axios.post("http://localhost:3000/api/tours", {
+      const res = await axios.post("http://localhost:3000/api/tours", {
         name: tourName,
         description,
         user_id: userId,
@@ -98,7 +106,9 @@ function ManualPlanner({ noLayout }) {
         end_time: end_time,
         steps,
       });
-      alert("Tạo tour thành công!");
+      // Show modal with summary and buttons
+      setCreatedTour(res.data.tour || res.data); // support both {tour, steps} and just tour
+      setShowSuccessModal(true);
       setTourName("");
       setDescription("");
       setTotalCost(0);
@@ -114,6 +124,14 @@ function ManualPlanner({ noLayout }) {
   const getSelectedPlace = (placeId) => {
     return places.find(p => p.id == placeId);
   };
+
+  const stepsByDay = steps.reduce((acc, step) => {
+    const day = step.day || 1;
+    if (!acc[day]) acc[day] = [];
+    acc[day].push(step);
+    return acc;
+  }, {});
+  const sortedDays = Object.keys(stepsByDay).sort((a, b) => a - b);
 
   if (!user) {
     const content = (
@@ -210,114 +228,141 @@ function ManualPlanner({ noLayout }) {
               <p className="text-muted">Chưa có địa điểm nào. Hãy thêm địa điểm đầu tiên!</p>
             </div>
           ) : (
-            <div className="tour-steps-container">
-              {steps.map((step, i) => {
-                const selectedPlace = getSelectedPlace(step.place_id);
-                return (
-                  <div key={i} className="tour-step-card mb-3">
-                    <div className="tour-step-header">
-                      <div className="step-number">{step.step_order}</div>
-                      <div className="step-controls">
-                        <button 
-                          className="btn btn-sm btn-outline-secondary me-1"
-                          onClick={() => handleMoveStep(i, 'up')}
-                          disabled={i === 0}
-                          title="Di chuyển lên"
-                        >
-                          <i className="fas fa-chevron-up"></i>
-                        </button>
-                        <button 
-                          className="btn btn-sm btn-outline-secondary me-1"
-                          onClick={() => handleMoveStep(i, 'down')}
-                          disabled={i === steps.length - 1}
-                          title="Di chuyển xuống"
-                        >
-                          <i className="fas fa-chevron-down"></i>
-                        </button>
-                        <button 
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => handleRemoveStep(i)}
-                          title="Xóa địa điểm"
-                        >
-                          <i className="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="tour-step-content">
-                      <div className="row g-3">
-                        <div className="col-md-6">
-                          <label className="form-label fw-bold">Địa điểm <span className="text-danger">*</span></label>
-                          <select
-                            className="form-select"
-                            value={step.place_id}
-                            onChange={(e) => handleChangeStep(i, "place_id", e.target.value)}
-                          >
-                            <option value="">-- Chọn địa điểm --</option>
-                            {places.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.name}
-                              </option>
-                            ))}
-                          </select>
-                          {selectedPlace && (
-                            <div className="mt-2 p-2 bg-light rounded">
-                              <small className="text-muted">
-                                <i className="fas fa-map-marker-alt me-1"></i>
-                                {selectedPlace.address}
-                              </small>
+            <>
+              <div className="tour-steps-container">
+                {sortedDays.map(dayNum => (
+                  <div key={dayNum} className="mb-4">
+                    <h5 className="fw-bold mb-3">Ngày {dayNum}</h5>
+                    {stepsByDay[dayNum].map((step, i) => {
+                      const selectedPlace = getSelectedPlace(step.place_id);
+                      const stepIndex = steps.findIndex(s => s === step);
+                      return (
+                        <div key={stepIndex} className="tour-step-card mb-3">
+                          <div className="tour-step-header">
+                            <div className="step-number">{step.step_order}</div>
+                            <div className="step-controls">
+                              <button 
+                                className="btn btn-sm btn-outline-secondary me-1"
+                                onClick={() => handleMoveStep(stepIndex, 'up')}
+                                disabled={stepIndex === 0}
+                                title="Di chuyển lên"
+                              >
+                                <i className="fas fa-chevron-up"></i>
+                              </button>
+                              <button 
+                                className="btn btn-sm btn-outline-secondary me-1"
+                                onClick={() => handleMoveStep(stepIndex, 'down')}
+                                disabled={stepIndex === steps.length - 1}
+                                title="Di chuyển xuống"
+                              >
+                                <i className="fas fa-chevron-down"></i>
+                              </button>
+                              <button 
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => handleRemoveStep(stepIndex)}
+                                title="Xóa địa điểm"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
                             </div>
-                          )}
+                          </div>
+                          <div className="tour-step-content">
+                            <div className="row g-3">
+                              <div className="col-md-6">
+                                <label className="form-label fw-bold">Địa điểm <span className="text-danger">*</span></label>
+                                <select
+                                  className="form-select"
+                                  value={step.place_id}
+                                  onChange={(e) => handleChangeStep(stepIndex, "place_id", e.target.value)}
+                                >
+                                  <option value="">-- Chọn địa điểm --</option>
+                                  {places.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.name}
+                                    </option>
+                                  ))}
+                                </select>
+                                {selectedPlace && (
+                                  <div className="mt-2 p-2 bg-light rounded">
+                                    <small className="text-muted">
+                                      <i className="fas fa-map-marker-alt me-1"></i>
+                                      {selectedPlace.address}
+                                    </small>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="col-md-2">
+                                <label className="form-label fw-bold">Ngày</label>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  min="1"
+                                  value={step.day || 1}
+                                  onChange={e => handleChangeStep(stepIndex, "day", e.target.value)}
+                                />
+                              </div>
+                              <div className="col-md-2">
+                                <label className="form-label fw-bold">Thời gian</label>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  min="15"
+                                  step="15"
+                                  value={step.stay_duration}
+                                  onChange={(e) => handleChangeStep(stepIndex, "stay_duration", e.target.value)}
+                                />
+                              </div>
+                              <div className="col-md-2">
+                                <label className="form-label fw-bold">Thứ tự</label>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  min="1"
+                                  value={step.step_order}
+                                  onChange={(e) => handleChangeStep(stepIndex, "step_order", e.target.value)}
+                                />
+                              </div>
+                              <div className="col-md-6">
+                                <label className="form-label fw-bold">Thời gian bắt đầu</label>
+                                <input
+                                  type="time"
+                                  className="form-control"
+                                  value={step.start_time || ""}
+                                  onChange={(e) => handleChangeStep(stepIndex, "start_time", e.target.value)}
+                                />
+                              </div>
+                              <div className="col-md-6">
+                                <label className="form-label fw-bold">Thời gian kết thúc</label>
+                                <input
+                                  type="time"
+                                  className="form-control"
+                                  value={step.end_time || ""}
+                                  onChange={(e) => handleChangeStep(stepIndex, "end_time", e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        
-                        <div className="col-md-3">
-                          <label className="form-label fw-bold">Thời gian ở lại (phút)</label>
-                          <input
-                            type="number"
-                            className="form-control"
-                            min="15"
-                            step="15"
-                            value={step.stay_duration}
-                            onChange={(e) => handleChangeStep(i, "stay_duration", e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="col-md-3">
-                          <label className="form-label fw-bold">Thứ tự</label>
-                          <input
-                            type="number"
-                            className="form-control"
-                            min="1"
-                            value={step.step_order}
-                            onChange={(e) => handleChangeStep(i, "step_order", e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="col-md-6">
-                          <label className="form-label fw-bold">Thời gian bắt đầu</label>
-                          <input
-                            type="time"
-                            className="form-control"
-                            value={step.start_time || ""}
-                            onChange={(e) => handleChangeStep(i, "start_time", e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="col-md-6">
-                          <label className="form-label fw-bold">Thời gian kết thúc</label>
-                          <input
-                            type="time"
-                            className="form-control"
-                            value={step.end_time || ""}
-                            onChange={(e) => handleChangeStep(i, "end_time", e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+              {/* Add summary preview below steps */}
+              <div className="mt-4">
+                <h5 className="fw-bold">Tóm tắt kế hoạch:</h5>
+                <ul>
+                  {sortedDays.map(dayNum => (
+                    <li key={dayNum}>
+                      <b>Ngày {dayNum}:</b> {stepsByDay[dayNum].map(step => {
+                        const place = getSelectedPlace(step.place_id);
+                        return place ? place.name : "(Chưa chọn địa điểm)";
+                      }).join(', ')}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -353,6 +398,54 @@ function ManualPlanner({ noLayout }) {
       <Navbar activePage="plan" />
       <main className="container py-4 flex-grow-1">
         {mainContent}
+        {/* Success Modal */}
+        {showSuccessModal && createdTour && (
+          <div className="modal show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.4)" }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Tạo tour thành công!</h5>
+                  <button type="button" className="btn-close" onClick={() => setShowSuccessModal(false)}></button>
+                </div>
+                <div className="modal-body">
+                  <p>Bạn đã tạo tour <b>{createdTour.name}</b> thành công.</p>
+                  <div className="mb-2">
+                    <b>Thời gian:</b> {createdTour.start_time || "-"} đến {createdTour.end_time || "-"}
+                  </div>
+                  {/* Show summary if available */}
+                  {steps.length > 0 && (
+                    <div className="mb-2">
+                      <b>Kế hoạch:</b>
+                      <ul>
+                        {sortedDays.map(dayNum => (
+                          <li key={dayNum}>
+                            <b>Ngày {dayNum}:</b> {stepsByDay[dayNum].map(step => {
+                              const place = getSelectedPlace(step.place_id);
+                              return place ? place.name : "(Chưa chọn địa điểm)";
+                            }).join(', ')}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <div className="modal-footer">
+                  {createdTour.id && (
+                    <button className="btn btn-main" onClick={() => navigate(`/tours/${createdTour.id}`)}>
+                      Xem chi tiết tour
+                    </button>
+                  )}
+                  <button className="btn btn-outline-secondary" onClick={() => navigate('/my-tours')}>
+                    Đến trang My Tours
+                  </button>
+                  <button className="btn btn-link" onClick={() => setShowSuccessModal(false)}>
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
       <Footer />
     </div>

@@ -56,14 +56,14 @@ module.exports = {
   },
   createTour: async (req, res) => {
     try {
-      const { name, description, user_id, total_cost = 0, steps = [] } = req.body;
+      const { name, description, user_id, total_cost = 0, steps = [], start_time, end_time } = req.body;
 
       if (!name || !user_id) {
         return res.status(400).json({ error: "Thiếu tên tour hoặc user_id" });
       }
 
       // 1. Tạo tour
-      const newTour = await tourRepo.save({ name, description, total_cost, user_id });
+      const newTour = await tourRepo.save({ name, description, total_cost, user_id, start_time, end_time });
 
       // 2. Lưu các bước của tour nếu có
       const savedSteps = [];
@@ -73,6 +73,8 @@ module.exports = {
           place_id: step.place_id,
           step_order: step.step_order,
           stay_duration: step.stay_duration || 60,
+          start_time: step.start_time,
+          end_time: step.end_time
         });
         savedSteps.push(saved);
       }

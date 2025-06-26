@@ -89,19 +89,37 @@ const TourDetail = () => {
             {tour.steps && tour.steps.length > 0 && (
               <div>
                 <h2 className="text-xl font-semibold mb-2">Các điểm đến:</h2>
-                <ul className="list-disc pl-6">
-                  {tour.steps.map((step, idx) => (
-                    <li key={idx} className="mb-2">
-                      <strong>Ngày {step.step_order}:</strong> {step.place_name || (step.place && step.place.name)} (Thời gian lưu trú: {step.stay_duration} phút)
-                      {step.start_time && (
-                        <span> | Bắt đầu: <b>{step.start_time}</b></span>
-                      )}
-                      {step.end_time && (
-                        <span> | Kết thúc: <b>{step.end_time}</b></span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                {(() => {
+                  const stepsByDay = tour.steps.reduce((acc, step) => {
+                    const day = step.day || 1;
+                    if (!acc[day]) acc[day] = [];
+                    acc[day].push(step);
+                    return acc;
+                  }, {});
+                  const sortedDays = Object.keys(stepsByDay).sort((a, b) => a - b);
+                  return (
+                    <div>
+                      {sortedDays.map(dayNum => (
+                        <div key={dayNum} className="mb-3">
+                          <h4 className="fw-bold mb-2">Ngày {dayNum}</h4>
+                          <ul className="list-disc pl-6">
+                            {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step, idx) => (
+                              <li key={idx} className="mb-2">
+                                <strong>{step.place_name || (step.place && step.place.name)}</strong> (Thời gian lưu trú: {step.stay_duration} phút)
+                                {step.start_time && (
+                                  <span> | Bắt đầu: <b>{step.start_time}</b></span>
+                                )}
+                                {step.end_time && (
+                                  <span> | Kết thúc: <b>{step.end_time}</b></span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
             <div className="d-flex justify-content-center">

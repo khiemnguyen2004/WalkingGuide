@@ -87,6 +87,8 @@ function MyTours() {
         description: selected.description || "",
         image_url: selected.image_url || "",
         total_cost: selected.total_cost || "",
+        start_time: selected.start_time || "",
+        end_time: selected.end_time || "",
         steps: tourSteps.map(s => ({ ...s })),
       });
       setEditError("");
@@ -141,6 +143,8 @@ function MyTours() {
           place_id: s.place_id,
           stay_duration: s.stay_duration,
           step_order: s.step_order,
+          start_time: s.start_time,
+          end_time: s.end_time,
         })
       ));
       // Delete removed steps
@@ -176,6 +180,8 @@ function MyTours() {
       const res = await tourStepApi.update(stepToEdit.id, {
         ...stepToEdit,
         stay_duration: editStepForm.stay_duration,
+        start_time: stepToEdit.start_time,
+        end_time: stepToEdit.end_time,
       });
       setTourSteps((prev) =>
         prev.map((s) => (s.id === stepToEdit.id ? { ...s, ...res.data } : s))
@@ -190,7 +196,6 @@ function MyTours() {
   return (
     <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
       <Header />
-      <Navbar activePage="mytours" />
       <main className="container px-4 py-4 flex-grow-1">
         <section className="mb-5">
           <div className="d-flex align-items-center mb-4" style={{background: 'linear-gradient(90deg, #b6e0fe 0%, #5b9df9 100%)', borderRadius: '1.5rem', padding: '1.5rem 2rem', boxShadow: '0 4px 24px 0 rgba(31, 38, 135, 0.10)'}}>
@@ -303,8 +308,12 @@ function MyTours() {
                           <textarea className="form-control" name="description" value={editForm.description} onChange={handleEditChange} rows={4} required />
                         </div>
                         <div className="mb-3">
-                          <label className="form-label">Ảnh (URL)</label>
-                          <input type="text" className="form-control" name="image_url" value={editForm.image_url} onChange={handleEditChange} />
+                          <label className="form-label">Ngày bắt đầu</label>
+                          <input type="date" className="form-control" name="start_time" value={editForm.start_time} onChange={handleEditChange} />
+                        </div>
+                        <div className="mb-3">
+                          <label className="form-label">Ngày kết thúc</label>
+                          <input type="date" className="form-control" name="end_time" value={editForm.end_time} onChange={handleEditChange} />
                         </div>
                         <div className="mb-3">
                           <label className="form-label">Chi phí (VND)</label>
@@ -319,8 +328,8 @@ function MyTours() {
                               <select className="form-select" style={{width:180}} value={step.place_id} onChange={e => handleEditStepFieldChange(idx, 'place_id', e.target.value)}>
                                 {allPlaces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                               </select>
-                              <input type="number" className="form-control" style={{width:120}} min={1} value={step.stay_duration} onChange={e => handleEditStepFieldChange(idx, 'stay_duration', e.target.value)} />
-                              <span>phút</span>
+                              <input type="time" className="form-control" name="start_time" value={step.start_time} onChange={e => handleEditStepFieldChange(idx, 'start_time', e.target.value)} />
+                              <input type="time" className="form-control" name="end_time" value={step.end_time} onChange={e => handleEditStepFieldChange(idx, 'end_time', e.target.value)} />
                               <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => handleRemoveStep(idx)} title="Xóa địa điểm"><i className="bi bi-x"></i></button>
                             </li>
                           ))}

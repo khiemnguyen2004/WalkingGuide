@@ -18,8 +18,8 @@ const AutoPlanner = ({ noLayout }) => {
   const { user } = useContext(AuthContext);
   const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [start_time, setStart_time] = useState("");
+  const [end_time, setEnd_time] = useState("");
 
   useEffect(() => {
     axios.get("http://localhost:3000/api/tags").then(res => setTags(res.data));
@@ -59,15 +59,15 @@ const AutoPlanner = ({ noLayout }) => {
         description: tourData.tour.description,
         user_id: user.id,
         total_cost: tourData.tour.total_cost,
-        start_date: startDate,
-        end_date: endDate,
         steps: tourData.steps.map((step, i) => ({
           place_id: step.place_id,
           step_order: i + 1,
           stay_duration: step.stay_duration,
-          start_time: step.start_time || "",
-          end_time: step.end_time || ""
-        }))
+          start_time: step.start_time || null,
+          end_time: step.end_time || null
+        })),
+        start_time: start_time,
+        end_time: end_time
       });
       alert("Đã lưu tour vào hệ thống!");
       setTourData(null);
@@ -106,7 +106,6 @@ const AutoPlanner = ({ noLayout }) => {
     return (
       <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
         <Header />
-        <Navbar activePage="plan" />
         <main className="container py-4 flex-grow-1">{content}</main>
         <Footer />
       </div>
@@ -131,7 +130,7 @@ const AutoPlanner = ({ noLayout }) => {
                 placeholder="Nhập tên tour (tuỳ chọn)"
               />
             </div>
-            <div className="col-md-6">
+            {/* <div className="col-md-6">
               <label className="form-label fw-bold">Số ngày <span className="text-danger">*</span></label>
               <input
                 type="number"
@@ -143,17 +142,7 @@ const AutoPlanner = ({ noLayout }) => {
                 className="form-control"
                 required
               />
-            </div>
-            <div className="col-md-6">
-              <label className="form-label fw-bold">Sở thích</label>
-              <input
-                type="text"
-                placeholder="Ví dụ: biển, núi, lịch sử, ẩm thực"
-                value={interests}
-                onChange={(e) => setInterests(e.target.value)}
-                className="form-control"
-              />
-            </div>
+            </div> */}
             <div className="col-md-6">
               <label className="form-label fw-bold">Bạn thích đi đâu?</label>
               <div>
@@ -166,8 +155,7 @@ const AutoPlanner = ({ noLayout }) => {
                       if (tagId && !selectedTags.includes(tagId)) {
                         setSelectedTags([...selectedTags, tagId]);
                       }
-                    }}
-                  >
+                    }}>
                     <option value="">Có thể bạn muốn khám phá...</option>
                     {tags.filter(tag => !selectedTags.includes(String(tag.id))).map(tag => (
                       <option key={tag.id} value={tag.id}>{tag.name}</option>
@@ -193,14 +181,14 @@ const AutoPlanner = ({ noLayout }) => {
                   })}
                 </div>
               </div>
-            </div>
+            </div>          
             <div className="col-md-6">
               <label className="form-label fw-bold">Ngày bắt đầu</label>
               <input
                 type="date"
                 className="form-control"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
+                value={start_time}
+                onChange={e => setStart_time(e.target.value)}
               />
             </div>
             <div className="col-md-6">
@@ -208,9 +196,19 @@ const AutoPlanner = ({ noLayout }) => {
               <input
                 type="date"
                 className="form-control"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-                min={startDate}
+                value={end_time}
+                onChange={e => setEnd_time(e.target.value)}
+                min={start_time}
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Sở thích</label>
+              <input
+                type="text"
+                placeholder="Ví dụ: biển, núi, lịch sử, ẩm thực"
+                value={interests}
+                onChange={(e) => setInterests(e.target.value)}
+                className="form-control"
               />
             </div>
             <div className="col-md-6">
@@ -291,7 +289,7 @@ const AutoPlanner = ({ noLayout }) => {
                 <div className="col-md-4">
                   <small className="text-muted">
                     <i className="fas fa-calendar me-1"></i>
-                    {startDate && endDate ? `${startDate} → ${endDate}` : `${tourData.steps.length} địa điểm`}
+                      {start_time && end_time ? `${start_time} → ${end_time}` : `${tourData.steps.length} địa điểm`}
                   </small>
                 </div>
                 <div className="col-md-4">
@@ -372,7 +370,6 @@ const AutoPlanner = ({ noLayout }) => {
   return (
     <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
       <Header />
-      <Navbar activePage="plan" />
       <main className="container py-4 flex-grow-1">
         {mainContent}
       </main>

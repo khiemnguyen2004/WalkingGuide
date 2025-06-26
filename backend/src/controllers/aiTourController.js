@@ -49,7 +49,9 @@ module.exports = {
         name: `Tour AI tự động`,
         description: `Gợi ý từ AI với sở thích: ${interests?.join(", ")}`,
         user_id: user_id,
-        total_cost: 0
+        total_cost: 0,
+        start_time: req.body.start_time || null,
+        end_time: req.body.end_time || null
       };
       const steps = allPlaces.slice(0, days * 2).map((p, i) => ({
         place_id: p.id,

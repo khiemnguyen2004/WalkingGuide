@@ -11,7 +11,7 @@ module.exports = new EntitySchema({
     total_cost: { type: "float", default: 0 },
     created_at: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" },
     updated_at: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" },
-    start_time: { type: "time", nullable: true },
-    end_time: { type: "time", nullable: true },
+    start_time: { type: "date", nullable: true },
+    end_time: { type: "date", nullable: true },
   }
 });
