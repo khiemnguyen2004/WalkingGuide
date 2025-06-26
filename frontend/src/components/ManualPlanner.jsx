@@ -14,8 +14,8 @@ function ManualPlanner({ noLayout }) {
   const [steps, setSteps] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, logout } = useContext(AuthContext);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [start_time, setStart_time] = useState("");
+  const [end_time, setEnd_time] = useState("");
 
   const userId = user ? user.id : null;
 
@@ -94,8 +94,8 @@ function ManualPlanner({ noLayout }) {
         description,
         user_id: userId,
         total_cost: parseFloat(totalCost) || 0,
-        start_date: startDate,
-        end_date: endDate,
+        start_time: start_time,
+        end_time: end_time,
         steps,
       });
       alert("Tạo tour thành công!");
@@ -166,8 +166,8 @@ function ManualPlanner({ noLayout }) {
               <input
                 type="date"
                 className="form-control"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
+                value={start_time}
+                onChange={e => setStart_time(e.target.value)}
               />
             </div>
             <div className="col-md-6">
@@ -175,9 +175,9 @@ function ManualPlanner({ noLayout }) {
               <input
                 type="date"
                 className="form-control"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-                min={startDate}
+                value={end_time}
+                onChange={e => setEnd_time(e.target.value)}
+                min={start_time}
               />
             </div>
             <div className="col-12">

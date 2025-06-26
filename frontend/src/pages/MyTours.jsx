@@ -392,7 +392,14 @@ function MyTours() {
 
             {/* Card Header with Edit Button */}
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h1 className="text-3xl font-bold text-center mb-0" style={{color:'rgb(26, 91, 184)'}}>{selected.name}</h1>
+              <h5 className="card-title mb-2 fw-bold">
+                {selected.name}
+                {selected.start_time && selected.end_time && (
+                  <span className="badge bg-info ms-2" style={{fontSize: '0.95em', fontWeight: 500}}>
+                    {new Date(selected.start_time).toLocaleDateString()} → {new Date(selected.end_time).toLocaleDateString()}
+                  </span>
+                )}
+              </h5>
               <button
                 className="btn btn-outline-primary ms-2"
                 style={{ borderRadius: 8 }}
@@ -407,6 +414,7 @@ function MyTours() {
             <div className="mb-4 d-flex flex-wrap gap-4 justify-content-center" style={{ fontSize: '1.05rem', color: 'rgb(26, 91, 184)' }}>
               <span>Chi phí: <b>{selected.total_cost} VND</b></span>
               {selected.created_at && <span>Ngày tạo: {new Date(selected.created_at).toLocaleDateString()}</span>}
+
                 </div>
                 <div className="prose prose-lg mb-4" style={{ color: 'rgb(26, 91, 184)', fontSize: '1.15rem', lineHeight: 1.7 }}>
                   <div dangerouslySetInnerHTML={{ __html: selected.description }} />
@@ -434,17 +442,27 @@ function MyTours() {
                         ))}
                     </div>
                     {/* Journey List */}
-                    <ol className="mb-0" style={{fontSize:'1.08rem', color:'#1a1a1a'}}>
-                      {tourSteps.sort((a, b) => a.step_order - b.step_order).map((step) => (
-                        <li key={step.id} className="mb-2 d-flex align-items-center justify-content-between">
-                          <span>
-                            <Link to={places[step.place_id] ? `/places/${places[step.place_id].id}` : '#'} style={{ fontWeight: 'bold', textDecoration: 'none', color: '#1a5bb8', cursor: 'pointer' }}>
-                              {places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
-                            </Link> <span className="text-muted" style={{color:'#888'}}>(ở lại {step.stay_duration} phút)</span>
-                          </span>
+                    <ul className="list-group list-group-flush">
+                      {tourSteps.map((step, idx) => (
+                        <li key={step.id || idx} className="list-group-item d-flex align-items-center justify-content-between">
+                          <div>
+                            <span className="fw-bold me-2">{idx + 1}.</span>
+                            {places[step.place_id]?.name || 'Địa điểm'}
+                            {step.start_time && (
+                              <span className="badge bg-success ms-2" style={{fontSize: '0.95em'}}>
+                                <i className="fas fa-play me-1"></i>{step.start_time}
+                              </span>
+                            )}
+                            {step.end_time && (
+                              <span className="badge bg-info ms-2" style={{fontSize: '0.95em'}}>
+                                <i className="fas fa-stop me-1"></i>{step.end_time}
+                              </span>
+                            )}
+                          </div>
+                          <span className="badge bg-primary ms-2">{step.stay_duration} phút</span>
                         </li>
                       ))}
-                    </ol>
+                    </ul>
                   </div>
                 )}
               </div>
