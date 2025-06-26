@@ -1,10 +1,14 @@
-const AppDataSource = require("../data-source");
-const tagRepo = AppDataSource.getRepository("Tag");
+const { AppDataSource } = require("../data-source");
+
+const getTagRepo = () => AppDataSource.getRepository("Tag");
 
 module.exports = {
-  findAll: () => tagRepo.find(),
-  findById: (id) => tagRepo.findOneBy({ id }),
-  create: (data) => tagRepo.save(tagRepo.create(data)),
-  update: async (id, data) => { await tagRepo.update(id, data); return tagRepo.findOneBy({ id }); },
-  remove: (id) => tagRepo.delete(id),
+  findAll: () => getTagRepo().find(),
+  findById: (id) => getTagRepo().findOneBy({ id }),
+  create: (data) => getTagRepo().save(getTagRepo().create(data)),
+  update: async (id, data) => {
+    await getTagRepo().update(id, data);
+    return getTagRepo().findOneBy({ id });
+  },
+  remove: (id) => getTagRepo().delete(id),
 };

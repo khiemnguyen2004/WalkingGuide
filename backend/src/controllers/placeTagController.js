@@ -1,13 +1,17 @@
-const express = require("express");
-const router = express.Router();
 const placeTagService = require("../services/placeTagService");
 
-router.get("/", async (req, res) => res.json(await placeTagService.findAll()));
-router.get("/:id", async (req, res) => {
-  const result = await placeTagService.findById(req.params.id);
-  result ? res.json(result) : res.status(404).json({ message: "Not found" });
-});
-router.post("/", async (req, res) => res.status(201).json(await placeTagService.create(req.body)));
-router.put("/:id", async (req, res) => res.json(await placeTagService.update(req.params.id, req.body)));
-router.delete("/:id", async (req, res) => { await placeTagService.remove(req.params.id); res.status(204).end(); });
-module.exports = router;
+exports.getAll = async (req, res) => {
+  const result = await placeTagService.findAll();
+  res.json(result);
+};
+
+exports.create = async (req, res) => {
+  const created = await placeTagService.create(req.body);
+  res.status(201).json(created);
+};
+
+exports.remove = async (req, res) => {
+  const { place_id, tag_id } = req.body;
+  await placeTagService.remove({ place_id, tag_id });
+  res.status(204).end();
+};

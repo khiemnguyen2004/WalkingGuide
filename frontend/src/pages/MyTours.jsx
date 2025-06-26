@@ -47,7 +47,6 @@ function MyTours() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  // Fetch steps and places when selected tour changes
   useEffect(() => {
     if (!selected) return;
     let isMounted = true;
@@ -379,7 +378,7 @@ function MyTours() {
             </div>
             <div className="col-12 col-lg-8">
         {selected && (
-          <div className="card shadow-lg border-0 rounded-4 p-4 mb-4" style={{background: 'rgba(255,255,255,0.97)'}}>
+          <div className="card shadow-lg border-0 rounded-4 p-4 mb-4" style={{background: 'rgba(255,255,255,0.97)', color: '#1a1a1a'}}>
             {/* Tour Image */}
             {selected.image_url && (
               <div className="d-flex justify-content-center mb-4">
@@ -393,7 +392,7 @@ function MyTours() {
 
             {/* Card Header with Edit Button */}
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h1 className="text-3xl font-bold text-gray-800 text-center mb-0">{selected.name}</h1>
+              <h1 className="text-3xl font-bold text-center mb-0" style={{color:'rgb(26, 91, 184)'}}>{selected.name}</h1>
               <button
                 className="btn btn-outline-primary ms-2"
                 style={{ borderRadius: 8 }}
@@ -405,20 +404,20 @@ function MyTours() {
             </div>
 
             {/* Tour Info */}
-            <div className="text-gray-600 mb-4 d-flex flex-wrap gap-4 justify-content-center" style={{ fontSize: '1.05rem' }}>
+            <div className="mb-4 d-flex flex-wrap gap-4 justify-content-center" style={{ fontSize: '1.05rem', color: 'rgb(26, 91, 184)' }}>
               <span>Chi phí: <b>{selected.total_cost} VND</b></span>
               {selected.created_at && <span>Ngày tạo: {new Date(selected.created_at).toLocaleDateString()}</span>}
                 </div>
-                <div className="prose prose-lg mb-4" style={{ color: '#223a5f', fontSize: '1.15rem', lineHeight: 1.7 }}>
+                <div className="prose prose-lg mb-4" style={{ color: 'rgb(26, 91, 184)', fontSize: '1.15rem', lineHeight: 1.7 }}>
                   <div dangerouslySetInnerHTML={{ __html: selected.description }} />
                 </div>
 
                 {/* Journey Section */}
                 {tourSteps && tourSteps.length > 0 && (
                   <div className="mt-3 luxury-journey-card">
-                    <h5 className="mb-3 text-primary" style={{fontWeight:700}}>Hành trình của bạn</h5>
+                    <h5 className="mb-3" style={{fontWeight:700, color:'#1a5bb8'}}>Hành trình của bạn</h5>
                     {/* Place Images Row */}
-                    <div className="d-flex gap-3 mb-3 flex-wrap justify-content-center">
+                    <div className="d-flex gap-3 mb-3 flex-wrap">
                       {tourSteps
                         .sort((a, b) => a.step_order - b.step_order)
                         .map((step) => (
@@ -428,18 +427,20 @@ function MyTours() {
                               alt={places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
                               style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 12, boxShadow: "0 2px 8px #b6e0fe33" }}
                             />
-                            <div className="small mt-1" style={{maxWidth: 80, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
+                            <div className="small mt-1" style={{maxWidth: 80, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color:'#1a1a1a'}}>
                               {places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
                             </div>
                           </div>
                         ))}
                     </div>
                     {/* Journey List */}
-                    <ol className="mb-0" style={{fontSize:'1.08rem'}}>
+                    <ol className="mb-0" style={{fontSize:'1.08rem', color:'#1a1a1a'}}>
                       {tourSteps.sort((a, b) => a.step_order - b.step_order).map((step) => (
                         <li key={step.id} className="mb-2 d-flex align-items-center justify-content-between">
                           <span>
-                            <b>{places[step.place_id]?.name || `Địa điểm #${step.place_id}`}</b> <span className="text-muted">(ở lại {step.stay_duration} phút)</span>
+                            <Link to={places[step.place_id] ? `/places/${places[step.place_id].id}` : '#'} style={{ fontWeight: 'bold', textDecoration: 'none', color: '#1a5bb8', cursor: 'pointer' }}>
+                              {places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
+                            </Link> <span className="text-muted" style={{color:'#888'}}>(ở lại {step.stay_duration} phút)</span>
                           </span>
                         </li>
                       ))}

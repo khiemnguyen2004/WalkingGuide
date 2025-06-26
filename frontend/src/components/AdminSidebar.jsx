@@ -7,6 +7,7 @@ const adminNavLinks = [
   { to: "/admin/places", icon: "bi-geo-alt", label: "Địa điểm" },
   { to: "/admin/articles", icon: "bi-newspaper", label: "Bài viết" },
   { to: "/admin/tours", icon: "bi-map", label: "Lộ trình" },
+  { to: "/admin/tags", icon: "bi-tag", label: "Thẻ địa điểm" },
 ];
 
 const AdminSidebar = ({ alwaysExpanded }) => {

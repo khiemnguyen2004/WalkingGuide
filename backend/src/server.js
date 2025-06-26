@@ -11,7 +11,8 @@ const authRoutes = require("./routes/authRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const tourStepRoutes = require("./routes/tourStepRoutes");
-
+const tagRoutes = require("./routes/tagRoutes");
+const placeTagRoutes = require("./routes/placeTagRoutes");
 
 const cors = require("cors");
 app.use(cors());
@@ -29,6 +30,8 @@ AppDataSource.initialize()
     app.use("/api/upload", uploadRoutes);
     app.use("/api/ai", aiRoutes);
     app.use("/api/tour-steps", tourStepRoutes);
+    app.use("/api/tags", tagRoutes);
+    app.use("/api/place-tags", placeTagRoutes);
     app.use("/uploads", express.static("uploads"));
     app.listen(3000, () => console.log("Server is running on port 3000"));
   })

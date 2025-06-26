@@ -1,9 +1,9 @@
-const placeTagRepo = AppDataSource.getRepository("PlaceTag");
+const { AppDataSource } = require("../data-source");
+const repo = () => AppDataSource.getRepository("PlaceTag");
 
 module.exports = {
-  findAll: () => placeTagRepo.find(),
-  findById: (id) => placeTagRepo.findOneBy({ id }),
-  create: (data) => placeTagRepo.save(placeTagRepo.create(data)),
-  update: async (id, data) => { await placeTagRepo.update(id, data); return placeTagRepo.findOneBy({ id }); },
-  remove: (id) => placeTagRepo.delete(id),
+  findAll: () => repo().find(),
+  create: (data) => repo().save(repo().create(data)),
+  remove: ({ place_id, tag_id }) =>
+    repo().delete({ place_id, tag_id }),
 };

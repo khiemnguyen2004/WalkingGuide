@@ -12,7 +12,11 @@ function ManualPlanner({ noLayout }) {
   const [description, setDescription] = useState("");
   const [totalCost, setTotalCost] = useState(0);
   const [steps, setSteps] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, logout } = useContext(AuthContext);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
   const userId = user ? user.id : null;
 
   useEffect(() => {
@@ -22,22 +26,76 @@ function ManualPlanner({ noLayout }) {
   }, []);
 
   const handleAddStep = () => {
-    setSteps([...steps, { place_id: "", step_order: steps.length + 1, stay_duration: 60 }]);
+    setSteps([...steps, { 
+      place_id: "", 
+      step_order: steps.length + 1, 
+      stay_duration: 60, 
+      start_time: "", 
+      end_time: "" 
+    }]);
+  };
+
+  const handleRemoveStep = (index) => {
+    const newSteps = steps.filter((_, i) => i !== index);
+    // Reorder remaining steps
+    const reorderedSteps = newSteps.map((step, i) => ({
+      ...step,
+      step_order: i + 1
+    }));
+    setSteps(reorderedSteps);
+  };
+
+  const handleMoveStep = (index, direction) => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === steps.length - 1) return;
+
+    const newSteps = [...steps];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    // Swap steps
+    [newSteps[index], newSteps[targetIndex]] = [newSteps[targetIndex], newSteps[index]];
+    
+    // Update step_order
+    newSteps.forEach((step, i) => {
+      step.step_order = i + 1;
+    });
+    
+    setSteps(newSteps);
   };
 
   const handleChangeStep = (index, field, value) => {
     const newSteps = [...steps];
-    newSteps[index][field] = field === "stay_duration" || field === "step_order" ? parseInt(value) : value;
+    if (field === "stay_duration" || field === "step_order") {
+      newSteps[index][field] = parseInt(value) || 0;
+    } else {
+      newSteps[index][field] = value;
+    }
     setSteps(newSteps);
   };
 
   const handleSubmit = async () => {
+    if (!tourName.trim()) {
+      alert("Vui lòng nhập tên tour!");
+      return;
+    }
+    if (steps.length === 0) {
+      alert("Vui lòng thêm ít nhất một địa điểm!");
+      return;
+    }
+    if (steps.some(step => !step.place_id)) {
+      alert("Vui lòng chọn địa điểm cho tất cả các bước!");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       await axios.post("http://localhost:3000/api/tours", {
         name: tourName,
         description,
         user_id: userId,
-        total_cost: parseFloat(totalCost),
+        total_cost: parseFloat(totalCost) || 0,
+        start_date: startDate,
+        end_date: endDate,
         steps,
       });
       alert("Tạo tour thành công!");
@@ -48,7 +106,13 @@ function ManualPlanner({ noLayout }) {
     } catch (err) {
       console.error(err);
       alert("Lỗi khi tạo tour");
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const getSelectedPlace = (placeId) => {
+    return places.find(p => p.id == placeId);
   };
 
   if (!user) {
@@ -70,78 +134,215 @@ function ManualPlanner({ noLayout }) {
   }
 
   const mainContent = (
-    <>
+    <div className="luxury-planner-container">
       <h2 className="luxury-section-title mb-4">Tự tạo lộ trình cho riêng bạn</h2>
-      <label className="form-label">Tên tour</label>
-      <input
-        className="form-control mb-2"
-        value={tourName}
-        onChange={(e) => setTourName(e.target.value)}
-        placeholder="Tên tour"
-      />
-      <label className="form-label">Mô tả</label>
-      <textarea
-        className="form-control mb-2"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Mô tả"
-      />
-      <label className="form-label">Tổng chi phí (VND)</label>
-      <input
-        className="form-control mb-2"
-        type="number"
-        value={totalCost}
-        onChange={(e) => setTotalCost(e.target.value)}
-        placeholder="Tổng chi phí (VND)"
-      />
-      <h4>Các bước trong tour</h4>
-      {steps.map((step, i) => (
-        <div key={i} className="row mb-2">
-          <div className="col-md-5">
-            <label className="form-label">Địa điểm</label>
-            <select
-              className="form-select"
-              value={step.place_id}
-              onChange={(e) => handleChangeStep(i, "place_id", e.target.value)}
-            >
-              <option value="">-- Chọn địa điểm --</option>
-              {places.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="col-md-3">
-            <label className="form-label">Thứ tự</label>
-            <input
-              type="number"
-              className="form-control"
-              placeholder="Thứ tự"
-              value={step.step_order}
-              onChange={(e) => handleChangeStep(i, "step_order", e.target.value)}
-            />
-          </div>
-          <div className="col-md-4">
-            <label className="form-label">Thời gian ở lại (phút)</label>
-            <input
-              type="number"
-              className="form-control"
-              placeholder="Thời gian ở lại (phút)"
-              value={step.stay_duration}
-              onChange={(e) => handleChangeStep(i, "stay_duration", e.target.value)}
-            />
+      
+      {/* Tour Basic Info */}
+      <div className="luxury-card mb-4">
+        <div className="luxury-card-body">
+          <h4 className="mb-3">Thông tin tour</h4>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Tên tour <span className="text-danger">*</span></label>
+              <input
+                className="form-control"
+                value={tourName}
+                onChange={(e) => setTourName(e.target.value)}
+                placeholder="Nhập tên tour của bạn"
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Tổng chi phí (VND)</label>
+              <input
+                className="form-control"
+                type="number"
+                value={totalCost}
+                onChange={(e) => setTotalCost(e.target.value)}
+                placeholder="Nhập chi phí dự kiến"
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Ngày bắt đầu</label>
+              <input
+                type="date"
+                className="form-control"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Ngày kết thúc</label>
+              <input
+                type="date"
+                className="form-control"
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+                min={startDate}
+              />
+            </div>
+            <div className="col-12">
+              <label className="form-label fw-bold">Mô tả</label>
+              <textarea
+                className="form-control"
+                rows="3"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Mô tả chi tiết về tour của bạn"
+              />
+            </div>
           </div>
         </div>
-      ))}
-      <button className="btn btn-main btn-add-location" onClick={handleAddStep}>
-        + Thêm địa điểm
-      </button>
-      <br />
-      <button className="btn btn-main" onClick={handleSubmit}>
-        Tạo tour
-      </button>
-    </>
+      </div>
+
+      {/* Tour Steps */}
+      <div className="luxury-card">
+        <div className="luxury-card-body">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4 className="mb-0">Các địa điểm trong tour</h4>
+            <button className="btn btn-main btn-sm" onClick={handleAddStep}>
+              <i className="fas fa-plus me-2"></i>Thêm địa điểm
+            </button>
+          </div>
+
+          {steps.length === 0 ? (
+            <div className="text-center py-4">
+              <i className="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+              <p className="text-muted">Chưa có địa điểm nào. Hãy thêm địa điểm đầu tiên!</p>
+            </div>
+          ) : (
+            <div className="tour-steps-container">
+              {steps.map((step, i) => {
+                const selectedPlace = getSelectedPlace(step.place_id);
+                return (
+                  <div key={i} className="tour-step-card mb-3">
+                    <div className="tour-step-header">
+                      <div className="step-number">{step.step_order}</div>
+                      <div className="step-controls">
+                        <button 
+                          className="btn btn-sm btn-outline-secondary me-1"
+                          onClick={() => handleMoveStep(i, 'up')}
+                          disabled={i === 0}
+                          title="Di chuyển lên"
+                        >
+                          <i className="fas fa-chevron-up"></i>
+                        </button>
+                        <button 
+                          className="btn btn-sm btn-outline-secondary me-1"
+                          onClick={() => handleMoveStep(i, 'down')}
+                          disabled={i === steps.length - 1}
+                          title="Di chuyển xuống"
+                        >
+                          <i className="fas fa-chevron-down"></i>
+                        </button>
+                        <button 
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleRemoveStep(i)}
+                          title="Xóa địa điểm"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="tour-step-content">
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <label className="form-label fw-bold">Địa điểm <span className="text-danger">*</span></label>
+                          <select
+                            className="form-select"
+                            value={step.place_id}
+                            onChange={(e) => handleChangeStep(i, "place_id", e.target.value)}
+                          >
+                            <option value="">-- Chọn địa điểm --</option>
+                            {places.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedPlace && (
+                            <div className="mt-2 p-2 bg-light rounded">
+                              <small className="text-muted">
+                                <i className="fas fa-map-marker-alt me-1"></i>
+                                {selectedPlace.address}
+                              </small>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="col-md-3">
+                          <label className="form-label fw-bold">Thời gian ở lại (phút)</label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            min="15"
+                            step="15"
+                            value={step.stay_duration}
+                            onChange={(e) => handleChangeStep(i, "stay_duration", e.target.value)}
+                          />
+                        </div>
+                        
+                        <div className="col-md-3">
+                          <label className="form-label fw-bold">Thứ tự</label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            min="1"
+                            value={step.step_order}
+                            onChange={(e) => handleChangeStep(i, "step_order", e.target.value)}
+                          />
+                        </div>
+                        
+                        <div className="col-md-6">
+                          <label className="form-label fw-bold">Thời gian bắt đầu</label>
+                          <input
+                            type="time"
+                            className="form-control"
+                            value={step.start_time || ""}
+                            onChange={(e) => handleChangeStep(i, "start_time", e.target.value)}
+                          />
+                        </div>
+                        
+                        <div className="col-md-6">
+                          <label className="form-label fw-bold">Thời gian kết thúc</label>
+                          <input
+                            type="time"
+                            className="form-control"
+                            value={step.end_time || ""}
+                            onChange={(e) => handleChangeStep(i, "end_time", e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <div className="text-center mt-4">
+        <button 
+          className="btn btn-main btn-lg px-5" 
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <i className="fas fa-spinner fa-spin me-2"></i>
+              Đang tạo tour...
+            </>
+          ) : (
+            <>
+              <i className="fas fa-save me-2"></i>
+              Tạo tour
+            </>
+          )}
+        </button>
+      </div>
+    </div>
   );
 
   if (noLayout) return mainContent;

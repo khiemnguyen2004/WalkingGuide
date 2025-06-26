@@ -59,7 +59,7 @@ function Header() {
       <div className="container d-flex align-items-center justify-content-between">
         <div className="d-flex align-items-center">
           <Link to ="/">
-            <img src="/src/images/banner.png" alt="Walking Guide Banner" style={{ height: 100, marginRight: 28, borderRadius: 12 }} />
+            <img src="/src/images/banner.png" alt="Walking Guide Banner" style={{ height: 180, marginRight: 28, borderRadius: 12 }} />
           </Link>
         </div>
         <div className="d-flex align-items-center gap-2 position-relative" ref={avatarRef}>

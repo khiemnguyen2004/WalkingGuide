@@ -1,5 +1,5 @@
-import React from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import React, { useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -12,7 +12,21 @@ const defaultIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-function Map({ locations = [], className }) {
+function MapAutoCenter({ locations, selectedCity }) {
+  const map = useMap();
+  useEffect(() => {
+    if (locations.length > 0) {
+      const avgLat = locations.reduce((sum, loc) => sum + loc.lat, 0) / locations.length;
+      const avgLng = locations.reduce((sum, loc) => sum + loc.lng, 0) / locations.length;
+      const center = [avgLat, avgLng];
+      const zoom = locations.length === 1 ? 15 : 11;
+      map.setView(center, zoom, { animate: true });
+    }
+  }, [selectedCity, locations, map]);
+  return null;
+}
+
+function Map({ locations = [], className, selectedCity }) {
   const defaultCenter = [21.0285, 105.8542]; // Hà Nội
   let center = defaultCenter;
   let zoom = 13;
@@ -40,6 +54,7 @@ function Map({ locations = [], className }) {
             attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          <MapAutoCenter locations={validLocations} selectedCity={selectedCity} />
           {validLocations.map((location) => (
             <Marker key={location.id} position={[location.lat, location.lng]} icon={defaultIcon}>
               <Popup>{location.name}</Popup>

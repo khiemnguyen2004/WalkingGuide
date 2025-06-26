@@ -4,6 +4,9 @@ import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
 import CKEditorField from "../../components/CKEditorField";
 import "../../css/AdminLayout.css";
+import { getTags } from "../../api/tagApi";
+import { getPlaceTags, createPlaceTag, deletePlaceTag } from "../../api/placeTagApi";
+import { Modal, Button } from "react-bootstrap";
 
 function PlacesAdmin() {
   const [places, setPlaces] = useState([]);
@@ -14,14 +17,31 @@ function PlacesAdmin() {
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [editId, setEditId] = useState(null);
+  const [tags, setTags] = useState([]);
+  const [placeTags, setPlaceTags] = useState([]);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [tagModalPlace, setTagModalPlace] = useState(null);
+  const [tagModalSelected, setTagModalSelected] = useState([]);
 
   useEffect(() => {
     fetchPlaces();
+    fetchTags();
+    fetchPlaceTags();
   }, []);
 
   const fetchPlaces = async () => {
     const res = await axios.get("http://localhost:3000/api/places");
     setPlaces(res.data);
+  };
+
+  const fetchTags = async () => {
+    const res = await getTags();
+    setTags(res.data);
+  };
+
+  const fetchPlaceTags = async () => {
+    const res = await getPlaceTags();
+    setPlaceTags(res.data);
   };
 
   const handleCreate = async () => {
@@ -91,6 +111,40 @@ function PlacesAdmin() {
       await axios.delete(`http://localhost:3000/api/places/${id}`);
       fetchPlaces();
     }
+  };
+
+  // Helper to get tags for a place
+  const getTagsForPlace = (placeId) => {
+    const tagIds = placeTags.filter(pt => pt.place_id === placeId).map(pt => pt.tag_id);
+    return tags.filter(tag => tagIds.includes(tag.id));
+  };
+
+  const openTagModal = (place) => {
+    setTagModalPlace(place);
+    setTagModalSelected(getTagsForPlace(place.id).map(t => t.id));
+    setShowTagModal(true);
+  };
+
+  const closeTagModal = () => {
+    setShowTagModal(false);
+    setTagModalPlace(null);
+    setTagModalSelected([]);
+  };
+
+  const handleTagModalSave = async () => {
+    if (!tagModalPlace) return;
+    const currentTagIds = getTagsForPlace(tagModalPlace.id).map(t => t.id);
+    const toAdd = tagModalSelected.filter(id => !currentTagIds.includes(id));
+    const toRemove = currentTagIds.filter(id => !tagModalSelected.includes(id));
+    for (const tagId of toAdd) {
+      await createPlaceTag({ place_id: tagModalPlace.id, tag_id: tagId });
+    }
+    for (const tagId of toRemove) {
+      const pt = placeTags.find(pt => pt.place_id === tagModalPlace.id && pt.tag_id === tagId);
+      if (pt) await deletePlaceTag(pt.id);
+    }
+    fetchPlaceTags();
+    closeTagModal();
   };
 
   return (
@@ -193,6 +247,7 @@ function PlacesAdmin() {
                     <th>Vĩ độ</th>
                     <th>Kinh độ</th>
                     <th>Ảnh</th>
+                    <th>Thẻ</th>
                     <th>Hành động</th>
                   </tr>
                 </thead>
@@ -222,6 +277,16 @@ function PlacesAdmin() {
                         )}
                       </td>
                       <td>
+                        {getTagsForPlace(p.id).map(tag => (
+                          <span key={tag.id} className="badge bg-primary me-1">
+                            {tag.name}
+                          </span>
+                        ))}
+                        <button className="btn btn-sm btn-outline-secondary ms-2" onClick={() => openTagModal(p)}>
+                          Quản lý thẻ
+                        </button>
+                      </td>
+                      <td>
                         <button
                           className="btn admin-main-btn btn-sm me-2"
                           onClick={() => handleEdit(p)}
@@ -243,6 +308,36 @@ function PlacesAdmin() {
           </div>
         </main>
       </div>
+      {/* Tag Modal */}
+      <Modal show={showTagModal} onHide={closeTagModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Quản lý thẻ cho địa điểm: {tagModalPlace?.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {tags.map(tag => (
+            <div key={tag.id} className="form-check">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id={`tag-checkbox-${tag.id}`}
+                checked={tagModalSelected.includes(tag.id)}
+                onChange={e => {
+                  if (e.target.checked) {
+                    setTagModalSelected([...tagModalSelected, tag.id]);
+                  } else {
+                    setTagModalSelected(tagModalSelected.filter(id => id !== tag.id));
+                  }
+                }}
+              />
+              <label className="form-check-label" htmlFor={`tag-checkbox-${tag.id}`}>{tag.name}</label>
+            </div>
+          ))}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={closeTagModal}>Hủy</Button>
+          <Button variant="primary" onClick={handleTagModalSave}>Lưu</Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

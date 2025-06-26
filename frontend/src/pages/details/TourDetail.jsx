@@ -76,6 +76,12 @@ const TourDetail = () => {
                 Người tạo: <b>{tour.user_id}</b>
               </span>
               <span>Chi phí: <b>{tour.total_cost}</b></span>
+              {tour.start_time && (
+                <span>Bắt đầu: <b>{tour.start_time}</b></span>
+              )}
+              {tour.end_time && (
+                <span>Kết thúc: <b>{tour.end_time}</b></span>
+              )}
             </div>
             <div className="prose prose-lg mb-4" style={{ color: '#223a5f', fontSize: '1.15rem', lineHeight: 1.7 }}>
               <div dangerouslySetInnerHTML={{ __html: tour.description }} />
@@ -87,6 +93,12 @@ const TourDetail = () => {
                   {tour.steps.map((step, idx) => (
                     <li key={idx} className="mb-2">
                       <strong>Ngày {step.step_order}:</strong> {step.place_name || (step.place && step.place.name)} (Thời gian lưu trú: {step.stay_duration} phút)
+                      {step.start_time && (
+                        <span> | Bắt đầu: <b>{step.start_time}</b></span>
+                      )}
+                      {step.end_time && (
+                        <span> | Kết thúc: <b>{step.end_time}</b></span>
+                      )}
                     </li>
                   ))}
                 </ul>

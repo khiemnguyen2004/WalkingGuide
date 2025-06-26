@@ -10,8 +10,9 @@
   min-height: 100vh;
   animation: fadeInBg 1.2s ease;
   padding-left: 220px;
-  margin-top: 115px;
+  margin-top: 0 !important;
   width:100%;
+  padding-top: 70px !important;
 }
 
 @keyframes fadeInBg {
@@ -159,7 +160,7 @@
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.13);
   border-radius: 1.5rem;
   transition: box-shadow 0.3s, transform 0.3s;
-  min-height: 260px;
+  min-height: 150px;
   max-height: 420px;
   display: flex;
   flex-direction: column;
@@ -189,6 +190,8 @@
   font-size: 1.7rem;
   font-weight: 700;
   text-align: center;
+  height: 70px;
+  margin-bottom: 0 !important;
 }
 
 .luxury-header .btn-main{
@@ -204,7 +207,7 @@
   box-shadow: 0 2px 12px 0 rgba(31, 38, 135, 0.08);
   /* border-radius: 0 0 1.2rem 1.2rem; */
   padding: 0.7rem 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0 !important;
   font-size: 1.1rem;
   font-weight: 500;
   animation: fadeInBg 1.2s;
@@ -379,7 +382,7 @@
 }
 
 .luxury-home-container {
-  padding-left: 60px;
+  padding-left: 0 !important;
   transition: padding-left 0.3s cubic-bezier(.4,2,.6,1);
 }
 
@@ -405,12 +408,12 @@
   content: '';
   position: absolute;
   top: 0;
-  left: 50%;
+  left: 0;
   transform: translateX(-50%);
-  width: 95vw;
+  width: 185vw;
   height: 100%;
   background-image: url('/src/images/bg-image.jpg');
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: center top;
   background-repeat: no-repeat;
   z-index: -1;
@@ -573,4 +576,344 @@
     max-width: 100%;
   }
 }
-/* End ManualPlanner homepage tweaks */
+
+/* Tour Planner Styles */
+.luxury-planner-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.tour-steps-container {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.tour-step-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tour-step-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: #3498db;
+}
+
+.tour-step-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.step-number {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.step-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.step-controls .btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.step-controls .btn:hover {
+  transform: scale(1.1);
+}
+
+.tour-step-content {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #e9ecef;
+}
+
+/* Timeline Styles for AutoPlanner */
+.tour-steps-timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.tour-steps-timeline::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, #3498db 0%, #b6e0fe 100%);
+  border-radius: 1px;
+}
+
+.timeline-step {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -2rem;
+  top: 0.5rem;
+}
+
+.timeline-marker .step-number {
+  width: 36px;
+  height: 36px;
+  font-size: 1rem;
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.timeline-content {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.place-card {
+  width: 100%;
+}
+
+.place-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.place-name {
+  color: #1a5bb8;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.place-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.place-details .badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+}
+
+.place-address {
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.place-description {
+  margin: 0;
+  padding: 0.5rem 0;
+  border-top: 1px solid #f1f3f4;
+}
+
+/* Tour Info Styles */
+.tour-info {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e3f2fd;
+}
+
+.tour-info h5 {
+  color: #1a5bb8;
+  font-weight: 600;
+}
+
+/* Form Improvements */
+.luxury-planner-container .form-control,
+.luxury-planner-container .form-select {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.luxury-planner-container .form-control:focus,
+.luxury-planner-container .form-select:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+  outline: none;
+}
+
+.luxury-planner-container .form-label {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Button Improvements */
+.luxury-planner-container .btn-main {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.luxury-planner-container .btn-main:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+  background: linear-gradient(135deg, #2980b9 0%, #1f5f8b 100%);
+}
+
+.luxury-planner-container .btn-main:disabled {
+  opacity: 0.7;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+}
+
+/* Alert Improvements */
+.luxury-planner-container .alert {
+  border-radius: 12px;
+  border: none;
+  padding: 1rem 1.5rem;
+  font-weight: 500;
+}
+
+.luxury-planner-container .alert-danger {
+  background: linear-gradient(135deg, #fee 0%, #fcc 100%);
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tour-step-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .step-controls {
+    align-self: flex-end;
+  }
+  
+  .place-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .place-details {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .timeline-content {
+    padding: 1rem;
+  }
+  
+  .tour-steps-timeline {
+    padding-left: 1.5rem;
+  }
+  
+  .timeline-marker {
+    left: -1.5rem;
+  }
+  
+  .timeline-marker .step-number {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Loading States */
+.luxury-planner-container .btn:disabled {
+  cursor: not-allowed;
+}
+
+.luxury-planner-container .fa-spin {
+  animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.luxury-planner-container .text-center {
+  color: #6c757d;
+}
+
+.luxury-planner-container .fa-3x {
+  opacity: 0.5;
+}
+
+/* Card Hover Effects */
+.luxury-card {
+  transition: all 0.3s ease;
+}
+
+.luxury-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Form Group Spacing */
+.luxury-planner-container .row.g-3 > * {
+  margin-bottom: 1rem;
+}
+
+/* Badge Improvements */
+.badge {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.badge.bg-primary {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+}
+
+.badge.bg-success {
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
+}
+
+.badge.bg-info {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+}
