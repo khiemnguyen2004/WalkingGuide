@@ -183,7 +183,7 @@ function ManualPlanner({ noLayout }) {
               />
               {totalCost && (
                 <div className="form-text">
-                  <i className="fas fa-info-circle me-1"></i>
+                  <i className="bi bi-info-circle me-1"></i>
                   Chi phí: {parseInt(totalCost).toLocaleString('vi-VN')} VNĐ
                 </div>
               )}
@@ -258,7 +258,7 @@ function ManualPlanner({ noLayout }) {
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4 className="mb-0">Các địa điểm trong tour</h4>
             <div className="d-flex gap-2">
-              <button className="btn btn-outline-primary btn-sm" onClick={() => {
+              <button className="btn btn-main btn-sm" onClick={() => {
                 // Calculate days based on start and end dates
                 let totalDays = 1;
                 if (start_time && end_time) {
@@ -279,17 +279,17 @@ function ManualPlanner({ noLayout }) {
                 }));
                 setSteps(newSteps);
               }}>
-                <i className="fas fa-magic me-1"></i>Tự động phân ngày
+                <i className="bi bi-magic me-1"></i>Tự động phân ngày
               </button>
               <button className="btn btn-main btn-sm" onClick={handleAddStep}>
-                <i className="fas fa-plus me-2"></i>Thêm địa điểm
+                Thêm địa điểm
               </button>
             </div>
           </div>
 
           {steps.length === 0 ? (
             <div className="text-center py-4">
-              <i className="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+              <i className="bi bi-map-marker-alt fa-3x text-muted mb-3"></i>
               <p className="text-muted">Chưa có địa điểm nào. Hãy thêm địa điểm đầu tiên!</p>
             </div>
           ) : (
@@ -350,7 +350,7 @@ function ManualPlanner({ noLayout }) {
                                 {selectedPlace && (
                                   <div className="mt-2 p-2 bg-light rounded">
                                     <small className="text-muted">
-                                      <i className="fas fa-map-marker-alt me-1"></i>
+                                      <i className="bi bi-map-marker-alt me-1"></i>
                                       {selectedPlace.address}
                                     </small>
                                   </div>
@@ -464,12 +464,12 @@ function ManualPlanner({ noLayout }) {
         >
           {isSubmitting ? (
             <>
-              <i className="fas fa-spinner fa-spin me-2"></i>
+              <i className="bi bi-spinner fa-spin me-2"></i>
               Đang tạo tour...
             </>
           ) : (
             <>
-              <i className="fas fa-save me-2"></i>
+              <i className="bi bi-save me-2"></i>
               Tạo tour
             </>
           )}

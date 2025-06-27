@@ -1,3 +1,6 @@
+body{
+  font-family: Arial, Helvetica, sans-serif !important;
+}
 :root {
   --luxury-gradient: linear-gradient(135deg, #f8fafc 0%, #b6e0fe 50%, #5b9df9 100%);
   --luxury-card-gradient: linear-gradient(120deg, #b6e0fe 0%, #5b9df9 100%);

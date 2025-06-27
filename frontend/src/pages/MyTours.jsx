@@ -319,24 +319,165 @@ function MyTours() {
                         </div>
                         <div className="mb-3">
                           <label className="form-label">Chi phí (VND)</label>
-                          <input type="number" className="form-control" name="total_cost" value={editForm.total_cost} onChange={handleEditChange} min={0} />
+                          <input 
+                            type="text" 
+                            className="form-control" 
+                            name="total_cost" 
+                            value={editForm.total_cost ? parseInt(editForm.total_cost).toLocaleString('vi-VN') : ''} 
+                            onChange={(e) => {
+                              const rawValue = e.target.value.replace(/\D/g, '');
+                              handleEditChange({ target: { name: 'total_cost', value: rawValue } });
+                            }} 
+                            placeholder="Nhập chi phí dự kiến"
+                          />
+                          {editForm.total_cost && (
+                            <div className="form-text">
+                              <i className="fas fa-info-circle me-1"></i>
+                              Chi phí: {parseInt(editForm.total_cost).toLocaleString('vi-VN')} VNĐ
+                            </div>
+                          )}
+                          
+                          {/* Price Suggestions */}
+                          {editForm.total_cost && editForm.total_cost.length > 0 && editForm.total_cost.length <= 3 && !editForm.total_cost.endsWith('000') && (
+                            <div className="mt-2">
+                              <small className="text-muted">Gợi ý:</small>
+                              <div className="d-flex flex-wrap gap-1 mt-1">
+                                {(() => {
+                                  const inputNum = editForm.total_cost.replace(/\D/g, '');
+                                  const suggestions = [
+                                    { value: inputNum + '000', label: inputNum + '.000 VNĐ' },
+                                    { value: inputNum + '0000', label: inputNum + '0.000 VNĐ' },
+                                    { value: inputNum + '00000', label: inputNum + '00.000 VNĐ' },
+                                    { value: inputNum + '000000', label: inputNum + '.000.000 VNĐ' },
+                                    { value: inputNum + '0000000', label: inputNum + '0.000.000 VNĐ' },
+                                  ].filter(s => s.value !== editForm.total_cost);
+                                  
+                                  return suggestions.map((suggestion, index) => (
+                                    <button
+                                      key={index}
+                                      type="button"
+                                      className="btn btn-outline-primary btn-sm"
+                                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
+                                      onClick={() => handleEditChange({ target: { name: 'total_cost', value: suggestion.value } })}
+                                    >
+                                      {suggestion.label}
+                                    </button>
+                                  ));
+                                })()}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="col-md-6">
                         <label className="form-label">Hành trình</label>
-                        <ol className="mb-0" style={{fontSize:'1.08rem'}}>
+                        <div className="tour-steps-edit-container" style={{maxHeight: '400px', overflowY: 'auto'}}>
                           {editForm.steps && editForm.steps.map((step, idx) => (
-                            <li key={step.id || idx} className="mb-3 d-flex align-items-center gap-2">
-                              <select className="form-select" style={{width:180}} value={step.place_id} onChange={e => handleEditStepFieldChange(idx, 'place_id', e.target.value)}>
-                                {allPlaces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                              </select>
-                              <input type="time" className="form-control" name="start_time" value={step.start_time} onChange={e => handleEditStepFieldChange(idx, 'start_time', e.target.value)} />
-                              <input type="time" className="form-control" name="end_time" value={step.end_time} onChange={e => handleEditStepFieldChange(idx, 'end_time', e.target.value)} />
-                              <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => handleRemoveStep(idx)} title="Xóa địa điểm"><i className="bi bi-x"></i></button>
-                            </li>
+                            <div 
+                              key={step.id || idx} 
+                              className="tour-step-edit-item mb-3 p-3 border rounded"
+                              style={{
+                                background: '#f8f9fa',
+                                cursor: 'grab',
+                                transition: 'all 0.2s ease',
+                                border: '1px solid #dee2e6'
+                              }}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData('text/plain', idx);
+                                e.currentTarget.style.opacity = '0.5';
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.style.opacity = '1';
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.style.borderColor = '#007bff';
+                                e.currentTarget.style.background = '#e3f2fd';
+                              }}
+                              onDragLeave={(e) => {
+                                e.currentTarget.style.borderColor = '#dee2e6';
+                                e.currentTarget.style.background = '#f8f9fa';
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const draggedIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                                const droppedIdx = idx;
+                                
+                                if (draggedIdx !== droppedIdx) {
+                                  const newSteps = [...editForm.steps];
+                                  const draggedStep = newSteps[draggedIdx];
+                                  newSteps.splice(draggedIdx, 1);
+                                  newSteps.splice(droppedIdx, 0, draggedStep);
+                                  
+                                  // Update step_order
+                                  newSteps.forEach((step, i) => {
+                                    step.step_order = i + 1;
+                                  });
+                                  
+                                  setEditForm(prev => ({ ...prev, steps: newSteps }));
+                                }
+                                
+                                e.currentTarget.style.borderColor = '#dee2e6';
+                                e.currentTarget.style.background = '#f8f9fa';
+                              }}
+                            >
+                              <div className="d-flex align-items-center gap-2">
+                                <div className="step-number" style={{
+                                  background: '#007bff',
+                                  color: 'white',
+                                  borderRadius: '50%',
+                                  width: '24px',
+                                  height: '24px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 'bold'
+                                }}>
+                                  {step.step_order}
+                                </div>
+                                <div className="flex-grow-1">
+                                  <select 
+                                    className="form-select form-select-sm" 
+                                    value={step.place_id} 
+                                    onChange={e => handleEditStepFieldChange(idx, 'place_id', e.target.value)}
+                                  >
+                                    <option value="">Chọn địa điểm...</option>
+                                    {allPlaces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                  </select>
+                                </div>
+                                <div className="d-flex gap-1">
+                                  <input 
+                                    type="time" 
+                                    className="form-control form-control-sm" 
+                                    style={{width: '100px'}}
+                                    value={step.start_time || ''} 
+                                    onChange={e => handleEditStepFieldChange(idx, 'start_time', e.target.value)} 
+                                  />
+                                  <input 
+                                    type="time" 
+                                    className="form-control form-control-sm" 
+                                    style={{width: '100px'}}
+                                    value={step.end_time || ''} 
+                                    onChange={e => handleEditStepFieldChange(idx, 'end_time', e.target.value)} 
+                                  />
+                                  <button 
+                                    type="button" 
+                                    className="btn btn-outline-danger btn-sm" 
+                                    onClick={() => handleRemoveStep(idx)} 
+                                    title="Xóa địa điểm"
+                                  >
+                                    <i className="bi bi-trash"></i>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           ))}
-                        </ol>
-                        <button type="button" className="btn btn-outline-success btn-sm mt-2" onClick={handleAddStep}><i className="bi bi-plus"></i> Thêm địa điểm</button>
+                        </div>
+                        <button type="button" className="btn btn-outline-success btn-sm mt-2" onClick={handleAddStep}>
+                          <i className="bi bi-plus"></i> Thêm địa điểm
+                        </button>
                       </div>
                     </div>
                     {editError && <div className="text-danger mb-2">{editError}</div>}
@@ -403,7 +544,7 @@ function MyTours() {
 
             {/* Card Header with Edit Button */}
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="card-title mb-2 fw-bold">
+              <h5 className="card-title mb-2 fw-bold luxury-section-title">
                 {selected.name}
                 {selected.start_time && selected.end_time && (
                   <span className="badge bg-info ms-2" style={{fontSize: '0.95em', fontWeight: 500}}>
@@ -423,7 +564,7 @@ function MyTours() {
 
             {/* Tour Info */}
             <div className="mb-4 d-flex flex-wrap gap-4 justify-content-center" style={{ fontSize: '1.05rem', color: 'rgb(26, 91, 184)' }}>
-              <span>Chi phí: <b>{selected.total_cost} VND</b></span>
+              <span>Chi phí: <b>{selected.total_cost.toLocaleString('vi-VN')} VND</b></span>
               {selected.created_at && <span>Ngày tạo: {new Date(selected.created_at).toLocaleDateString()}</span>}
 
                 </div>
@@ -433,7 +574,7 @@ function MyTours() {
 
                 {/* Day summary */}
                 <div className="mb-4">
-                  <h6 className="fw-bold mb-3 text-primary">Tổng quan theo ngày:</h6>
+                  <h6 className="fw-bold mb-3 luxury-section-title">Tổng quan theo ngày:</h6>
                   <div className="row g-3">
                     {(() => {
                       // Group steps by day
@@ -446,8 +587,8 @@ function MyTours() {
                       const sortedDays = Object.keys(stepsByDay).sort((a, b) => parseInt(a) - parseInt(b));
                       return sortedDays.map(dayNum => (
                         <div key={dayNum} className="col-md-6 col-lg-4">
-                          <div className="card border-primary h-100" style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(26, 91, 184, 0.1)'}}>
-                            <div className="card-header bg-primary text-white text-center fw-bold" style={{borderRadius: '12px 12px 0 0'}}>
+                          <div className="card h-100" style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(26, 91, 184, 0.1)'}}>
+                            <div className="card-header text-center text-white fw-bold" style={{borderRadius: '12px 12px 0 0', background: 'linear-gradient(120deg, #b6e0fe 0%, #5b9df9 100%)'}}>
                               Ngày {dayNum}
                             </div>
                             <div className="card-body p-3">
@@ -474,7 +615,6 @@ function MyTours() {
                 </div>
                 {/* Place Images Row */}
                 <div className="mb-4">
-                  <h6 className="fw-bold mb-3 text-primary">Hình ảnh địa điểm theo ngày:</h6>
                   {(() => {
                     // Group steps by day for journey list as well
                     const stepsByDay = tourSteps.reduce((acc, step) => {
@@ -487,7 +627,7 @@ function MyTours() {
                     return sortedDays.map(dayNum => (
                       <div key={dayNum} className="mb-4">
                         <h6 className="fw-bold mb-3 text-secondary border-bottom pb-2">
-                          <i className="fas fa-calendar-day me-2"></i>Ngày {dayNum}
+                          <i className="bi bi-calendar-day me-2"></i>Ngày {dayNum}
                         </h6>
                         <div className="d-flex gap-3 flex-wrap">
                           {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step) => (
@@ -500,9 +640,6 @@ function MyTours() {
                               <div className="small mt-2" style={{maxWidth: 100, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color:'#1a1a1a', fontWeight: '500'}}>
                                 {places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
                               </div>
-                              <div className="badge bg-primary" style={{fontSize: '0.7em'}}>
-                                Bước {step.step_order}
-                              </div>
                             </div>
                           ))}
                         </div>
@@ -512,7 +649,7 @@ function MyTours() {
                 </div>
                 {/* Journey List */}
                 <div className="mb-4">
-                  <h6 className="fw-bold mb-3 text-primary">Chi tiết hành trình:</h6>
+                  <h6 className="fw-bold mb-3 luxury-section-title">Chi tiết hành trình:</h6>
                   <div className="list-group">
                     {(() => {
                       const stepsByDay = tourSteps.reduce((acc, step) => {
@@ -524,17 +661,17 @@ function MyTours() {
                       const sortedDays = Object.keys(stepsByDay).sort((a, b) => parseInt(a) - parseInt(b));
                       return sortedDays.map(dayNum => (
                         <React.Fragment key={dayNum}>
-                          <div className="list-group-item bg-primary text-white fw-bold text-center" style={{borderRadius: '8px 8px 0 0', fontSize: '1.1em'}}>
-                            <i className="fas fa-calendar-day me-2"></i>Ngày {dayNum}
+                          <div className="list-group-item text-white fw-bold text-center" style={{borderRadius: '8px 8px 0 0', fontSize: '1.1em', background: 'linear-gradient(120deg, #b6e0fe 0%, #5b9df9 100%)'}}>
+                            <i className="bi bi-calendar-day me-2"></i>Ngày {dayNum}
                           </div>
                           {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step, idx) => (
-                            <div key={step.id || idx} className="list-group-item d-flex align-items-center justify-content-between border-start border-end" style={{borderLeft: '4px solid #1a5bb8', marginLeft: '1rem', marginRight: '1rem'}}>
+                            <div key={step.id || idx} className="list-group-item d-flex align-items-center justify-content-between border-start border-end" style={{borderLeft: '4px solid #1a5bb8'}}>
                               <div className="d-flex align-items-center">
                                 <span className="badge bg-primary me-3" style={{fontSize: '1em', minWidth: '2rem'}}>
                                   {step.step_order}
                                 </span>
                                 <div>
-                                  <div className="fw-bold" style={{color: '#1a1a1a'}}>
+                                  <div className="fw-bold" style={{color: '#1a5bb8'}}>
                                     {places[step.place_id]?.name || 'Địa điểm'}
                                   </div>
                                   <div className="small text-muted">
@@ -545,20 +682,20 @@ function MyTours() {
                               <div className="d-flex gap-2">
                                 {step.start_time && (
                                   <span className="badge bg-success" style={{fontSize: '0.85em'}}>
-                                    <i className="fas fa-play me-1"></i>{step.start_time}
+                                    <i className="bi bi-play me-1"></i>{step.start_time}
                                   </span>
                                 )}
                                 {step.end_time && (
                                   <span className="badge bg-info" style={{fontSize: '0.85em'}}>
-                                    <i className="fas fa-stop me-1"></i>{step.end_time}
+                                    <i className="bi bi-stop me-1"></i>{step.end_time}
                                   </span>
                                 )}
                               </div>
                             </div>
                           ))}
                           {dayNum < sortedDays[sortedDays.length - 1] && (
-                            <div className="text-center py-2" style={{background: '#f8f9fa', borderLeft: '4px solid #dee2e6', marginLeft: '1rem', marginRight: '1rem'}}>
-                              <i className="fas fa-arrow-down text-muted"></i>
+                            <div className="text-center py-2" style={{background: '#f8f9fa', borderLeft: '4px solid #dee2e6', marginLeft: '1.75rem', marginRight: '1rem'}}>
+                              <i className="bi bi-arrow-down text-muted"></i>
                             </div>
                           )}
                         </React.Fragment>

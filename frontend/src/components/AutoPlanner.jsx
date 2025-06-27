@@ -8,7 +8,7 @@ import "../css/luxury-home.css";
 const AutoPlanner = ({ noLayout }) => {
   const [days, setDays] = useState(1);
   const [interests, setInterests] = useState("");
-  const [budget, setBudget] = useState("");
+  const [total_cost, setTotal_cost] = useState("");
   const [tourData, setTourData] = useState(null);
   const [error, setError] = useState("");
   const [tourName, setTourName] = useState("");
@@ -35,7 +35,7 @@ const AutoPlanner = ({ noLayout }) => {
       const res = await axios.post("http://localhost:3000/api/ai/generate-tour", {
         days: parseInt(days),
         interests: interests.split(",").map(i => i.trim()).filter(Boolean),
-        budget: budget ? parseFloat(budget) : 0,
+        total_cost: total_cost ? parseFloat(total_cost) : 0,
         user_id: Number(user.id),
         tag_ids: selectedTags.map(Number),
         start_time: start_time,
@@ -74,7 +74,7 @@ const AutoPlanner = ({ noLayout }) => {
         name: tourName || tourData.tour.name,
         description: tourData.tour.description,
         user_id: user.id,
-        total_cost: tourData.tour.total_cost,
+        total_cost: total_cost ? parseFloat(total_cost) : 0,
         steps: tourData.steps.map((step, i) => ({
           place_id: step.place_id,
           step_order: i + 1,
@@ -220,34 +220,34 @@ const AutoPlanner = ({ noLayout }) => {
               <input
                 type="text"
                 placeholder="Nhập ngân sách dự kiến"
-                value={budget ? parseInt(budget).toLocaleString('vi-VN') : ''}
+                value={total_cost ? parseInt(total_cost).toLocaleString('vi-VN') : ''}
                 onChange={(e) => {
                   const rawValue = e.target.value.replace(/\D/g, '');
-                  setBudget(rawValue);
+                  setTotal_cost(rawValue);
                 }}
                 className="form-control"
               />
-              {budget && (
+              {total_cost && (
                 <div className="form-text">
-                  <i className="fas fa-info-circle me-1"></i>
-                  Ngân sách: {parseInt(budget).toLocaleString('vi-VN')} VNĐ
+                  <i className="bi bi-info-circle me-1"></i>
+                  Ngân sách: {parseInt(total_cost).toLocaleString('vi-VN')} VNĐ
                 </div>
               )}
               
               {/* Price Suggestions - only show when input is short and not a complete price */}
-              {budget && budget.length > 0 && budget.length <= 3 && !budget.endsWith('000') && (
+              {total_cost && total_cost.length > 0 && total_cost.length <= 3 && !total_cost.endsWith('000') && (
                 <div className="mt-2">
                   <small className="text-muted">Gợi ý:</small>
                   <div className="d-flex flex-wrap gap-1 mt-1">
                     {(() => {
-                      const inputNum = budget.replace(/\D/g, '');
+                      const inputNum = total_cost.replace(/\D/g, '');
                       const suggestions = [
                         { value: inputNum + '000', label: inputNum + '.000 VNĐ' },
                         { value: inputNum + '0000', label: inputNum + '0.000 VNĐ' },
                         { value: inputNum + '00000', label: inputNum + '00.000 VNĐ' },
                         { value: inputNum + '000000', label: inputNum + '.000.000 VNĐ' },
                         { value: inputNum + '0000000', label: inputNum + '0.000.000 VNĐ' },
-                      ].filter(s => s.value !== budget);
+                      ].filter(s => s.value !== total_cost);
                       
                       return suggestions.map((suggestion, index) => (
                         <button
@@ -255,7 +255,7 @@ const AutoPlanner = ({ noLayout }) => {
                           type="button"
                           className="btn btn-outline-primary btn-sm"
                           style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
-                          onClick={() => setBudget(suggestion.value)}
+                          onClick={() => setTotal_cost(suggestion.value)}
                         >
                           {suggestion.label}
                         </button>
@@ -274,13 +274,13 @@ const AutoPlanner = ({ noLayout }) => {
             >
               {isGenerating ? (
                 <>
-                  <i className="fas fa-magic fa-spin me-2"></i>
-                  AI đang tạo tour...
+                  <i className="bi bi-magic fa-spin me-2"></i>
+                  Đang tạo tour...
                 </>
               ) : (
                 <>
-                  <i className="fas fa-magic me-2"></i>
-                  Tạo tour bằng AI
+                  <i className="bi bi-magic text-white me-2"></i>
+                  Tạo tour
                 </>
               )}
             </button>
@@ -290,7 +290,7 @@ const AutoPlanner = ({ noLayout }) => {
 
       {error && (
         <div className="alert alert-danger" role="alert">
-          <i className="fas fa-exclamation-triangle me-2"></i>
+          <i className="bi bi-exclamation-triangle me-2"></i>
           {error}
         </div>
       )}
@@ -308,12 +308,12 @@ const AutoPlanner = ({ noLayout }) => {
               >
                 {isSaving ? (
                   <>
-                    <i className="fas fa-spinner fa-spin me-2"></i>
+                    <i className="bi bi-spinner fa-spin me-2"></i>
                     Đang lưu...
                   </>
                 ) : (
                   <>
-                    <i className="fas fa-save me-2"></i>
+                    <i className="bi bi-save me-2"></i>
                     Lưu tour
                   </>
                 )}
@@ -322,7 +322,7 @@ const AutoPlanner = ({ noLayout }) => {
 
             <div className="tour-info mb-4">
               <h5 className="text-primary mb-2">
-                <i className="fas fa-route me-2"></i>
+                <i className="bi bi-route me-2"></i>
                 {/* {tourData.tour.name} */}
               </h5>
               <p className="text-muted mb-2">
@@ -331,22 +331,22 @@ const AutoPlanner = ({ noLayout }) => {
               <div className="row">
                 <div className="col-md-4">
                   <small className="text-muted">
-                    <i className="fas fa-calendar me-1"></i>
+                    <i className="bi bi-calendar me-1"></i>
                       {start_time && end_time ? `${start_time} → ${end_time}` : `${tourData.steps.length} địa điểm`}
                   </small>
                 </div>
                 <div className="col-md-4">
                   <small className="text-muted">
-                    <i className="fas fa-clock me-1"></i>
+                    <i className="bi bi-clock me-1"></i>
                     {tourData.steps.reduce((total, step) => total + (step.stay_duration || 0), 0)} phút
                   </small>
                 </div>
-                <div className="col-md-4">
+                {/* <div className="col-md-4">
                   <small className="text-muted">
-                    <i className="fas fa-money-bill me-1"></i>
+                    <i className="bi bi-cash me-1"></i>
                     {tourData.tour.total_cost?.toLocaleString('vi-VN')} VND
                   </small>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -363,23 +363,23 @@ const AutoPlanner = ({ noLayout }) => {
                       <div className="place-card">
                         <div className="place-header">
                           <h6 className="place-name mb-1">
-                            <i className="fas fa-map-marker-alt me-2 text-primary"></i>
+                            <i className="bi bi-map-marker-alt me-2 text-primary"></i>
                             {place?.name}
                           </h6>
                           <div className="place-details">
                             <span className="badge bg-primary me-2">
-                              <i className="fas fa-clock me-1"></i>
+                              <i className="bi bi-clock me-1"></i>
                               {step.stay_duration} phút
                             </span>
                             {step.start_time && (
                               <span className="badge bg-success me-2">
-                                <i className="fas fa-play me-1"></i>
+                                <i className="bi bi-play me-1"></i>
                                 {step.start_time}
                               </span>
                             )}
                             {step.end_time && (
                               <span className="badge bg-info">
-                                <i className="fas fa-stop me-1"></i>
+                                <i className="bi bi-stop me-1"></i>
                                 {step.end_time}
                               </span>
                             )}
@@ -387,7 +387,7 @@ const AutoPlanner = ({ noLayout }) => {
                         </div>
                         {place?.address && (
                           <p className="place-address mb-2">
-                            <i className="fas fa-location-dot me-1 text-muted"></i>
+                            <i className="bi bi-geo-alt me-1 text-muted"></i>
                             <small className="text-muted">{place.address}</small>
                           </p>
                         )}
