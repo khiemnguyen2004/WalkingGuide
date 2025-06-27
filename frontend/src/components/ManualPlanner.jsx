@@ -173,11 +173,51 @@ function ManualPlanner({ noLayout }) {
               <label className="form-label fw-bold">Tổng chi phí (VND)</label>
               <input
                 className="form-control"
-                type="number"
-                value={totalCost}
-                onChange={(e) => setTotalCost(e.target.value)}
+                type="text"
+                value={totalCost ? parseInt(totalCost).toLocaleString('vi-VN') : ''}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/\D/g, '');
+                  setTotalCost(rawValue);
+                }}
                 placeholder="Nhập chi phí dự kiến"
               />
+              {totalCost && (
+                <div className="form-text">
+                  <i className="fas fa-info-circle me-1"></i>
+                  Chi phí: {parseInt(totalCost).toLocaleString('vi-VN')} VNĐ
+                </div>
+              )}
+              
+              {/* Price Suggestions - only show when input is short and not a complete price */}
+              {totalCost && totalCost.length > 0 && totalCost.length <= 3 && !totalCost.endsWith('000') && (
+                <div className="mt-2">
+                  <small className="text-muted">Gợi ý:</small>
+                  <div className="d-flex flex-wrap gap-1 mt-1">
+                    {(() => {
+                      const inputNum = totalCost.replace(/\D/g, '');
+                      const suggestions = [
+                        { value: inputNum + '000', label: inputNum + '.000 VNĐ' },
+                        { value: inputNum + '0000', label: inputNum + '0.000 VNĐ' },
+                        { value: inputNum + '00000', label: inputNum + '00.000 VNĐ' },
+                        { value: inputNum + '000000', label: inputNum + '.000.000 VNĐ' },
+                        { value: inputNum + '0000000', label: inputNum + '0.000.000 VNĐ' },
+                      ].filter(s => s.value !== totalCost);
+                      
+                      return suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          className="btn btn-outline-primary btn-sm"
+                          style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
+                          onClick={() => setTotalCost(suggestion.value)}
+                        >
+                          {suggestion.label}
+                        </button>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="col-md-6">
               <label className="form-label fw-bold">Ngày bắt đầu</label>
@@ -272,7 +312,7 @@ function ManualPlanner({ noLayout }) {
                                 disabled={stepIndex === 0}
                                 title="Di chuyển lên"
                               >
-                                <i className="fas fa-chevron-up"></i>
+                                <i className="bi bi-arrow-up"></i>
                               </button>
                               <button 
                                 className="btn btn-sm btn-outline-secondary me-1"
@@ -280,14 +320,14 @@ function ManualPlanner({ noLayout }) {
                                 disabled={stepIndex === steps.length - 1}
                                 title="Di chuyển xuống"
                               >
-                                <i className="fas fa-chevron-down"></i>
+                                <i className="bi bi-arrow-down"></i>
                               </button>
                               <button 
                                 className="btn btn-sm btn-outline-danger"
                                 onClick={() => handleRemoveStep(stepIndex)}
                                 title="Xóa địa điểm"
                               >
-                                <i className="fas fa-trash"></i>
+                                <i className="bi bi-trash"></i>
                               </button>
                             </div>
                           </div>
@@ -436,7 +476,6 @@ function ManualPlanner({ noLayout }) {
   return (
     <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
       <Header />
-      <Navbar activePage="plan" />
       <main className="container py-4 flex-grow-1">
         {mainContent}
         {/* Success Modal */}

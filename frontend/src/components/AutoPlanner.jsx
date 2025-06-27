@@ -2,7 +2,6 @@ import React, { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext.jsx";
 import Header from "./Header.jsx";
-import Navbar from "./Navbar.jsx";
 import Footer from "./Footer.jsx";
 import "../css/luxury-home.css";
 
@@ -149,19 +148,6 @@ const AutoPlanner = ({ noLayout }) => {
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label fw-bold">Số ngày <span className="text-danger">*</span></label>
-              <input
-                type="number"
-                min={1}
-                max={7}
-                placeholder="Nhập số ngày (1-7)"
-                value={days}
-                onChange={(e) => setDays(e.target.value)}
-                className="form-control"
-                required
-              />
-            </div>
-            <div className="col-md-6">
               <label className="form-label fw-bold">Bạn thích đi đâu?</label>
               <div>
                 <div className="d-flex align-items-center gap-2">
@@ -198,8 +184,8 @@ const AutoPlanner = ({ noLayout }) => {
                     );
                   })}
                 </div>
-              </div>
-            </div>          
+              </div>          
+            </div>
             <div className="col-md-6">
               <label className="form-label fw-bold">Ngày bắt đầu</label>
               <input
@@ -232,14 +218,53 @@ const AutoPlanner = ({ noLayout }) => {
             <div className="col-md-6">
               <label className="form-label fw-bold">Ngân sách (VND)</label>
               <input
-                type="number"
-                min={0}
+                type="text"
                 placeholder="Nhập ngân sách dự kiến"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
+                value={budget ? parseInt(budget).toLocaleString('vi-VN') : ''}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/\D/g, '');
+                  setBudget(rawValue);
+                }}
                 className="form-control"
               />
-          </div>
+              {budget && (
+                <div className="form-text">
+                  <i className="fas fa-info-circle me-1"></i>
+                  Ngân sách: {parseInt(budget).toLocaleString('vi-VN')} VNĐ
+                </div>
+              )}
+              
+              {/* Price Suggestions - only show when input is short and not a complete price */}
+              {budget && budget.length > 0 && budget.length <= 3 && !budget.endsWith('000') && (
+                <div className="mt-2">
+                  <small className="text-muted">Gợi ý:</small>
+                  <div className="d-flex flex-wrap gap-1 mt-1">
+                    {(() => {
+                      const inputNum = budget.replace(/\D/g, '');
+                      const suggestions = [
+                        { value: inputNum + '000', label: inputNum + '.000 VNĐ' },
+                        { value: inputNum + '0000', label: inputNum + '0.000 VNĐ' },
+                        { value: inputNum + '00000', label: inputNum + '00.000 VNĐ' },
+                        { value: inputNum + '000000', label: inputNum + '.000.000 VNĐ' },
+                        { value: inputNum + '0000000', label: inputNum + '0.000.000 VNĐ' },
+                      ].filter(s => s.value !== budget);
+                      
+                      return suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          className="btn btn-outline-primary btn-sm"
+                          style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
+                          onClick={() => setBudget(suggestion.value)}
+                        >
+                          {suggestion.label}
+                        </button>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="text-center mt-4">
             <button
