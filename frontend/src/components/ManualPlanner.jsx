@@ -428,6 +428,13 @@ function ManualPlanner({ noLayout }) {
                     })}
                   </div>
                 ))}
+                <button 
+                  className="btn btn-main btn-sm mb-3"
+                  onClick={() => handleAddStep()}
+                  title="Thêm địa điểm"
+                >
+                  Thêm
+                </button>
               </div>
               {/* Add summary preview below steps */}
               <div className="mt-4">
