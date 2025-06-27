@@ -8,9 +8,21 @@ module.exports = {
   
   generateTour: async (req, res) => {
     try {
-      const { interests, budget, days, user_id, tag_ids } = req.body;
-      if (!user_id || !days) {
+      const { interests, budget, days, user_id, tag_ids, start_time, end_time } = req.body;
+      if (!user_id) {
         return res.status(400).json({ error: "Thiếu dữ liệu đầu vào" });
+      }
+
+      // Calculate days based on start and end dates
+      let totalDays = 1;
+      if (start_time && end_time) {
+        const startDate = new Date(start_time);
+        const endDate = new Date(end_time);
+        const diffTime = Math.abs(endDate - startDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        totalDays = Math.max(1, diffDays);
+      } else {
+        totalDays = parseInt(days) || 1;
       }
 
       let matchedTagIds = Array.isArray(tag_ids) ? [...tag_ids] : [];
@@ -50,15 +62,23 @@ module.exports = {
         description: `Gợi ý từ AI với sở thích: ${interests?.join(", ")}`,
         user_id: user_id,
         total_cost: 0,
-        start_time: req.body.start_time || null,
-        end_time: req.body.end_time || null
+        start_time: start_time || null,
+        end_time: end_time || null
       };
-      const steps = allPlaces.slice(0, days * 2).map((p, i) => ({
+      
+      // Generate more places (3-4 per day instead of fixed 2)
+      const placesPerDay = 3; // Allow more places per day
+      const totalPlaces = Math.min(allPlaces.length, totalDays * placesPerDay);
+      const stepsPerDay = Math.ceil(totalPlaces / totalDays);
+      
+      const steps = allPlaces.slice(0, totalPlaces).map((p, i) => ({
         place_id: p.id,
         step_order: i + 1,
         stay_duration: 120,
+        day: Math.floor(i / stepsPerDay) + 1, // Distribute evenly across calculated days
         place: p
       }));
+      
       res.status(200).json({ tour, steps });
     } catch (err) {
       console.error("AI generateTour error:", err);

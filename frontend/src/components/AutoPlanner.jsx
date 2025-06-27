@@ -26,7 +26,7 @@ const AutoPlanner = ({ noLayout }) => {
   }, []);
 
   const generateTour = async () => {
-    if (!user?.id || isNaN(Number(user.id)) || !days || isNaN(days) || parseInt(days) < 1) {
+    if (!user?.id || isNaN(Number(user.id))) {
       setError("Vui lòng nhập đầy đủ thông tin!");
       return;
     }
@@ -38,7 +38,9 @@ const AutoPlanner = ({ noLayout }) => {
         interests: interests.split(",").map(i => i.trim()).filter(Boolean),
         budget: budget ? parseFloat(budget) : 0,
         user_id: Number(user.id),
-        tag_ids: selectedTags.map(Number)
+        tag_ids: selectedTags.map(Number),
+        start_time: start_time,
+        end_time: end_time
       });
       setTourData(res.data);
     } catch (err) {
@@ -54,6 +56,21 @@ const AutoPlanner = ({ noLayout }) => {
     
     setIsSaving(true);
     try {
+      // Calculate days based on start and end dates
+      let totalDays = 1;
+      if (start_time && end_time) {
+        const startDate = new Date(start_time);
+        const endDate = new Date(end_time);
+        const diffTime = Math.abs(endDate - startDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        totalDays = Math.max(1, diffDays);
+      } else {
+        totalDays = parseInt(days) || 1;
+      }
+      
+      // Distribute steps across days evenly
+      const stepsPerDay = Math.ceil(tourData.steps.length / totalDays);
+      
       await axios.post("http://localhost:3000/api/tours", {
         name: tourName || tourData.tour.name,
         description: tourData.tour.description,
@@ -64,7 +81,8 @@ const AutoPlanner = ({ noLayout }) => {
           step_order: i + 1,
           stay_duration: step.stay_duration,
           start_time: step.start_time || null,
-          end_time: step.end_time || null
+          end_time: step.end_time || null,
+          day: Math.floor(i / stepsPerDay) + 1 // Distribute evenly across calculated days
         })),
         start_time: start_time,
         end_time: end_time
@@ -130,7 +148,7 @@ const AutoPlanner = ({ noLayout }) => {
                 placeholder="Nhập tên tour (tuỳ chọn)"
               />
             </div>
-            {/* <div className="col-md-6">
+            <div className="col-md-6">
               <label className="form-label fw-bold">Số ngày <span className="text-danger">*</span></label>
               <input
                 type="number"
@@ -142,7 +160,7 @@ const AutoPlanner = ({ noLayout }) => {
                 className="form-control"
                 required
               />
-            </div> */}
+            </div>
             <div className="col-md-6">
               <label className="form-label fw-bold">Bạn thích đi đâu?</label>
               <div>

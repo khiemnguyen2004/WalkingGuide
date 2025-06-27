@@ -54,6 +54,7 @@ function MyTours() {
       try {
         const res = await tourStepApi.getByTourId(selected.id);
         if (!isMounted) return;
+        console.log('Tour steps data:', res.data); // Debug: Check the actual data
         setTourSteps(res.data);
         // Fetch all places for steps
         const placeIds = res.data.map(s => s.place_id);
@@ -145,6 +146,7 @@ function MyTours() {
           step_order: s.step_order,
           start_time: s.start_time,
           end_time: s.end_time,
+          day: s.day || 1
         })
       ));
       // Delete removed steps
@@ -429,51 +431,141 @@ function MyTours() {
                   <div dangerouslySetInnerHTML={{ __html: selected.description }} />
                 </div>
 
-                {/* Journey Section */}
-                {tourSteps && tourSteps.length > 0 && (
-                  <div className="mt-3 luxury-journey-card">
-                    <h5 className="mb-3" style={{fontWeight:700, color:'#1a5bb8'}}>Hành trình của bạn</h5>
-                    {/* Place Images Row */}
-                    <div className="d-flex gap-3 mb-3 flex-wrap">
-                      {tourSteps
-                        .sort((a, b) => a.step_order - b.step_order)
-                        .map((step) => (
-                          <div key={step.id} className="text-center">
-                            <img
-                              src={places[step.place_id]?.image_url || "/default-place.jpg"}
-                              alt={places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
-                              style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 12, boxShadow: "0 2px 8px #b6e0fe33" }}
-                            />
-                            <div className="small mt-1" style={{maxWidth: 80, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color:'#1a1a1a'}}>
-                              {places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
+                {/* Day summary */}
+                <div className="mb-4">
+                  <h6 className="fw-bold mb-3 text-primary">Tổng quan theo ngày:</h6>
+                  <div className="row g-3">
+                    {(() => {
+                      // Group steps by day
+                      const stepsByDay = tourSteps.reduce((acc, step) => {
+                        const day = step.day || 1;
+                        if (!acc[day]) acc[day] = [];
+                        acc[day].push(step);
+                        return acc;
+                      }, {});
+                      const sortedDays = Object.keys(stepsByDay).sort((a, b) => parseInt(a) - parseInt(b));
+                      return sortedDays.map(dayNum => (
+                        <div key={dayNum} className="col-md-6 col-lg-4">
+                          <div className="card border-primary h-100" style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(26, 91, 184, 0.1)'}}>
+                            <div className="card-header bg-primary text-white text-center fw-bold" style={{borderRadius: '12px 12px 0 0'}}>
+                              Ngày {dayNum}
+                            </div>
+                            <div className="card-body p-3">
+                              <div className="small">
+                                {stepsByDay[dayNum]
+                                  .sort((a, b) => a.step_order - b.step_order)
+                                  .map((step, idx) => (
+                                    <div key={step.id} className="d-flex align-items-center mb-2">
+                                      <span className="badge bg-light text-dark me-2" style={{fontSize: '0.75em'}}>
+                                        {step.step_order}
+                                      </span>
+                                      <span className="text-truncate" style={{fontSize: '0.9em'}}>
+                                        {places[step.place_id]?.name || 'Địa điểm'}
+                                      </span>
+                                    </div>
+                                  ))}
+                              </div>
                             </div>
                           </div>
-                        ))}
-                    </div>
-                    {/* Journey List */}
-                    <ul className="list-group list-group-flush">
-                      {tourSteps.map((step, idx) => (
-                        <li key={step.id || idx} className="list-group-item d-flex align-items-center justify-content-between">
-                          <div>
-                            <span className="fw-bold me-2">{idx + 1}.</span>
-                            {places[step.place_id]?.name || 'Địa điểm'}
-                            {step.start_time && (
-                              <span className="badge bg-success ms-2" style={{fontSize: '0.95em'}}>
-                                <i className="fas fa-play me-1"></i>{step.start_time}
-                              </span>
-                            )}
-                            {step.end_time && (
-                              <span className="badge bg-info ms-2" style={{fontSize: '0.95em'}}>
-                                <i className="fas fa-stop me-1"></i>{step.end_time}
-                              </span>
-                            )}
-                          </div>
-                          <span className="badge bg-primary ms-2">{step.stay_duration} phút</span>
-                        </li>
-                      ))}
-                    </ul>
+                        </div>
+                      ));
+                    })()}
                   </div>
-                )}
+                </div>
+                {/* Place Images Row */}
+                <div className="mb-4">
+                  <h6 className="fw-bold mb-3 text-primary">Hình ảnh địa điểm theo ngày:</h6>
+                  {(() => {
+                    // Group steps by day for journey list as well
+                    const stepsByDay = tourSteps.reduce((acc, step) => {
+                      const day = step.day || 1;
+                      if (!acc[day]) acc[day] = [];
+                      acc[day].push(step);
+                      return acc;
+                    }, {});
+                    const sortedDays = Object.keys(stepsByDay).sort((a, b) => parseInt(a) - parseInt(b));
+                    return sortedDays.map(dayNum => (
+                      <div key={dayNum} className="mb-4">
+                        <h6 className="fw-bold mb-3 text-secondary border-bottom pb-2">
+                          <i className="fas fa-calendar-day me-2"></i>Ngày {dayNum}
+                        </h6>
+                        <div className="d-flex gap-3 flex-wrap">
+                          {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step) => (
+                            <div key={step.id} className="text-center">
+                              <img
+                                src={places[step.place_id]?.image_url || "/default-place.jpg"}
+                                alt={places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
+                                style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 12, boxShadow: "0 2px 8px #b6e0fe33" }}
+                              />
+                              <div className="small mt-2" style={{maxWidth: 100, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color:'#1a1a1a', fontWeight: '500'}}>
+                                {places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
+                              </div>
+                              <div className="badge bg-primary" style={{fontSize: '0.7em'}}>
+                                Bước {step.step_order}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+                {/* Journey List */}
+                <div className="mb-4">
+                  <h6 className="fw-bold mb-3 text-primary">Chi tiết hành trình:</h6>
+                  <div className="list-group">
+                    {(() => {
+                      const stepsByDay = tourSteps.reduce((acc, step) => {
+                        const day = step.day || 1;
+                        if (!acc[day]) acc[day] = [];
+                        acc[day].push(step);
+                        return acc;
+                      }, {});
+                      const sortedDays = Object.keys(stepsByDay).sort((a, b) => parseInt(a) - parseInt(b));
+                      return sortedDays.map(dayNum => (
+                        <React.Fragment key={dayNum}>
+                          <div className="list-group-item bg-primary text-white fw-bold text-center" style={{borderRadius: '8px 8px 0 0', fontSize: '1.1em'}}>
+                            <i className="fas fa-calendar-day me-2"></i>Ngày {dayNum}
+                          </div>
+                          {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step, idx) => (
+                            <div key={step.id || idx} className="list-group-item d-flex align-items-center justify-content-between border-start border-end" style={{borderLeft: '4px solid #1a5bb8', marginLeft: '1rem', marginRight: '1rem'}}>
+                              <div className="d-flex align-items-center">
+                                <span className="badge bg-primary me-3" style={{fontSize: '1em', minWidth: '2rem'}}>
+                                  {step.step_order}
+                                </span>
+                                <div>
+                                  <div className="fw-bold" style={{color: '#1a1a1a'}}>
+                                    {places[step.place_id]?.name || 'Địa điểm'}
+                                  </div>
+                                  <div className="small text-muted">
+                                    {step.stay_duration} phút
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="d-flex gap-2">
+                                {step.start_time && (
+                                  <span className="badge bg-success" style={{fontSize: '0.85em'}}>
+                                    <i className="fas fa-play me-1"></i>{step.start_time}
+                                  </span>
+                                )}
+                                {step.end_time && (
+                                  <span className="badge bg-info" style={{fontSize: '0.85em'}}>
+                                    <i className="fas fa-stop me-1"></i>{step.end_time}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {dayNum < sortedDays[sortedDays.length - 1] && (
+                            <div className="text-center py-2" style={{background: '#f8f9fa', borderLeft: '4px solid #dee2e6', marginLeft: '1rem', marginRight: '1rem'}}>
+                              <i className="fas fa-arrow-down text-muted"></i>
+                            </div>
+                          )}
+                        </React.Fragment>
+                      ));
+                    })()}
+                  </div>
+                </div>
               </div>
             )}
             </div>

@@ -217,9 +217,34 @@ function ManualPlanner({ noLayout }) {
         <div className="luxury-card-body">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4 className="mb-0">Các địa điểm trong tour</h4>
-            <button className="btn btn-main btn-sm" onClick={handleAddStep}>
-              <i className="fas fa-plus me-2"></i>Thêm địa điểm
-            </button>
+            <div className="d-flex gap-2">
+              <button className="btn btn-outline-primary btn-sm" onClick={() => {
+                // Calculate days based on start and end dates
+                let totalDays = 1;
+                if (start_time && end_time) {
+                  const startDate = new Date(start_time);
+                  const endDate = new Date(end_time);
+                  const diffTime = Math.abs(endDate - startDate);
+                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                  totalDays = Math.max(1, diffDays);
+                } else {
+                  totalDays = Math.ceil(steps.length / 3); // Default to 3 places per day
+                }
+                
+                // Distribute steps evenly across calculated days
+                const stepsPerDay = Math.ceil(steps.length / totalDays);
+                const newSteps = steps.map((step, i) => ({
+                  ...step,
+                  day: Math.floor(i / stepsPerDay) + 1
+                }));
+                setSteps(newSteps);
+              }}>
+                <i className="fas fa-magic me-1"></i>Tự động phân ngày
+              </button>
+              <button className="btn btn-main btn-sm" onClick={handleAddStep}>
+                <i className="fas fa-plus me-2"></i>Thêm địa điểm
+              </button>
+            </div>
           </div>
 
           {steps.length === 0 ? (
@@ -293,13 +318,29 @@ function ManualPlanner({ noLayout }) {
                               </div>
                               <div className="col-md-2">
                                 <label className="form-label fw-bold">Ngày</label>
-                                <input
-                                  type="number"
-                                  className="form-control"
-                                  min="1"
+                                <select
+                                  className="form-select"
                                   value={step.day || 1}
                                   onChange={e => handleChangeStep(stepIndex, "day", e.target.value)}
-                                />
+                                >
+                                  {(() => {
+                                    // Calculate total days based on start/end dates
+                                    let totalDays = 1;
+                                    if (start_time && end_time) {
+                                      const startDate = new Date(start_time);
+                                      const endDate = new Date(end_time);
+                                      const diffTime = Math.abs(endDate - startDate);
+                                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                      totalDays = Math.max(1, diffDays);
+                                    } else {
+                                      totalDays = Math.max(1, Math.ceil(steps.length / 3));
+                                    }
+                                    
+                                    return Array.from({ length: totalDays }, (_, i) => (
+                                      <option key={i + 1} value={i + 1}>Ngày {i + 1}</option>
+                                    ));
+                                  })()}
+                                </select>
                               </div>
                               <div className="col-md-2">
                                 <label className="form-label fw-bold">Thời gian</label>
