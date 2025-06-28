@@ -7,6 +7,7 @@ import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import Map from "../components/Map.jsx";
 import ManualPlanner from "../components/ManualPlanner.jsx";
 import AutoPlanner from "../components/AutoPlanner.jsx";
+import PlaceDetailMap from "../components/PlaceDetailMap";
 import "../css/HomePage.css";
 import "../css/luxury-home.css";
 
@@ -31,6 +32,8 @@ function HomePage() {
   const [placeSuggestions, setPlaceSuggestions] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [showPlaceDetailMap, setShowPlaceDetailMap] = useState(false);
+  const [placeForDetailMap, setPlaceForDetailMap] = useState(null);
   const mapRef = useRef();
 
   useEffect(() => {
@@ -104,6 +107,13 @@ function HomePage() {
     setHighlightedIndex(-1);
   };
 
+  // Handler for the special link
+  const handleExploreMapClick = (e) => {
+    e.preventDefault();
+    setPlaceForDetailMap(null); // Show map with no specific place
+    setShowPlaceDetailMap(true);
+  };
+
   return (
     <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
       <Header />
@@ -144,7 +154,7 @@ function HomePage() {
             <section className="mb-6">
             <h2 className="h4 mb-3 fw-bold text-center text-light">
               Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!{' '}
-              <a href="#map-section" className="arrow-link ms-2" style={{textDecoration: 'none'}}>
+              <a href="#" onClick={handleExploreMapClick} className="arrow-link ms-2" style={{textDecoration: 'none'}}>
                 <i className="bi bi-arrow-right" style={{fontSize: 24, verticalAlign: 'middle', color: '#fff'}}></i>
               </a>
             </h2>
@@ -419,6 +429,11 @@ function HomePage() {
         )}
       </main>
       <Footer />
+      {showPlaceDetailMap && (
+        <div style={{position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 2000, background: 'rgba(0,0,0,0.15)'}}>
+          <PlaceDetailMap place={placeForDetailMap} onClose={() => setShowPlaceDetailMap(false)} />
+        </div>
+      )}
     </div>
   );
 }

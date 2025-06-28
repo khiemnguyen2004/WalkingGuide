@@ -15,6 +15,10 @@ function LoginForm({ onSuccess, onSwitch }) {
         email,
         password,
       });
+      
+      // Store the token in localStorage
+      localStorage.setItem("token", res.data.token);
+      
       login(res.data.user);
       if (onSuccess) onSuccess();
     } catch (err) {

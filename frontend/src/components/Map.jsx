@@ -12,6 +12,72 @@ const defaultIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+// Component for current location button
+function CurrentLocationButton() {
+  const map = useMap();
+  
+  const handleClick = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          map.setView([lat, lng], 15);
+        },
+        (error) => {
+          console.error('Error getting current location:', error);
+          alert('Không thể lấy vị trí hiện tại. Vui lòng kiểm tra quyền truy cập vị trí.');
+        }
+      );
+    } else {
+      alert('Trình duyệt của bạn không hỗ trợ định vị.');
+    }
+  };
+
+  return (
+    <div className="leaflet-control leaflet-bar location-control">
+      <button
+        onClick={handleClick}
+        title="Đến vị trí hiện tại"
+      >
+        <i className="bi bi-geo-alt-fill"></i>
+      </button>
+    </div>
+  );
+}
+
+// Component for zoom controls
+function ZoomControls() {
+  const map = useMap();
+  
+  const handleZoomIn = () => {
+    map.zoomIn();
+  };
+  
+  const handleZoomOut = () => {
+    map.zoomOut();
+  };
+
+  return (
+    <div className="leaflet-control leaflet-bar zoom-controls">
+      <button
+        onClick={handleZoomIn}
+        title="Phóng to"
+        className="zoom-in-btn"
+      >
+        <i className="bi bi-plus-lg"></i>
+      </button>
+      <button
+        onClick={handleZoomOut}
+        title="Thu nhỏ"
+        className="zoom-out-btn"
+      >
+        <i className="bi bi-dash-lg"></i>
+      </button>
+    </div>
+  );
+}
+
 function MapAutoCenter({ locations, selectedCity }) {
   const map = useMap();
   useEffect(() => {
@@ -55,6 +121,8 @@ function Map({ locations = [], className, selectedCity }) {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapAutoCenter locations={validLocations} selectedCity={selectedCity} />
+          <CurrentLocationButton />
+          <ZoomControls />
           {validLocations.map((location) => (
             <Marker key={location.id} position={[location.lat, location.lng]} icon={defaultIcon}>
               <Popup>{location.name}</Popup>

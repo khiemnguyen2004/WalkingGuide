@@ -92,6 +92,9 @@ function Header() {
                         <i className="bi bi-gear-wide-connected me-2"></i>Trang quản trị
                       </Link>
                     )}
+                    <Link to="/users" className="dropdown-item text-decoration-none me-2" onClick={()=>setDropdownOpen(false)}>
+                      <i className="bi bi-person-circle me-2"></i>Hồ sơ cá nhân
+                    </Link>
                     <button className="dropdown-item text-danger mt-2" onClick={handleLogout}>
                       <i className="bi bi-box-arrow-right me-2"></i>Đăng xuất
                     </button>

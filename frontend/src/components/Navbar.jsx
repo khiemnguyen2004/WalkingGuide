@@ -41,6 +41,20 @@ const Navbar = ({ activePage, isAuthenticated }) => (
             <span className="luxury-sidebar-label">Tour của tôi</span>
           </Link>
         </li>
+        {isAuthenticated && (
+          <li>
+            <Link
+              to="/users"
+              className={`luxury-sidebar-link${
+                activePage === "profile" ? " active" : ""
+              }`}
+              style={{ textDecoration: "none" }}
+            >
+              <i className="bi bi-person-circle luxury-sidebar-icon" />
+              <span className="luxury-sidebar-label">Hồ sơ</span>
+            </Link>
+          </li>
+        )}
       </ul>
     </nav>
   </aside>
