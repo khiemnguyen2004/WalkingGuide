@@ -154,7 +154,16 @@ function PlaceDetailMap({ place, onClose }) {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(place);
   const [defaultCenter, setDefaultCenter] = useState([10.8231, 106.6297]); // Default to Ho Chi Minh City
+  const [loading, setLoading] = useState(true);
   const mapRef = useRef(null);
+
+  // Initialize selectedPlace with the passed place prop
+  useEffect(() => {
+    if (place) {
+      setSelectedPlace(place);
+      setDefaultCenter([parseFloat(place.latitude), parseFloat(place.longitude)]);
+    }
+  }, [place]);
 
   // Get current location first
   useEffect(() => {
@@ -166,7 +175,11 @@ function PlaceDetailMap({ place, onClose }) {
             lng: position.coords.longitude
           };
           setCurrentLocation(location);
-          setDefaultCenter([location.lat, location.lng]);
+          
+          // Only update default center if no place is selected
+          if (!selectedPlace) {
+            setDefaultCenter([location.lat, location.lng]);
+          }
           
           // Always find nearest place when map opens
           findNearestPlace(location);
@@ -177,20 +190,28 @@ function PlaceDetailMap({ place, onClose }) {
         }
       );
     }
-  }, [places]);
+  }, [places, selectedPlace]);
 
   // Fetch all places
   useEffect(() => {
     const fetchPlaces = async () => {
       try {
+        setLoading(true);
         const response = await axios.get('http://localhost:3000/api/places');
         setPlaces(response.data);
+        
+        // If no place is selected, select the first place
+        if (!selectedPlace && response.data.length > 0) {
+          setSelectedPlace(response.data[0]);
+        }
       } catch (error) {
         console.error('Error fetching places:', error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchPlaces();
-  }, []);
+  }, [selectedPlace]);
 
   // Find nearest place to current location
   const findNearestPlace = (location) => {
@@ -198,38 +219,35 @@ function PlaceDetailMap({ place, onClose }) {
     
     let nearestPlace = places[0];
     let shortestDistance = calculateDistance(
-      location.lat, 
-      location.lng, 
-      parseFloat(places[0].latitude), 
-      parseFloat(places[0].longitude)
+      location.lat, location.lng,
+      nearestPlace.latitude, nearestPlace.longitude
     );
     
     places.forEach(place => {
       const distance = calculateDistance(
-        location.lat,
-        location.lng,
-        parseFloat(place.latitude),
-        parseFloat(place.longitude)
+        location.lat, location.lng,
+        place.latitude, place.longitude
       );
-      
       if (distance < shortestDistance) {
         shortestDistance = distance;
         nearestPlace = place;
       }
     });
     
-    setSelectedPlace(nearestPlace);
+    // Only update if no place is currently selected
+    if (!selectedPlace) {
+      setSelectedPlace(nearestPlace);
+    }
   };
 
-  // Calculate distance between two points using Haversine formula
+  // Calculate distance between two points
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radius of the Earth in kilometers
+    const R = 6371; // Radius of the Earth in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   };
@@ -244,328 +262,277 @@ function PlaceDetailMap({ place, onClose }) {
 
   const handleLocationClick = (location) => {
     setCurrentLocation(location);
-    setDefaultCenter([location.lat, location.lng]);
-    // Find nearest place to new location
-    findNearestPlace(location);
   };
 
+  // ESC key handler for closing expanded view
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape' && isExpanded) {
+        setIsExpanded(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [isExpanded]);
+
   const formatTime = (timeString) => {
-    if (!timeString) return 'Không rõ';
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit'
+    if (!timeString) return '';
+    const time = new Date(`2000-01-01T${timeString}`);
+    return time.toLocaleTimeString('vi-VN', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
     });
   };
 
   const formatPrice = (price) => {
-    if (!price) return 'Không rõ';
+    if (!price) return '';
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(price);
   };
 
+  // Convert HTML to plain text
+  const convertHtmlToText = (html) => {
+    if (!html) return '';
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  };
+
+  // Show loading state
+  if (loading || !selectedPlace) {
+    return (
+      <div className="place-detail-map-fullscreen">
+        <div className="map-container">
+          <MapContainer
+            center={defaultCenter}
+            zoom={13}
+            className="fullscreen-map"
+            zoomControl={false}
+            ref={mapRef}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <MapInitializer defaultCenter={defaultCenter} zoom={13} />
+            <CurrentLocationButton onLocationClick={handleLocationClick} />
+            <ZoomControls />
+          </MapContainer>
+        </div>
+        
+        {/* Loading overlay */}
+        <div className="info-overlay">
+          <div className="overlay-content">
+            <div className="tab-content">
+              <div className="place-basic-info">
+                <div className="d-flex align-items-center justify-content-center" style={{ height: '200px' }}>
+                  <div className="text-center">
+                    <div className="spinner-border text-primary mb-3" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 className="text-muted">Đang tải thông tin địa điểm...</h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`place-detail-map-container ${isExpanded ? 'expanded' : ''}`}>
-      {/* Map Background */}
-      <div className="map-background">
+    <div className="place-detail-map-fullscreen">
+      {/* Map Container */}
+      <div className="map-container">
         <MapContainer
-          ref={mapRef}
           center={defaultCenter}
           zoom={13}
-          className="detail-map"
+          className="fullscreen-map"
           zoomControl={false}
-          attributionControl={false}
+          ref={mapRef}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           
-          {/* All Place Markers */}
-          {places.map((placeItem) => (
-            <Marker
-              key={placeItem.id}
-              position={[parseFloat(placeItem.latitude), parseFloat(placeItem.longitude)]}
-              icon={createCustomIcon(placeItem.type || 'restaurant')}
-              eventHandlers={{
-                click: () => handlePlaceClick(placeItem)
-              }}
-            >
-              <Popup>
-                <div>
-                  <h4>{placeItem.name}</h4>
-                  <p>{placeItem.address}</p>
-                  <button 
-                    className="btn btn-sm btn-primary mt-2"
-                    onClick={() => handlePlaceClick(placeItem)}
-                  >
-                    Xem chi tiết
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-          
-          {/* Current Location Marker */}
+          {/* Current location marker */}
           {currentLocation && (
-            <Marker
+            <Marker 
               position={[currentLocation.lat, currentLocation.lng]}
               icon={currentLocationIcon}
             >
               <Popup>
-                <div>
-                  <h4>Vị trí hiện tại</h4>
-                  <p>Bạn đang ở đây</p>
+                <div className="text-center">
+                  <h6 className="text-primary mb-1">Vị trí hiện tại</h6>
+                  <small className="text-muted">
+                    {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                  </small>
                 </div>
               </Popup>
             </Marker>
           )}
-          
-          <MapUpdater center={defaultCenter} zoom={13} />
+
+          {/* All places markers */}
+          {places.map((place) => (
+            <Marker
+              key={place.id}
+              position={[parseFloat(place.latitude), parseFloat(place.longitude)]}
+              icon={createCustomIcon(place.type || 'default')}
+              eventHandlers={{
+                click: () => handlePlaceClick(place)
+              }}
+            >
+              <Popup>
+                <div className="text-center">
+                  <h6 className="text-primary mb-1">{place.name}</h6>
+                  {place.address && <p className="mb-1 small">{place.address}</p>}
+                  {place.city && <p className="mb-0 text-muted small">{place.city}</p>}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+
           <MapInitializer defaultCenter={defaultCenter} zoom={13} />
           <CurrentLocationButton onLocationClick={handleLocationClick} />
           <ZoomControls />
         </MapContainer>
       </div>
 
-      {/* Overlay Information Panel */}
-      <div className="info-overlay">
-        {/* Header */}
-        <div className="overlay-header">
-          <div className="header-content">
-            <h1 className="place-title">
-              {selectedPlace?.name || 'Bạn muốn đi đâu?'}
-            </h1>
-            <div className="header-actions">
-              <button 
-                className="expand-btn"
-                onClick={handleExpand}
-                title={isExpanded ? 'Thu nhỏ' : 'Mở rộng'}
-              >
-                <i className={`bi bi-${isExpanded ? 'arrows-collapse' : 'arrows-expand'}`}></i>
-              </button>
-              <button 
-                className="close-btn"
-                onClick={onClose}
-                title="Đóng"
-              >
-                <i className="bi bi-x-lg"></i>
-              </button>
+      {/* Information Overlay */}
+      <div className={`info-overlay ${isExpanded ? 'expanded' : ''}`}>
+        <div className="overlay-content">
+          <div className="tab-content">
+            <div className="place-basic-info">
+              {/* Hero Image */}
+              {selectedPlace && selectedPlace.image_url && (
+                <div className="position-relative" style={{ height: '250px' }}>
+                  <img
+                    src={selectedPlace.image_url.startsWith("http") ? selectedPlace.image_url : `http://localhost:3000${selectedPlace.image_url}`}
+                    alt={selectedPlace.name}
+                    className="w-100 h-100"
+                    style={{ objectFit: 'cover' }}
+                    onError={(e) => {
+                      e.target.src = "/default-place.jpg";
+                    }}
+                  />
+                  <div className="position-absolute top-0 start-0 w-100 h-100" 
+                       style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)' }}>
+                  </div>
+                  <div className="position-absolute bottom-0 start-0 w-100 p-3">
+                    <h2 className="text-white fw-bold mb-2 text-shadow" style={{ fontSize: '1.8rem' }}>
+                      {selectedPlace.name}
+                    </h2>
+                    <div className="d-flex flex-wrap gap-2 align-items-center">
+                      {selectedPlace.city && (
+                        <span className="badge bg-primary bg-opacity-75 px-3 py-2 rounded-pill">
+                          <i className="bi bi-geo-alt-fill me-1"></i>
+                          {selectedPlace.city}
+                        </span>
+                      )}
+                      <span className="badge bg-warning bg-opacity-75 px-3 py-2 rounded-pill">
+                        <i className="bi bi-star-fill me-1"></i>
+                        {selectedPlace.rating?.toFixed ? selectedPlace.rating.toFixed(1) : selectedPlace.rating}/5
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Open Button */}
+              <div className="d-flex justify-content-end pe-3">
+                <button
+                  className="btn btn-primary btn-sm rounded-pill"
+                  style={{ fontSize: '0.8rem' }}
+                  title={isExpanded ? "Thu nhỏ thông tin" : "Mở rộng thông tin"}
+                  onClick={handleExpand}
+                >
+                  <i className={`bi ${isExpanded ? 'bi-arrows-collapse' : 'bi-arrows-expand'} me-1`}></i>
+                  {isExpanded ? 'Xem bản đồ' : 'Xem thêm'}
+                </button>
+              </div>
+
+              {/* Place Info */}
+              <div className="p-4">
+                {/* Info Cards */}
+                <div className="row g-3 mb-4">
+                  {selectedPlace && selectedPlace.address && (
+                    <div className="col-12">
+                      <div className="d-flex align-items-center p-3 bg-light rounded-3">
+                        <div className="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                          <i className="bi bi-house text-primary"></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Địa chỉ</small>
+                          <strong className="text-dark">{selectedPlace.address}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {selectedPlace && selectedPlace.opening_hours && (
+                    <div className="col-12">
+                      <div className="d-flex align-items-center p-3 bg-light rounded-3">
+                        <div className="bg-success bg-opacity-10 p-2 rounded-circle me-3">
+                          <i className="bi bi-clock text-success"></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Giờ mở cửa</small>
+                          <strong className="text-dark">{selectedPlace.opening_hours}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Description */}
+                <div className="mb-4">
+                  <h5 className="text-primary mb-3">
+                    <i className="bi bi-info-circle me-2"></i>
+                    Mô tả
+                  </h5>
+                  <div className="p-3 bg-light rounded-3 description-text" style={{ fontSize: '0.95rem', maxHeight: '150px', overflowY: 'auto' }}>
+                    <div>{convertHtmlToText(selectedPlace.description)}</div>
+                  </div>
+                </div>
+
+                {/* Services */}
+                {selectedPlace && selectedPlace.service && (
+                  <div className="mb-4">
+                    <h5 className="text-primary mb-3">
+                      <i className="bi bi-tools me-2"></i>
+                      Dịch vụ
+                    </h5>
+                    <div className="p-3 service-section">
+                      <p className="text-dark mb-0 fw-medium" style={{ fontSize: '0.95rem' }}>{selectedPlace.service}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="d-flex gap-2 justify-content-center pt-3">
+                  <button
+                    onClick={onClose}
+                    className="btn btn-outline-primary px-3 py-2 rounded-pill"
+                    style={{ fontSize: '0.9rem' }}
+                  >
+                    <i className="bi bi-arrow-left me-2"></i>
+                    Quay lại
+                  </button>
+                  <button className="btn btn-primary px-3 py-2 rounded-pill" style={{ fontSize: '0.9rem' }}>
+                    <i className="bi bi-share me-2"></i>
+                    Chia sẻ
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Content */}
-        <div className="overlay-content">
-          {selectedPlace ? (
-            <>
-              {/* Tabs */}
-              <div className="content-tabs">
-                <button 
-                  className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('overview')}
-                >
-                  <i className="bi bi-info-circle"></i>
-                  Tổng Quan
-                </button>
-                <button 
-                  className={`tab-btn ${activeTab === 'info' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('info')}
-                >
-                  <i className="bi bi-geo-alt"></i>
-                  Thông Tin
-                </button>
-                <button 
-                  className={`tab-btn ${activeTab === 'details' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('details')}
-                >
-                  <i className="bi bi-list-ul"></i>
-                  Dịch vụ
-                </button>
-                <button 
-                  className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('reviews')}
-                >
-                  <i className="bi bi-star"></i>
-                  Đánh giá
-                </button>
-              </div>
-
-              {/* Tab Content */}
-              <div className="tab-content">
-                {activeTab === 'overview' && (
-                  <div className="overview-tab">
-                    <div className="place-overview">
-                      <p>{selectedPlace?.description || 'Chưa có mô tả cho địa điểm này.'}</p>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'info' && (
-                  <div className="info-tab">
-                    <div className="place-basic-info">
-                      <div className="info-item location-item">
-                        <i className="bi bi-geo-alt-fill"></i>
-                        <div className="location-details">
-                          <label>Địa chỉ:</label>
-                          <span className="address-text">{selectedPlace?.address || 'Không có thông tin'}</span>
-                          {currentLocation && selectedPlace?.latitude && selectedPlace?.longitude && (
-                            <div className="distance-info">
-                              <small>
-                                <strong>Khoảng cách:</strong> {calculateDistance(
-                                  currentLocation.lat,
-                                  currentLocation.lng,
-                                  parseFloat(selectedPlace.latitude),
-                                  parseFloat(selectedPlace.longitude)
-                                ).toFixed(1)} km
-                              </small>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="info-item">
-                        <i className="bi bi-clock"></i>
-                        <div>
-                          <label>Giờ mở cửa:</label>
-                          <span>
-                            {selectedPlace?.opening_time && selectedPlace?.closing_time 
-                              ? `${formatTime(selectedPlace.opening_time)} - ${formatTime(selectedPlace.closing_time)}`
-                              : 'Không có thông tin'
-                            }
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="info-item">
-                        <i className="bi bi-telephone"></i>
-                        <div>
-                          <label>Điện thoại:</label>
-                          <span>{selectedPlace?.phone || 'Không có thông tin'}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="info-item">
-                        <i className="bi bi-currency-dollar"></i>
-                        <div>
-                          <label>Mức giá:</label>
-                          <span>{formatPrice(selectedPlace?.price_range)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'details' && (
-                  <div className="details-tab">
-                    <div className="details-grid">
-                      <div className="detail-card">
-                        <h4>Thông tin cơ bản</h4>
-                        <ul>
-                          <li><strong>Loại:</strong> {selectedPlace?.type || 'Không rõ'}</li>
-                          <li><strong>Đánh giá:</strong> {selectedPlace?.rating || 'Chưa có đánh giá'}</li>
-                          <li><strong>Trạng thái:</strong> {selectedPlace?.status || 'Hoạt động'}</li>
-                        </ul>
-                      </div>
-                      
-                      <div className="detail-card">
-                        <h4>Dịch vụ</h4>
-                        <ul>
-                          <li>WiFi miễn phí</li>
-                          <li>Chỗ đậu xe</li>
-                          <li>Phòng vệ sinh</li>
-                          <li>Điều hòa</li>
-                        </ul>
-                      </div>
-                      
-                      <div className="detail-card">
-                        <h4>Thời gian phù hợp</h4>
-                        <ul>
-                          <li>Sáng: 7:00 - 11:00</li>
-                          <li>Trưa: 11:00 - 14:00</li>
-                          <li>Chiều: 14:00 - 18:00</li>
-                          <li>Tối: 18:00 - 22:00</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'reviews' && (
-                  <div className="reviews-tab">
-                    <div className="reviews-header">
-                      <h3>Đánh giá từ khách hàng</h3>
-                      <div className="average-rating">
-                        <span className="rating-number">4.5</span>
-                        <div className="stars">
-                          <i className="bi bi-star-fill"></i>
-                          <i className="bi bi-star-fill"></i>
-                          <i className="bi bi-star-fill"></i>
-                          <i className="bi bi-star-fill"></i>
-                          <i className="bi bi-star-half"></i>
-                        </div>
-                        <span className="total-reviews">(128 đánh giá)</span>
-                      </div>
-                    </div>
-                    
-                    <div className="reviews-list">
-                      <div className="review-item">
-                        <div className="review-header">
-                          <div className="reviewer-info">
-                            <div className="reviewer-avatar">N</div>
-                            <div>
-                              <div className="reviewer-name">Nguyễn Văn A</div>
-                              <div className="review-date">2 ngày trước</div>
-                            </div>
-                          </div>
-                          <div className="review-rating">
-                            <i className="bi bi-star-fill"></i>
-                            <i className="bi bi-star-fill"></i>
-                            <i className="bi bi-star-fill"></i>
-                            <i className="bi bi-star-fill"></i>
-                            <i className="bi bi-star"></i>
-                          </div>
-                        </div>
-                        <p className="review-text">
-                          Địa điểm rất đẹp, không gian thoáng mát, nhân viên phục vụ nhiệt tình. 
-                          Thức ăn ngon và giá cả hợp lý. Sẽ quay lại lần nữa!
-                        </p>
-                      </div>
-                      
-                      <div className="review-item">
-                        <div className="review-header">
-                          <div className="reviewer-info">
-                            <div className="reviewer-avatar">T</div>
-                            <div>
-                              <div className="reviewer-name">Trần Thị B</div>
-                              <div className="review-date">1 tuần trước</div>
-                            </div>
-                          </div>
-                          <div className="review-rating">
-                            <i className="bi bi-star-fill"></i>
-                            <i className="bi bi-star-fill"></i>
-                            <i className="bi bi-star-fill"></i>
-                            <i className="bi bi-star-fill"></i>
-                            <i className="bi bi-star-fill"></i>
-                          </div>
-                        </div>
-                        <p className="review-text">
-                          Tuyệt vời! Không gian rất ấm cúng, đồ ăn ngon và giá cả phải chăng. 
-                          Đặc biệt thích cách trang trí và ánh sáng ở đây.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div style={{textAlign: 'center', padding: '2rem'}}>
-              <h3>Chào mừng đến với bản đồ du lịch!</h3>
-              <p>Nhấp vào bất kỳ địa điểm nào trên bản đồ để xem thông tin chi tiết.</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

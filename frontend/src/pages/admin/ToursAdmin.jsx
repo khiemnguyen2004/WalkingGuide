@@ -40,6 +40,9 @@ function ToursAdmin() {
     setEditId(tour.id);
     setName(tour.name);
     setDescription(tour.description);
+    
+    // Scroll to top of the page to show the form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleUpdate = async () => {

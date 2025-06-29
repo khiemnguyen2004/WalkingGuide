@@ -3,6 +3,7 @@ import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext.jsx";
 import Header from "./Header.jsx";
 import Footer from "./Footer.jsx";
+import TourReminder from "./TourReminder";
 import "../css/luxury-home.css";
 
 const AutoPlanner = ({ noLayout }) => {
@@ -14,6 +15,8 @@ const AutoPlanner = ({ noLayout }) => {
   const [tourName, setTourName] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdTour, setCreatedTour] = useState(null);
   const { user } = useContext(AuthContext);
   const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -70,7 +73,7 @@ const AutoPlanner = ({ noLayout }) => {
       // Distribute steps across days evenly
       const stepsPerDay = Math.ceil(tourData.steps.length / totalDays);
       
-      await axios.post("http://localhost:3000/api/tours", {
+      const response = await axios.post("http://localhost:3000/api/tours", {
         name: tourName || tourData.tour.name,
         description: tourData.tour.description,
         user_id: user.id,
@@ -86,7 +89,9 @@ const AutoPlanner = ({ noLayout }) => {
         start_time: start_time,
         end_time: end_time
       });
-      alert("Đã lưu tour vào hệ thống!");
+      
+      setCreatedTour(response.data.tour);
+      setShowSuccessModal(true);
       setTourData(null);
       setTourName("");
     } catch (err) {
@@ -202,25 +207,25 @@ const AutoPlanner = ({ noLayout }) => {
                 className="form-control"
                 value={end_time}
                 onChange={e => setEnd_time(e.target.value)}
-                min={start_time}
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label fw-bold">Sở thích</label>
+              <label className="form-label fw-bold">Số ngày</label>
               <input
-                type="text"
-                placeholder="Ví dụ: biển, núi, lịch sử, ẩm thực"
-                value={interests}
-                onChange={(e) => setInterests(e.target.value)}
+                type="number"
                 className="form-control"
+                value={days}
+                onChange={e => setDays(e.target.value)}
+                min="1"
+                max="7"
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label fw-bold">Ngân sách (VND)</label>
+              <label className="form-label fw-bold">Ngân sách (VNĐ)</label>
               <input
                 type="text"
-                placeholder="Nhập ngân sách dự kiến"
-                value={total_cost ? parseInt(total_cost).toLocaleString('vi-VN') : ''}
+                placeholder="Nhập ngân sách"
+                value={total_cost}
                 onChange={(e) => {
                   const rawValue = e.target.value.replace(/\D/g, '');
                   setTotal_cost(rawValue);
@@ -415,6 +420,51 @@ const AutoPlanner = ({ noLayout }) => {
       <Header />
       <main className="container py-4 flex-grow-1">
         {mainContent}
+        {/* Success Modal */}
+        {showSuccessModal && createdTour && (
+          <div className="modal show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.4)" }}>
+            <div className="modal-dialog modal-dialog-centered modal-lg">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Tạo tour thành công!</h5>
+                  <button type="button" className="btn-close" onClick={() => setShowSuccessModal(false)}></button>
+                </div>
+                <div className="modal-body">
+                  <p>Bạn đã tạo tour <b>{createdTour.name}</b> thành công.</p>
+                  <div className="mb-3">
+                    <b>Thời gian:</b> {createdTour.start_time || "-"} đến {createdTour.end_time || "-"}
+                  </div>
+                  
+                  {/* Tour Reminder Section */}
+                  {createdTour.id && (
+                    <div className="mt-4">
+                      <TourReminder 
+                        tourId={createdTour.id}
+                        tourName={createdTour.name}
+                        onReminderSet={() => {
+                          // Optionally refresh notifications or show success message
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="modal-footer">
+                  {createdTour.id && (
+                    <button className="btn btn-main" onClick={() => window.location.href = `/tours/${createdTour.id}`}>
+                      Xem chi tiết tour
+                    </button>
+                  )}
+                  <button className="btn btn-outline-secondary" onClick={() => window.location.href = '/my-tours'}>
+                    Đến trang My Tours
+                  </button>
+                  <button className="btn btn-link" onClick={() => setShowSuccessModal(false)}>
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
       <Footer />
     </div>

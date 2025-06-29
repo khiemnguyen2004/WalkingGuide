@@ -56,6 +56,9 @@ function ArticlesAdmin() {
     setContent(article.content);
     setEditImageUrl(article.image_url);
     setImageFile(null);
+    
+    // Scroll to top of the page to show the form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleUpdate = async () => {

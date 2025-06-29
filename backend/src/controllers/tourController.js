@@ -1,4 +1,5 @@
 const { AppDataSource } = require("../data-source");
+const notiService = require("../services/notificationService");
 
 const tourRepo = AppDataSource.getRepository("Tour");
 const tourStepRepo = AppDataSource.getRepository("TourStep");
@@ -48,6 +49,9 @@ module.exports = {
         total_cost: tour.total_cost,
       });
 
+      // Create notification for cloned tour
+      await notiService.createTourCreated(userId, newTour.name);
+
       res.status(201).json(newTour);
     } catch (err) {
       console.error("Lỗi khi clone tour:", err);
@@ -78,6 +82,16 @@ module.exports = {
           day: step.day || 1
         });
         savedSteps.push(saved);
+      }
+
+      // 3. Create notification for new tour
+      await notiService.createTourCreated(user_id, newTour.name);
+
+      // 4. Create tour reminder if start_time is provided
+      if (start_time) {
+        const reminderDate = new Date(start_time);
+        reminderDate.setDate(reminderDate.getDate() - 1); // Remind 1 day before
+        await notiService.createTourReminder(user_id, newTour.id, newTour.name, start_time);
       }
 
       res.status(201).json({ tour: newTour, steps: savedSteps });

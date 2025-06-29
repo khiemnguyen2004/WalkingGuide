@@ -6,6 +6,7 @@ import AuthModal from "./AuthModal";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import ConfirmModal from "./ConfirmModal";
+import NotificationIcon from "./NotificationIcon";
 
 function Header() {
   const { user, logout } = useContext(AuthContext);
@@ -69,6 +70,7 @@ function Header() {
               <span>Tour của tôi</span>
             </Link>
           )}
+          {user && <NotificationIcon />}
           <div className="dropdown">
             <button
               className="btn rounded-circle p-0 d-flex align-items-center justify-content-center border-0"
@@ -94,6 +96,9 @@ function Header() {
                     )}
                     <Link to="/users" className="dropdown-item text-decoration-none me-2" onClick={()=>setDropdownOpen(false)}>
                       <i className="bi bi-person-circle me-2"></i>Hồ sơ cá nhân
+                    </Link>
+                    <Link to="/notifications" className="dropdown-item text-decoration-none me-2" onClick={()=>setDropdownOpen(false)}>
+                      <i className="bi bi-bell me-2"></i>Thông báo
                     </Link>
                     <button className="dropdown-item text-danger mt-2" onClick={handleLogout}>
                       <i className="bi bi-box-arrow-right me-2"></i>Đăng xuất

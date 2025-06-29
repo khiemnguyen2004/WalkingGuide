@@ -3,6 +3,7 @@ import AdminHeader from "../../components/AdminHeader.jsx";
 import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
 import CKEditorField from "../../components/CKEditorField";
+import CityAutocomplete from "../../components/CityAutocomplete";
 import "../../css/AdminLayout.css";
 import { getTags } from "../../api/tagApi";
 import { getPlaceTags, createPlaceTag, deletePlaceTag } from "../../api/placeTagApi";
@@ -16,9 +17,14 @@ function PlacesAdmin() {
   const [longitude, setLongitude] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState(null);
+  const [city, setCity] = useState("");
+  const [address, setAddress] = useState("");
+  const [openingHours, setOpeningHours] = useState("");
+  const [service, setService] = useState("");
   const [editId, setEditId] = useState(null);
   const [tags, setTags] = useState([]);
   const [placeTags, setPlaceTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagModalPlace, setTagModalPlace] = useState(null);
   const [tagModalSelected, setTagModalSelected] = useState([]);
@@ -54,20 +60,40 @@ function PlacesAdmin() {
       });
       uploadedImageUrl = uploadRes.data.url;
     }
-    await axios.post("http://localhost:3000/api/places", {
+    
+    // Create the place
+    const placeRes = await axios.post("http://localhost:3000/api/places", {
       name,
       description,
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
       image_url: uploadedImageUrl,
+      city,
+      address,
+      opening_hours: openingHours,
+      service,
     });
+    
+    // Create place tags if any are selected
+    if (selectedTags.length > 0) {
+      for (const tagId of selectedTags) {
+        await createPlaceTag({ place_id: placeRes.data.id, tag_id: tagId });
+      }
+    }
+    
     fetchPlaces();
+    fetchPlaceTags();
     setName("");
     setDescription("");
     setLatitude("");
     setLongitude("");
     setImageUrl("");
     setImageFile(null);
+    setCity("");
+    setAddress("");
+    setOpeningHours("");
+    setService("");
+    setSelectedTags([]);
   };
 
   const handleEdit = (place) => {
@@ -77,6 +103,17 @@ function PlacesAdmin() {
     setLatitude(place.latitude);
     setLongitude(place.longitude);
     setImageUrl(place.image_url);
+    setCity(place.city || "");
+    setAddress(place.address || "");
+    setOpeningHours(place.opening_hours || "");
+    setService(place.service || "");
+    
+    // Set selected tags for the place being edited
+    const placeTagIds = getTagsForPlace(place.id).map(tag => tag.id);
+    setSelectedTags(placeTagIds);
+    
+    // Scroll to top of the page to show the form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleUpdate = async () => {
@@ -89,14 +126,35 @@ function PlacesAdmin() {
       });
       uploadedImageUrl = uploadRes.data.url;
     }
+    
+    // Update the place
     await axios.put(`http://localhost:3000/api/places/${editId}`, {
       name,
       description,
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
       image_url: uploadedImageUrl,
+      city,
+      address,
+      opening_hours: openingHours,
+      service,
     });
+    
+    // Update place tags
+    const currentTagIds = getTagsForPlace(editId).map(t => t.id);
+    const toAdd = selectedTags.filter(id => !currentTagIds.includes(id));
+    const toRemove = currentTagIds.filter(id => !selectedTags.includes(id));
+    
+    for (const tagId of toAdd) {
+      await createPlaceTag({ place_id: editId, tag_id: tagId });
+    }
+    for (const tagId of toRemove) {
+      const pt = placeTags.find(pt => pt.place_id === editId && pt.tag_id === tagId);
+      if (pt) await deletePlaceTag(pt.id);
+    }
+    
     fetchPlaces();
+    fetchPlaceTags();
     setEditId(null);
     setName("");
     setDescription("");
@@ -104,6 +162,11 @@ function PlacesAdmin() {
     setLongitude("");
     setImageUrl("");
     setImageFile(null);
+    setCity("");
+    setAddress("");
+    setOpeningHours("");
+    setService("");
+    setSelectedTags([]);
   };
 
   const handleDelete = async (id) => {
@@ -199,6 +262,37 @@ function PlacesAdmin() {
                   placeholder="Kinh độ (longitude)"
                   type="number"
                 />
+                <div className="row">
+                  <div className="col-md-6">
+                    <CityAutocomplete
+                      value={city}
+                      onChange={setCity}
+                      placeholder="Thành phố"
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <input
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      className="form-control mb-2"
+                      placeholder="Địa chỉ"
+                    />
+                  </div>
+                </div>
+                <textarea
+                  value={openingHours}
+                  onChange={(e) => setOpeningHours(e.target.value)}
+                  className="form-control mb-2"
+                  placeholder="Giờ mở cửa"
+                  rows="3"
+                />
+                <textarea
+                  value={service}
+                  onChange={(e) => setService(e.target.value)}
+                  className="form-control mb-2"
+                  placeholder="Dịch vụ"
+                  rows="3"
+                />
                 <input
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
@@ -211,6 +305,49 @@ function PlacesAdmin() {
                   onChange={(e) => setImageFile(e.target.files[0])}
                   className="form-control mb-2"
                 />
+                
+                {/* Tag Selection */}
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Thẻ địa điểm:</label>
+                  <div className="row">
+                    {tags.map(tag => (
+                      <div key={tag.id} className="col-md-3 col-sm-6 mb-2">
+                        <div className="form-check">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id={`tag-${tag.id}`}
+                            checked={selectedTags.includes(tag.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedTags([...selectedTags, tag.id]);
+                              } else {
+                                setSelectedTags(selectedTags.filter(id => id !== tag.id));
+                              }
+                            }}
+                          />
+                          <label className="form-check-label" htmlFor={`tag-${tag.id}`}>
+                            {tag.name}
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {selectedTags.length > 0 && (
+                    <div className="mt-2">
+                      <small className="text-muted">Đã chọn: </small>
+                      {selectedTags.map(tagId => {
+                        const tag = tags.find(t => t.id === tagId);
+                        return tag ? (
+                          <span key={tagId} className="badge bg-primary me-1">
+                            {tag.name}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </div>
+                
                 {editId ? (
                   <>
                     <button onClick={handleUpdate} className="btn admin-main-btn me-2">
@@ -225,6 +362,11 @@ function PlacesAdmin() {
                         setLongitude("");
                         setImageUrl("");
                         setImageFile(null);
+                        setCity("");
+                        setAddress("");
+                        setOpeningHours("");
+                        setService("");
+                        setSelectedTags([]);
                       }}
                       className="btn admin-btn-secondary"
                     >
@@ -238,72 +380,90 @@ function PlacesAdmin() {
                 )}
               </div>
 
-              <table className="table table-bordered">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Tên địa điểm</th>
-                    <th>Mô tả</th>
-                    <th>Vĩ độ</th>
-                    <th>Kinh độ</th>
-                    <th>Ảnh</th>
-                    <th>Thẻ</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {places.map((p) => (
-                    <tr key={p.id}>
-                      <td>{p.id}</td>
-                      <td>{p.name}</td>
-                      <td>
-                        <div style={{maxWidth: 300, maxHeight: 120, overflow: 'auto'}} dangerouslySetInnerHTML={{ __html: p.description }} />
-                      </td>
-                      <td>{p.latitude}</td>
-                      <td>{p.longitude}</td>
-                      <td>
-                        {p.image_url ? (
-                          <img
-                            src={
-                              p.image_url.startsWith("http")
-                                ? p.image_url
-                                : `http://localhost:3000${p.image_url}`
-                            }
-                            alt="Ảnh"
-                            style={{ maxWidth: 80, maxHeight: 60 }}
-                          />
-                        ) : (
-                          ""
-                        )}
-                      </td>
-                      <td>
-                        {getTagsForPlace(p.id).map(tag => (
-                          <span key={tag.id} className="badge bg-primary me-1">
-                            {tag.name}
-                          </span>
-                        ))}
-                        <button className="btn btn-sm btn-outline-secondary ms-2" onClick={() => openTagModal(p)}>
-                          Quản lý thẻ
-                        </button>
-                      </td>
-                      <td>
-                        <button
-                          className="btn admin-main-btn btn-sm me-2"
-                          onClick={() => handleEdit(p)}
-                        >
-                          Sửa
-                        </button>
-                        <button
-                          className="btn admin-btn-danger btn-sm"
-                          onClick={() => handleDelete(p.id)}
-                        >
-                          Xóa
-                        </button>
-                      </td>
+              <div className="table-responsive">
+                <table className="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Tên địa điểm</th>
+                      <th>Thành phố</th>
+                      <th>Địa chỉ</th>
+                      <th>Giờ mở cửa</th>
+                      <th>Dịch vụ</th>
+                      <th>Vĩ độ</th>
+                      <th>Kinh độ</th>
+                      <th>Ảnh</th>
+                      <th>Thẻ</th>
+                      <th>Hành động</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {places.map((p) => (
+                      <tr key={p.id}>
+                        <td>{p.id}</td>
+                        <td>{p.name}</td>
+                        <td>{p.city || "N/A"}</td>
+                        <td>
+                          <div style={{maxWidth: 150, maxHeight: 80, overflow: 'auto'}}>
+                            {p.address || "N/A"}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{maxWidth: 150, maxHeight: 80, overflow: 'auto'}}>
+                            {p.opening_hours || "N/A"}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{maxWidth: 150, maxHeight: 80, overflow: 'auto'}}>
+                            {p.service || "N/A"}
+                          </div>
+                        </td>
+                        <td>{p.latitude}</td>
+                        <td>{p.longitude}</td>
+                        <td>
+                          {p.image_url ? (
+                            <img
+                              src={
+                                p.image_url.startsWith("http")
+                                  ? p.image_url
+                                  : `http://localhost:3000${p.image_url}`
+                              }
+                              alt="Ảnh"
+                              style={{ maxWidth: 80, maxHeight: 60 }}
+                            />
+                          ) : (
+                            ""
+                          )}
+                        </td>
+                        <td>
+                          {getTagsForPlace(p.id).map(tag => (
+                            <span key={tag.id} className="badge bg-primary me-1">
+                              {tag.name}
+                            </span>
+                          ))}
+                          <button className="btn btn-sm btn-outline-secondary ms-2" onClick={() => openTagModal(p)}>
+                            Quản lý thẻ
+                          </button>
+                        </td>
+                        <td>
+                          <button
+                            className="btn admin-main-btn btn-sm me-2"
+                            onClick={() => handleEdit(p)}
+                          >
+                            Sửa
+                          </button>
+                          <button
+                            className="btn admin-btn-danger btn-sm"
+                            onClick={() => handleDelete(p.id)}
+                          >
+                            Xóa
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </main>

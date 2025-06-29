@@ -40,6 +40,9 @@ function UsersAdmin() {
     setEmail(user.email);
     setRole(user.role);
     setPassword(user.password_hash);
+    
+    // Scroll to top of the page to show the form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleUpdate = async () => {

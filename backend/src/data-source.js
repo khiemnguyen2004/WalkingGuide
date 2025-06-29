@@ -32,7 +32,10 @@ const AppDataSource = new DataSource({
     FavoritePlace,
     Notification,
   ],
-  migrations: ["src/migrations/*.js"],
+  migrations: [
+    "src/migrations/1751163195304-UpdatePlaces.js",
+    "src/migrations/1751164000000-UpdateNotifications.js"
+  ],
   subscribers: [],
 });
 

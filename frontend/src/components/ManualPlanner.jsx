@@ -6,6 +6,7 @@ import Navbar from "./Navbar.jsx";
 import Footer from "./Footer.jsx";
 import "../css/luxury-home.css";
 import { useNavigate } from "react-router-dom";
+import TourReminder from "./TourReminder";
 
 function ManualPlanner({ noLayout }) {
   const [places, setPlaces] = useState([]);
@@ -488,7 +489,7 @@ function ManualPlanner({ noLayout }) {
         {/* Success Modal */}
         {showSuccessModal && createdTour && (
           <div className="modal show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.4)" }}>
-            <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-dialog modal-dialog-centered modal-lg">
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Tạo tour thành công!</h5>
@@ -501,7 +502,7 @@ function ManualPlanner({ noLayout }) {
                   </div>
                   {/* Show summary if available */}
                   {steps.length > 0 && (
-                    <div className="mb-2">
+                    <div className="mb-3">
                       <b>Kế hoạch:</b>
                       <ul>
                         {sortedDays.map(dayNum => (
@@ -513,6 +514,19 @@ function ManualPlanner({ noLayout }) {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+                  
+                  {/* Tour Reminder Section */}
+                  {createdTour.id && (
+                    <div className="mt-4">
+                      <TourReminder 
+                        tourId={createdTour.id}
+                        tourName={createdTour.name}
+                        onReminderSet={() => {
+                          // Optionally refresh notifications or show success message
+                        }}
+                      />
                     </div>
                   )}
                 </div>
