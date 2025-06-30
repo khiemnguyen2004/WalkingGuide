@@ -83,6 +83,7 @@ body{
   min-height: 160px;
   transition: background 0.3s;
   color: #223a5f;
+  height: 100%;
 }
 
 .luxury-card:hover .luxury-card-body {

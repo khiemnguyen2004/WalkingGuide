@@ -4,12 +4,14 @@ import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Footer from '../../components/Footer.jsx';
 import userApi from '../../api/userApi';
+import articleApi from '../../api/articleApi';
 
 const ArticleDetail = () => {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [admin, setAdmin] = useState(null);
+  const [newestArticles, setNewestArticles] = useState([]);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -63,6 +65,19 @@ const ArticleDetail = () => {
     };
 
     fetchArticle();
+    // Fetch newest articles (excluding current)
+    const fetchNewest = async () => {
+      try {
+        const res = await articleApi.getAll();
+        let articles = res.data || [];
+        articles = articles.filter(a => a.article_id !== Number(id));
+        articles.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+        setNewestArticles(articles);
+      } catch (e) {
+        setNewestArticles([]);
+      }
+    };
+    fetchNewest();
   }, [id]);
 
   if (loading) {
@@ -79,6 +94,15 @@ const ArticleDetail = () => {
         <p className="text-xl text-red-600">{error}</p>
       </div>
     );
+  }
+
+  // Helper to chunk array into groups of 3
+  function chunkArray(arr, size) {
+    const result = [];
+    for (let i = 0; i < arr.length; i += size) {
+      result.push(arr.slice(i, i + size));
+    }
+    return result;
   }
 
   return (
@@ -123,6 +147,60 @@ const ArticleDetail = () => {
           </div>
         </div>
       </main>
+      {/* Newest Articles Carousel */}
+      <div className="container my-5">
+        <h2 className="h4 mb-4 fw-bold luxury-section-title">Bài viết khác</h2>
+        {newestArticles.length === 0 ? (
+          <p className="text-muted text-center">Không có bài viết nào để hiển thị.</p>
+        ) : (
+          <div id="articlesCarousel" className="carousel slide" data-bs-ride="carousel">
+            <div className="carousel-inner">
+              {chunkArray(newestArticles, 3).map((group, idx) => (
+                <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(a => a.article_id).join('-')}>
+                  <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
+                    {group.map((a) => (
+                      <div className="col" key={a.article_id}>
+                        <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                          <a href={`/articles/${a.article_id}`} className="text-decoration-none">
+                            {a.image_url && (
+                              <img
+                                src={a.image_url.startsWith('http') ? a.image_url : `http://localhost:3000${a.image_url}`}
+                                alt={a.title}
+                                className="card-img-top luxury-img-top"
+                                style={{ height: 220, objectFit: 'cover', borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem' }}
+                              />
+                            )}
+                            <div className="card-body luxury-card-body">
+                              <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{a.title}</h3>
+                              <p className="card-text text-muted mb-2 luxury-desc">
+                                {a.content ? `${a.content.replace(/<[^>]+>/g, '').substring(0, 100)}...` : 'Chưa có nội dung'}
+                              </p>
+                            </div>
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {newestArticles.length > 3 && (
+              <>
+                <button className="carousel-control-prev" type="button" data-bs-target="#articlesCarousel" data-bs-slide="prev"
+                  style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                  <span className="visually-hidden">Previous</span>
+                </button>
+                <button className="carousel-control-next" type="button" data-bs-target="#articlesCarousel" data-bs-slide="next"
+                  style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                  <span className="visually-hidden">Next</span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
       <Footer />
     </div>
   );

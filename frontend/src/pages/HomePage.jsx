@@ -315,125 +315,125 @@ function HomePage() {
               <h2 className="h4 mb-4 fw-bold luxury-section-title">
                 Chuyến đi & Lịch trình
               </h2>
-              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5">
-                {tours.length === 0 ? (
-                  <p className="text-muted">Không có tour nào để hiển thị.</p>
-                ) : (
-                  tours.map((t) => (
-                    <div className="col" key={t.id}>
-                      <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                        <Link
-                          to={`/tours/${t.id}`}
-                          className="text-decoration-none"
-                        >
-                          {t.image_url ? (
-                            <img
-                              src={t.image_url.startsWith("http") ? t.image_url : `http://localhost:3000${t.image_url}`}
-                              alt={t.name}
-                              className="card-img-top luxury-img-top"
-                              style={{
-                                height: 220,
-                                objectFit: "cover",
-                                borderTopLeftRadius: "1.5rem",
-                                borderTopRightRadius: "1.5rem",
-                              }}
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <div 
-                              className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                              style={{
-                                height: 220,
-                                borderTopLeftRadius: "1.5rem",
-                                borderTopRightRadius: "1.5rem",
-                                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                                color: "white",
-                                fontSize: "3rem"
-                              }}
-                            >
-                              <i className="bi bi-map"></i>
+              {/* Bootstrap Carousel for all tours, 3 per slide */}
+              {tours.length === 0 ? (
+                <p className="text-muted">Không có tour nào để hiển thị.</p>
+              ) : (
+                <div id="toursCarousel" className="carousel slide" data-bs-ride="carousel">
+                  <div className="carousel-inner">
+                    {chunkArray(tours, 3).map((group, idx) => (
+                      <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(t => t.id).join('-')}>
+                        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
+                          {group.map((t) => (
+                            <div className="col" key={t.id}>
+                              <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                                <Link to={`/tours/${t.id}`} className="text-decoration-none">
+                                  {t.image_url ? (
+                                    <img
+                                      src={t.image_url.startsWith("http") ? t.image_url : `http://localhost:3000${t.image_url}`}
+                                      alt={t.name}
+                                      className="card-img-top luxury-img-top"
+                                      style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                      onError={(e) => { e.target.style.display = 'none'; }}
+                                    />
+                                  ) : (
+                                    <div 
+                                      className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                      style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                                    >
+                                      <i className="bi bi-map"></i>
+                                    </div>
+                                  )}
+                                  <div className="card-body luxury-card-body">
+                                    <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{t.name}</h3>
+                                    {t.description && (
+                                      <p className="card-text text-muted mb-2 luxury-desc">
+                                        {`${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`}
+                                      </p>
+                                    )}
+                                    {t.total_cost && (
+                                      <p className="card-text text-muted small mb-0 luxury-rating">
+                                        <span className="luxury-money">💰</span> {t.total_cost} VND
+                                      </p>
+                                    )}
+                                  </div>
+                                </Link>
+                              </div>
                             </div>
-                          )}
-                          <div className="card-body luxury-card-body">
-                            <h3
-                              className="card-title mb-2"
-                              style={{ fontWeight: 600 }}
-                            >
-                              {t.name}
-                            </h3>
-                            <p className="card-text text-muted mb-2 luxury-desc">
-                              {t.description
-                                ? `${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`
-                                : "Chưa có mô tả"}
-                            </p>
-                            <p className="card-text text-muted small mb-0 luxury-rating">
-                              <span className="luxury-money">💰</span> {t.total_cost}{" "}
-                              VND
-                            </p>
-                          </div>
-                        </Link>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                    ))}
+                  </div>
+                  {/* Always show controls for consistency */}
+                  <button className="carousel-control-prev" type="button" data-bs-target="#toursCarousel" data-bs-slide="prev"
+                    style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                    <span className="visually-hidden">Previous</span>
+                  </button>
+                  <button className="carousel-control-next" type="button" data-bs-target="#toursCarousel" data-bs-slide="next"
+                    style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                    <span className="visually-hidden">Next</span>
+                  </button>
+                </div>
+              )}
             </section>
             <hr className="my-5 luxury-divider" />
             <section className="cards-section mb-6">
               <h2 className="h4 mb-4 fw-bold luxury-section-title">
                 Bài viết mới nhất
               </h2>
-              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5">
-                {articles.length === 0 ? (
-                  <p className="text-muted">Không có bài viết nào để hiển thị.</p>
-                ) : (
-                  articles.map((a) => (
-                    <div className="col" key={a.article_id}>
-                      <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                        <Link
-                          to={`/articles/${a.article_id}`}
-                          className="text-decoration-none"
-                        >
-                          {a.image_url ? (
-                            <img
-                              src={
-                                a.image_url.startsWith("http")
-                                  ? a.image_url
-                                  : `http://localhost:3000${a.image_url}`
-                              }
-                              alt="Ảnh"
-                              className="card-img-top luxury-img-top"
-                              style={{
-                                height: 220,
-                                objectFit: "cover",
-                                borderTopLeftRadius: "1.5rem",
-                                borderTopRightRadius: "1.5rem",
-                              }}
-                            />
-                          ) : (
-                            ""
-                          )}
-                          <div className="card-body luxury-card-body">
-                            <h3
-                              className="card-title mb-2"
-                              style={{ fontWeight: 600 }}
-                            >
-                              {a.title}
-                            </h3>
-                            <p className="card-text text-muted mb-2 luxury-desc">
-                              {a.content
-                                ? `${a.content.replace(/<[^>]+>/g, '').substring(0, 100)}...`
-                                : "Chưa có nội dung"}
-                            </p>
-                          </div>
-                        </Link>
+              {/* Bootstrap Carousel for all articles, 3 per slide */}
+              {articles.length === 0 ? (
+                <p className="text-muted">Không có bài viết nào để hiển thị.</p>
+              ) : (
+                <div id="articlesCarousel" className="carousel slide" data-bs-ride="carousel">
+                  <div className="carousel-inner">
+                    {chunkArray(articles, 3).map((group, idx) => (
+                      <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(a => a.article_id).join('-')}>
+                        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
+                          {group.map((a) => (
+                            <div className="col" key={a.article_id}>
+                              <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                                <Link to={`/articles/${a.article_id}`} className="text-decoration-none">
+                                  {a.image_url && (
+                                    <img
+                                      src={a.image_url.startsWith("http") ? a.image_url : `http://localhost:3000${a.image_url}`}
+                                      alt="Ảnh"
+                                      className="card-img-top luxury-img-top"
+                                      style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                    />
+                                  )}
+                                  <div className="card-body luxury-card-body">
+                                    <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{a.title}</h3>
+                                    {a.content && (
+                                      <p className="card-text text-muted mb-2 luxury-desc">
+                                        {`${a.content.replace(/<[^>]+>/g, '').substring(0, 100)}...`}
+                                      </p>
+                                    )}
+                                  </div>
+                                </Link>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                    ))}
+                  </div>
+                  {/* Always show controls for consistency */}
+                  <button className="carousel-control-prev" type="button" data-bs-target="#articlesCarousel" data-bs-slide="prev"
+                    style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                    <span className="visually-hidden">Previous</span>
+                  </button>
+                  <button className="carousel-control-next" type="button" data-bs-target="#articlesCarousel" data-bs-slide="next"
+                    style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                    <span className="visually-hidden">Next</span>
+                  </button>
+                </div>
+              )}
             </section>
           </>
         )}

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Footer from '../../components/Footer.jsx';
+import tourApi from '../../api/tourApi';
 
 const TourDetail = () => {
   const [tour, setTour] = useState(null);
@@ -10,6 +11,7 @@ const TourDetail = () => {
   const [error, setError] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
+  const [newestTours, setNewestTours] = useState([]);
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -31,7 +33,30 @@ const TourDetail = () => {
       }
     };
     fetchTour();
+
+    // Fetch newest tours (excluding current)
+    const fetchNewest = async () => {
+      try {
+        const res = await tourApi.getAll();
+        let tours = res.data || [];
+        tours = tours.filter(t => t.id !== Number(id));
+        tours.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setNewestTours(tours);
+      } catch (e) {
+        setNewestTours([]);
+      }
+    };
+    fetchNewest();
   }, [id]);
+
+  // Helper to chunk array into groups of 3
+  function chunkArray(arr, size) {
+    const result = [];
+    for (let i = 0; i < arr.length; i += size) {
+      result.push(arr.slice(i, i + size));
+    }
+    return result;
+  }
 
   if (loading) {
     return (
@@ -134,6 +159,63 @@ const TourDetail = () => {
           </div>
         </div>
       </main>
+      {/* Newest Tours Carousel */}
+      <div className="container my-5">
+        <h2 className="h4 mb-4 fw-bold luxury-section-title">Chuyến đi khác</h2>
+        {newestTours.length === 0 ? (
+          <p className="text-muted text-center">Không có chuyến đi nào để hiển thị.</p>
+        ) : (
+          <div id="toursCarousel" className="carousel slide" data-bs-ride="carousel">
+            <div className="carousel-inner">
+              {chunkArray(newestTours, 3).map((group, idx) => (
+                <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(t => t.id).join('-')}>
+                  <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
+                    {group.map((t) => (
+                      <div className="col" key={t.id}>
+                        <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                          <a href={`/tours/${t.id}`} className="text-decoration-none">
+                            {t.image_url && (
+                              <img
+                                src={t.image_url.startsWith('http') ? t.image_url : `http://localhost:3000${t.image_url}`}
+                                alt={t.name}
+                                className="card-img-top luxury-img-top"
+                                style={{ height: 220, objectFit: 'cover', borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem' }}
+                              />
+                            )}
+                            <div className="card-body luxury-card-body">
+                              <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{t.name}</h3>
+                              <p className="card-text text-muted mb-2 luxury-desc">
+                                {t.description ? `${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...` : 'Chưa có mô tả'}
+                              </p>
+                              <p className="card-text text-muted small mb-0 luxury-rating">
+                                <span className="luxury-money">💰</span> {t.total_cost} VND
+                              </p>
+                            </div>
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {newestTours.length > 3 && (
+              <>
+                <button className="carousel-control-prev" type="button" data-bs-target="#toursCarousel" data-bs-slide="prev"
+                  style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                  <span className="visually-hidden">Previous</span>
+                </button>
+                <button className="carousel-control-next" type="button" data-bs-target="#toursCarousel" data-bs-slide="next"
+                  style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                  <span className="visually-hidden">Next</span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
       <Footer />
     </div>
   );
