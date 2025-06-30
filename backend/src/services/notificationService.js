@@ -29,7 +29,7 @@ module.exports = {
   
   // Create tour reminder notification
   createTourReminder: async (userId, tourId, tourName, reminderDate) => {
-    const content = `Nhắc nhở: Bạn có tour "${tourName}" vào ngày ${reminderDate}. Hãy chuẩn bị sẵn sàng!`;
+    const content = `⏰ Nhắc nhở: Tour "${tourName}" sẽ bắt đầu vào ${reminderDate}. Hãy chuẩn bị sẵn sàng cho chuyến đi tuyệt vời!`;
     return notiRepo.save(notiRepo.create({
       user_id: userId,
       content,
@@ -41,7 +41,7 @@ module.exports = {
   
   // Create tour completion notification
   createTourCompletion: async (userId, tourName) => {
-    const content = `Chúc mừng! Bạn đã hoàn thành tour "${tourName}". Hy vọng bạn đã có một chuyến đi tuyệt vời!`;
+    const content = `🎊 Chúc mừng! Bạn đã hoàn thành tour "${tourName}". Hy vọng bạn đã có một chuyến đi tuyệt vời với nhiều kỷ niệm đáng nhớ!`;
     return notiRepo.save(notiRepo.create({
       user_id: userId,
       content,
@@ -52,7 +52,7 @@ module.exports = {
   
   // Create new tour created notification
   createTourCreated: async (userId, tourName) => {
-    const content = `Tour "${tourName}" đã được tạo thành công! Bạn có thể xem chi tiết trong trang "Tour của tôi".`;
+    const content = `🎉 Tour "${tourName}" đã được tạo thành công! Bạn có thể xem chi tiết trong trang "Tour của tôi". Nếu bạn đã đặt thời gian bắt đầu, bạn sẽ nhận được nhắc nhở tự động.`;
     return notiRepo.save(notiRepo.create({
       user_id: userId,
       content,

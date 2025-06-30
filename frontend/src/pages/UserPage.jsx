@@ -27,6 +27,9 @@ function UserPage() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
     if (authUser) {
@@ -55,7 +58,8 @@ function UserPage() {
   const loadUserTours = async () => {
     try {
       const response = await tourApi.getUserTours(authUser.id);
-      console.log("User tours:", response.data); // Debug log
+      console.log("UserPage - User tours:", response.data); // Debug log
+      console.log("UserPage - First tour image_url:", response.data[0]?.image_url); // Debug log
       setUserTours(response.data);
     } catch (err) {
       console.error("Error loading user tours:", err);
@@ -144,6 +148,56 @@ function UserPage() {
     });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreview(e.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch('http://localhost:3000/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    const data = await response.json();
+    return data.url;
+  };
+
+  const handleImageUpload = async () => {
+    if (!imageFile) return;
+    
+    try {
+      setIsUploadingImage(true);
+      const imageUrl = await uploadImage(imageFile);
+      
+      // Update user profile with new image
+      const response = await userApi.updateProfile({
+        ...editForm,
+        image_url: imageUrl
+      });
+      
+      setUserProfile(response.data);
+      login(response.data);
+      setImageFile(null);
+      setImagePreview("");
+      setError(null);
+    } catch (err) {
+      setError("Failed to upload image");
+      console.error("Error uploading image:", err);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   if (!authUser) {
     return (
       <div className="user-page-container">
@@ -176,10 +230,85 @@ function UserPage() {
         <div className="profile-header">
           <h1>Hồ sơ người dùng</h1>
           <div className="profile-avatar">
-            <div className="avatar-circle">
+            {userProfile?.image_url ? (
+              <img
+                src={userProfile.image_url.startsWith("http") ? userProfile.image_url : `http://localhost:3000${userProfile.image_url}`}
+                alt={userProfile.full_name}
+                className="avatar-image"
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '4px solid #fff',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className="avatar-circle"
+              style={{ display: userProfile?.image_url ? 'none' : 'flex' }}
+            >
               {userProfile?.full_name?.charAt(0).toUpperCase()}
             </div>
+            {!isEditing && (
+              <div className="avatar-upload">
+                <label htmlFor="profile-image" className="upload-btn">
+                  <i className="bi bi-camera"></i>
+                </label>
+                <input
+                  id="profile-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={{ display: 'none' }}
+                />
+              </div>
+            )}
           </div>
+          
+          {/* Image preview and upload section */}
+          {(imageFile || imagePreview) && (
+            <div className="image-upload-section" style={{ marginTop: '20px', textAlign: 'center' }}>
+              <div style={{ marginBottom: '10px' }}>
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  style={{
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '2px solid #ddd'
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button
+                  className="save-btn"
+                  onClick={handleImageUpload}
+                  disabled={isUploadingImage}
+                  style={{ padding: '8px 16px', fontSize: '14px' }}
+                >
+                  {isUploadingImage ? 'Đang tải...' : 'Lưu ảnh'}
+                </button>
+                <button
+                  className="cancel-btn"
+                  onClick={() => {
+                    setImageFile(null);
+                    setImagePreview("");
+                  }}
+                  style={{ padding: '8px 16px', fontSize: '14px' }}
+                >
+                  Hủy
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {error && (
@@ -346,25 +475,64 @@ function UserPage() {
             <h2>Tour gần đây</h2>
             {userTours.length > 0 ? (
               <div className="tours-list">
-                {userTours.slice(0, 5).map(tour => (
-                  <div key={tour.id} className="tour-item">
-                    <div className="tour-info">
-                      <h3 className="tour-title">{tour.name}</h3>
-                      <p className="tour-description">{tour.description}</p>
-                      <div className="tour-meta">
-                        <span className="tour-date">
-                          {tour.start_time && tour.end_time 
-                            ? `${formatDate(tour.start_time)} - ${formatDate(tour.end_time)}`
-                            : 'Chưa đặt ngày'
-                          }
-                        </span>
-                        <span className={`tour-status status-planned`}>
-                          Đã lên kế hoạch
-                        </span>
+                {userTours.slice(0, 5).map(tour => {
+                  console.log("UserPage - Rendering tour:", tour.name, "image_url:", tour.image_url); // Debug log
+                  return (
+                    <div key={tour.id} className="tour-item">
+                      <div className="tour-image">
+                        {tour.image_url ? (
+                          <img
+                            src={tour.image_url.startsWith("http") ? tour.image_url : `http://localhost:3000${tour.image_url}`}
+                            alt={tour.name}
+                            style={{
+                              width: '80px',
+                              height: '80px',
+                              borderRadius: '12px',
+                              objectFit: 'cover',
+                              border: '2px solid #e9ecef'
+                            }}
+                            onError={(e) => {
+                              console.log("UserPage - Tour image failed to load:", e.target.src); // Debug log
+                              e.target.style.display = 'none';
+                            }}
+                            onLoad={() => console.log("UserPage - Tour image loaded successfully:", tour.name)} // Debug log
+                          />
+                        ) : (
+                          <div 
+                            style={{
+                              width: '80px',
+                              height: '80px',
+                              borderRadius: '12px',
+                              background: 'linear-gradient(135deg, #1a5bb8 0%, #1a5bb8 100%)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '1.5rem'
+                            }}
+                          >
+                            <i className="bi bi-map"></i>
+                          </div>
+                        )}
+                      </div>
+                      <div className="tour-info">
+                        <h3 className="tour-title">{tour.name}</h3>
+                        <p className="tour-description">{tour.description}</p>
+                        <div className="tour-meta">
+                          <span className="tour-date">
+                            {tour.start_time && tour.end_time 
+                              ? `${formatDate(tour.start_time)} - ${formatDate(tour.end_time)}`
+                              : 'Chưa đặt ngày'
+                            }
+                          </span>
+                          <span className={`tour-status status-planned`}>
+                            Đã lên kế hoạch
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="no-tours">

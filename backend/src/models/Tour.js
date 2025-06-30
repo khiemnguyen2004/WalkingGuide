@@ -8,6 +8,7 @@ module.exports = new EntitySchema({
     user_id: { type: "int" },
     name: { type: "varchar", length: 255, nullable: false },
     description: { type: "text" },
+    image_url: { type: "varchar", length: 500, nullable: true },
     total_cost: { type: "float", default: 0 },
     created_at: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" },
     updated_at: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" },

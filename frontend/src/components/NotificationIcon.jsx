@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
-import { getUserNotifications, getUnreadCount, markAllAsRead, updateNotification } from '../api/notificationApi';
+import { getUserNotifications, getUnreadCount, markAllAsRead, updateNotification, deleteNotification } from '../api/notificationApi';
 
 const NotificationIcon = () => {
-  const { user } = useContext(AuthContext);
+  const { user, notificationRefreshTrigger } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -14,7 +14,7 @@ const NotificationIcon = () => {
       fetchNotifications();
       fetchUnreadCount();
     }
-  }, [user]);
+  }, [user, notificationRefreshTrigger]);
 
   const fetchNotifications = async () => {
     try {
@@ -63,6 +63,23 @@ const NotificationIcon = () => {
     }
   };
 
+  const handleDeleteNotification = async (notificationId, event) => {
+    event.stopPropagation(); // Prevent triggering mark as read
+    if (!window.confirm('Bạn có chắc muốn xóa thông báo này?')) return;
+    
+    try {
+      await deleteNotification(notificationId);
+      const deletedNotification = notifications.find(n => n.notification_id === notificationId);
+      setNotifications(prev => prev.filter(notif => notif.notification_id !== notificationId));
+      // Update unread count if the deleted notification was unread
+      if (deletedNotification && !deletedNotification.is_read) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  };
+
   const formatDate = (dateString) => {
     try {
       const date = new Date(dateString);
@@ -104,8 +121,18 @@ const NotificationIcon = () => {
         <i className="bi bi-bell" style={{ fontSize: 24, color: '#1a5bb8' }}></i>
         {unreadCount > 0 && (
           <span 
-            className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-            style={{ fontSize: '0.7rem', transform: 'translate(-50%, -50%)' }}
+            className="position-absolute badge rounded-pill bg-danger"
+            style={{ 
+              fontSize: '0.7rem', 
+              top: '2px', 
+              right: '-8px',
+              minWidth: '18px',
+              height: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2px 6px'
+            }}
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
@@ -158,7 +185,10 @@ const NotificationIcon = () => {
                   key={notification.notification_id}
                   className={`p-3 border-bottom ${!notification.is_read ? 'bg-light' : ''}`}
                   style={{ cursor: 'pointer' }}
-                  onClick={() => handleMarkAsRead(notification.notification_id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleMarkAsRead(notification.notification_id);
+                  }}
                 >
                   <div className="d-flex align-items-start">
                     <div className="me-3 mt-1">
@@ -178,6 +208,16 @@ const NotificationIcon = () => {
                       <small className="text-muted">
                         {formatDate(notification.created_at)}
                       </small>
+                    </div>
+                    <div className="ms-2">
+                      <i 
+                        className="bi bi-trash" 
+                        style={{ fontSize: '1.2rem', color: '#dc3545', cursor: 'pointer' }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteNotification(notification.notification_id, event);
+                        }}
+                      ></i>
                     </div>
                   </div>
                 </div>

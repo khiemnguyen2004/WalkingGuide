@@ -3,11 +3,9 @@ import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext.jsx";
 import Header from "./Header.jsx";
 import Footer from "./Footer.jsx";
-import TourReminder from "./TourReminder";
 import "../css/luxury-home.css";
 
 const AutoPlanner = ({ noLayout }) => {
-  const [days, setDays] = useState(1);
   const [interests, setInterests] = useState("");
   const [total_cost, setTotal_cost] = useState("");
   const [tourData, setTourData] = useState(null);
@@ -17,7 +15,7 @@ const AutoPlanner = ({ noLayout }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdTour, setCreatedTour] = useState(null);
-  const { user } = useContext(AuthContext);
+  const { user, refreshNotifications } = useContext(AuthContext);
   const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [start_time, setStart_time] = useState("");
@@ -36,7 +34,6 @@ const AutoPlanner = ({ noLayout }) => {
       setError("");
       setIsGenerating(true);
       const res = await axios.post("http://localhost:3000/api/ai/generate-tour", {
-        days: parseInt(days),
         interests: interests.split(",").map(i => i.trim()).filter(Boolean),
         total_cost: total_cost ? parseFloat(total_cost) : 0,
         user_id: Number(user.id),
@@ -94,6 +91,9 @@ const AutoPlanner = ({ noLayout }) => {
       setShowSuccessModal(true);
       setTourData(null);
       setTourName("");
+      
+      // Trigger notification refresh to update unread count
+      refreshNotifications();
     } catch (err) {
       console.error(err);
       alert("Lỗi khi lưu tour vào hệ thống!");
@@ -115,6 +115,16 @@ const AutoPlanner = ({ noLayout }) => {
       desc += `Dựa trên sở thích của bạn (${interestArr.join(", ")}), các địa điểm nổi bật gồm: ${placeNames.slice(0,3).join(", ")}`;
     }
     return desc;
+  }
+
+  // Helper to convert HTML to plain text
+  function htmlToPlainText(html) {
+    if (!html) return "";
+    // Create a temporary div element
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+    // Get the text content (strips HTML tags)
+    return tempDiv.textContent || tempDiv.innerText || "";
   }
 
   if (!user) {
@@ -207,17 +217,6 @@ const AutoPlanner = ({ noLayout }) => {
                 className="form-control"
                 value={end_time}
                 onChange={e => setEnd_time(e.target.value)}
-              />
-            </div>
-            <div className="col-md-6">
-              <label className="form-label fw-bold">Số ngày</label>
-              <input
-                type="number"
-                className="form-control"
-                value={days}
-                onChange={e => setDays(e.target.value)}
-                min="1"
-                max="7"
               />
             </div>
             <div className="col-md-6">
@@ -331,7 +330,7 @@ const AutoPlanner = ({ noLayout }) => {
                 {/* {tourData.tour.name} */}
               </h5>
               <p className="text-muted mb-2">
-                {generateAIDescription(interests, tourData.steps) || tourData.tour.description}
+                {generateAIDescription(interests, tourData.steps) || htmlToPlainText(tourData.tour.description)}
               </p>
               <div className="row">
                 <div className="col-md-4">
@@ -398,7 +397,7 @@ const AutoPlanner = ({ noLayout }) => {
                         )}
                         {place?.description && (
                           <p className="place-description">
-                            <small className="text-muted">{place.description}</small>
+                            <small className="text-muted">{htmlToPlainText(place.description)}</small>
                           </p>
                         )}
                       </div>
@@ -423,7 +422,7 @@ const AutoPlanner = ({ noLayout }) => {
         {/* Success Modal */}
         {showSuccessModal && createdTour && (
           <div className="modal show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.4)" }}>
-            <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Tạo tour thành công!</h5>
@@ -435,16 +434,11 @@ const AutoPlanner = ({ noLayout }) => {
                     <b>Thời gian:</b> {createdTour.start_time || "-"} đến {createdTour.end_time || "-"}
                   </div>
                   
-                  {/* Tour Reminder Section */}
-                  {createdTour.id && (
-                    <div className="mt-4">
-                      <TourReminder 
-                        tourId={createdTour.id}
-                        tourName={createdTour.name}
-                        onReminderSet={() => {
-                          // Optionally refresh notifications or show success message
-                        }}
-                      />
+                  {/* Auto reminder message */}
+                  {createdTour.start_time && (
+                    <div className="alert alert-info mt-3">
+                      <i className="bi bi-bell me-2"></i>
+                      <strong>Nhắc nhở tự động:</strong> Bạn sẽ nhận được thông báo nhắc nhở trước khi tour bắt đầu.
                     </div>
                   )}
                 </div>

@@ -262,15 +262,27 @@
 
 .tour-item {
   background: white;
-  border-radius: 15px;
-  padding: 25px;
+  border-radius: 12px;
+  padding: 20px;
   border: 1px solid #e9ecef;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .tour-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.tour-image {
+  flex-shrink: 0;
+}
+
+.tour-info {
+  flex: 1;
 }
 
 .tour-title {
@@ -515,4 +527,46 @@
   color: #6c757d;
   padding: 2rem;
   font-style: italic;
+}
+
+/* Avatar Upload Styles */
+.avatar-upload {
+  position: relative;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.upload-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #3498db;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.upload-btn:hover {
+  background: #1a5bb8;
+  transform: scale(1.1);
+}
+
+.upload-btn i {
+  font-size: 18px;
+}
+
+.image-upload-section {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 } 

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
+import userApi from "../api/userApi";
 
 export const AuthContext = createContext();
 
@@ -7,6 +8,24 @@ export function AuthProvider({ children }) {
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
   });
+  const [notificationRefreshTrigger, setNotificationRefreshTrigger] = useState(0);
+
+  // Refresh user data from server if we have a token
+  useEffect(() => {
+    const refreshUserData = async () => {
+      const token = localStorage.getItem("token");
+      if (token && user) {
+        try {
+          const response = await userApi.getProfile();
+          setUser(response.data);
+        } catch (error) {
+          console.error("Failed to refresh user data:", error);
+        }
+      }
+    };
+
+    refreshUserData();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -25,8 +44,18 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
   };
 
+  const refreshNotifications = () => {
+    setNotificationRefreshTrigger(prev => prev + 1);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      notificationRefreshTrigger, 
+      refreshNotifications 
+    }}>
       {children}
     </AuthContext.Provider>
   );

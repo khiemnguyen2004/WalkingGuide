@@ -7,9 +7,12 @@ function UsersAdmin() {
   const [users, setUsers] = useState([]);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [role, setRole] = useState("USER");
   const [password, setPassword] = useState("");
   const [editId, setEditId] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -20,24 +23,66 @@ function UsersAdmin() {
     setUsers(res.data);
   };
 
-  const handleCreate = async () => {
-    await axios.post("http://localhost:3000/api/users", {
-      full_name: fullName,
-      email,
-      password, // required
-      role,
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreview(e.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await axios.post('http://localhost:3000/api/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
-    fetchUsers();
-    setFullName("");
-    setEmail("");
-    setPassword("");
-    setRole("USER");
+    
+    return response.data.url;
+  };
+
+  const handleCreate = async () => {
+    setIsUploading(true);
+    try {
+      let imageUrl = "";
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+
+      await axios.post("http://localhost:3000/api/users", {
+        full_name: fullName,
+        email,
+        image_url: imageUrl,
+        password, // required
+        role,
+      });
+      fetchUsers();
+      setFullName("");
+      setEmail("");
+      setImageFile(null);
+      setImagePreview("");
+      setPassword("");
+      setRole("USER");
+    } catch (error) {
+      console.error("Error creating user:", error);
+      alert("Có lỗi xảy ra khi tạo người dùng");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleEdit = (user) => {
     setEditId(user.id);
     setFullName(user.full_name);
     setEmail(user.email);
+    setImageFile(null);
+    setImagePreview(user.image_url || "");
     setRole(user.role);
     setPassword(user.password_hash);
     
@@ -46,18 +91,34 @@ function UsersAdmin() {
   };
 
   const handleUpdate = async () => {
-    await axios.put(`http://localhost:3000/api/users/${editId}`, {
-      full_name: fullName,
-      email,
-      password_hash: password || undefined,
-      role,
-    });
-    fetchUsers();
-    setEditId(null);
-    setFullName("");
-    setEmail("");
-    setPassword("");
-    setRole("USER");
+    setIsUploading(true);
+    try {
+      let imageUrl = imagePreview;
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+
+      await axios.put(`http://localhost:3000/api/users/${editId}`, {
+        full_name: fullName,
+        email,
+        image_url: imageUrl,
+        password_hash: password || undefined,
+        role,
+      });
+      fetchUsers();
+      setEditId(null);
+      setFullName("");
+      setEmail("");
+      setImageFile(null);
+      setImagePreview("");
+      setPassword("");
+      setRole("USER");
+    } catch (error) {
+      console.error("Error updating user:", error);
+      alert("Có lỗi xảy ra khi cập nhật người dùng");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -65,6 +126,16 @@ function UsersAdmin() {
       await axios.delete(`http://localhost:3000/api/users/${id}`);
       fetchUsers();
     }
+  };
+
+  const clearForm = () => {
+    setEditId(null);
+    setFullName("");
+    setEmail("");
+    setImageFile(null);
+    setImagePreview("");
+    setPassword("");
+    setRole("USER");
   };
 
   return (
@@ -106,6 +177,32 @@ function UsersAdmin() {
                   className="form-control mb-2"
                   placeholder="Email"
                 />
+                
+                <div className="mb-2">
+                  <label className="form-label">Hình ảnh đại diện</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="form-control"
+                  />
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <img 
+                        src={imagePreview.startsWith('data:') ? imagePreview : `http://localhost:3000${imagePreview}`} 
+                        alt="Preview" 
+                        style={{ 
+                          width: '80px', 
+                          height: '80px', 
+                          objectFit: 'cover',
+                          borderRadius: '50%',
+                          border: '2px solid #ddd'
+                        }} 
+                      />
+                    </div>
+                  )}
+                </div>
+
                 <input
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -121,27 +218,31 @@ function UsersAdmin() {
                   <option value="USER">USER</option>
                   <option value="ADMIN">ADMIN</option>
                 </select>
+                
                 {editId ? (
                   <>
-                    <button onClick={handleUpdate} className="btn admin-main-btn me-2">
-                      Cập nhật
+                    <button 
+                      onClick={handleUpdate} 
+                      className="btn admin-main-btn me-2"
+                      disabled={isUploading}
+                    >
+                      {isUploading ? "Đang cập nhật..." : "Cập nhật"}
                     </button>
                     <button
-                      onClick={() => {
-                        setEditId(null);
-                        setFullName("");
-                        setEmail("");
-                        setPassword("");
-                        setRole("USER");
-                      }}
+                      onClick={clearForm}
                       className="btn admin-btn-secondary"
+                      disabled={isUploading}
                     >
                       Hủy
                     </button>
                   </>
                 ) : (
-                  <button onClick={handleCreate} className="btn admin-main-btn">
-                    Thêm
+                  <button 
+                    onClick={handleCreate} 
+                    className="btn admin-main-btn"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? "Đang tạo..." : "Thêm"}
                   </button>
                 )}
               </div>
@@ -150,6 +251,7 @@ function UsersAdmin() {
                 <thead>
                   <tr>
                     <th>ID</th>
+                    <th>Hình ảnh</th>
                     <th>Họ tên</th>
                     <th>Email</th>
                     <th>Vai trò</th>
@@ -160,6 +262,36 @@ function UsersAdmin() {
                   {users.map((u) => (
                     <tr key={u.id}>
                       <td>{u.id}</td>
+                      <td>
+                        {u.image_url ? (
+                          <img 
+                            src={`http://localhost:3000${u.image_url}`} 
+                            alt={u.full_name}
+                            style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '50%' }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : (
+                          <div 
+                            style={{ 
+                              width: '50px', 
+                              height: '50px', 
+                              borderRadius: '50%', 
+                              backgroundColor: '#e9ecef',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#6c757d',
+                              fontSize: '18px',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            {u.full_name ? u.full_name.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                        )}
+                      </td>
                       <td>{u.full_name}</td>
                       <td>{u.email}</td>
                       <td>{u.role}</td>

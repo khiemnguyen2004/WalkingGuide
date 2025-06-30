@@ -276,7 +276,7 @@ function HomePage() {
                                     </p>
                                     {p.service && (
                                       <p className="card-text text-muted mb-2 small">
-                                        <i className="bi bi-tools me-1"></i>
+                                        <i className="bi bi-activity me-1"></i>
                                         {p.service.length > 80 ? `${p.service.substring(0, 80)}...` : p.service}
                                       </p>
                                     )}
@@ -326,6 +326,36 @@ function HomePage() {
                           to={`/tours/${t.id}`}
                           className="text-decoration-none"
                         >
+                          {t.image_url ? (
+                            <img
+                              src={t.image_url.startsWith("http") ? t.image_url : `http://localhost:3000${t.image_url}`}
+                              alt={t.name}
+                              className="card-img-top luxury-img-top"
+                              style={{
+                                height: 220,
+                                objectFit: "cover",
+                                borderTopLeftRadius: "1.5rem",
+                                borderTopRightRadius: "1.5rem",
+                              }}
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div 
+                              className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                              style={{
+                                height: 220,
+                                borderTopLeftRadius: "1.5rem",
+                                borderTopRightRadius: "1.5rem",
+                                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                                color: "white",
+                                fontSize: "3rem"
+                              }}
+                            >
+                              <i className="bi bi-map"></i>
+                            </div>
+                          )}
                           <div className="card-body luxury-card-body">
                             <h3
                               className="card-title mb-2"

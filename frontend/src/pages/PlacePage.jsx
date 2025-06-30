@@ -62,9 +62,16 @@ function PlacePage() {
                     <div className="card h-100">
                       <Link to={`/places/${p.id}`} className="text-decoration-none">
                         <img
-                          src={p.image_url || "/default-place.jpg"}
+                          src={p.image_url 
+                            ? (p.image_url.startsWith('http') 
+                                ? p.image_url 
+                                : `http://localhost:3000${p.image_url}`)
+                            : "/default-place.jpg"}
                           alt={p.name}
                           className="card-img-top"
+                          onError={(e) => {
+                            e.target.src = "/default-place.jpg";
+                          }}
                         />
                         <div className="card-body">
                           <h3 className="card-title text-primary">{p.name}</h3>

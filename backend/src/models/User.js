@@ -23,6 +23,11 @@ module.exports = new EntitySchema({
       type: "varchar",
       nullable: false,
     },
+    image_url: {
+      type: "varchar",
+      length: 500,
+      nullable: true,
+    },
     role: {
       type: "varchar",
       length: 10,

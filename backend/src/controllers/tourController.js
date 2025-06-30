@@ -45,6 +45,7 @@ module.exports = {
       const newTour = await tourRepo.save({
         name: tour.name,
         description: tour.description,
+        image_url: tour.image_url,
         user_id: userId,
         total_cost: tour.total_cost,
       });
@@ -60,14 +61,14 @@ module.exports = {
   },
   createTour: async (req, res) => {
     try {
-      const { name, description, user_id, total_cost = 0, steps = [], start_time, end_time } = req.body;
+      const { name, description, image_url, user_id, total_cost = 0, steps = [], start_time, end_time } = req.body;
 
       if (!name || !user_id) {
         return res.status(400).json({ error: "Thiếu tên tour hoặc user_id" });
       }
 
       // 1. Tạo tour
-      const newTour = await tourRepo.save({ name, description, total_cost, user_id, start_time, end_time });
+      const newTour = await tourRepo.save({ name, description, image_url, total_cost, user_id, start_time, end_time });
 
       // 2. Lưu các bước của tour nếu có
       const savedSteps = [];
@@ -89,9 +90,27 @@ module.exports = {
 
       // 4. Create tour reminder if start_time is provided
       if (start_time) {
-        const reminderDate = new Date(start_time);
-        reminderDate.setDate(reminderDate.getDate() - 1); // Remind 1 day before
+        // Create immediate reminder notification
         await notiService.createTourReminder(user_id, newTour.id, newTour.name, start_time);
+        
+        // Create a reminder 1 day before if the tour is more than 1 day away
+        const tourStartDate = new Date(start_time);
+        const now = new Date();
+        const daysUntilTour = Math.ceil((tourStartDate - now) / (1000 * 60 * 60 * 24));
+        
+        if (daysUntilTour > 1) {
+          // Create a reminder for 1 day before
+          const reminderDate = new Date(tourStartDate);
+          reminderDate.setDate(reminderDate.getDate() - 1);
+          
+          await notiService.create({
+            user_id: user_id,
+            content: `Nhắc nhở: Tour "${newTour.name}" sẽ bắt đầu vào ngày mai (${start_time}). Hãy chuẩn bị sẵn sàng!`,
+            type: 'tour_reminder',
+            tour_id: newTour.id,
+            is_read: false
+          });
+        }
       }
 
       res.status(201).json({ tour: newTour, steps: savedSteps });
@@ -104,11 +123,12 @@ module.exports = {
   editTour: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description } = req.body;
+      const { name, description, image_url } = req.body;
       const tour = await tourRepo.findOneBy({ id: parseInt(id) });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
       if (name !== undefined) tour.name = name;
       if (description !== undefined) tour.description = description;
+      if (image_url !== undefined) tour.image_url = image_url;
       await tourRepo.save(tour);
       res.json(tour);
     } catch (err) {

@@ -6,7 +6,6 @@ import Navbar from "./Navbar.jsx";
 import Footer from "./Footer.jsx";
 import "../css/luxury-home.css";
 import { useNavigate } from "react-router-dom";
-import TourReminder from "./TourReminder";
 
 function ManualPlanner({ noLayout }) {
   const [places, setPlaces] = useState([]);
@@ -15,13 +14,12 @@ function ManualPlanner({ noLayout }) {
   const [totalCost, setTotalCost] = useState(0);
   const [steps, setSteps] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, refreshNotifications } = useContext(AuthContext);
   const [start_time, setStart_time] = useState("");
   const [end_time, setEnd_time] = useState("");
   const navigate = useNavigate();
   const [createdTour, setCreatedTour] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
   const userId = user ? user.id : null;
 
   useEffect(() => {
@@ -114,6 +112,9 @@ function ManualPlanner({ noLayout }) {
       setDescription("");
       setTotalCost(0);
       setSteps([]);
+      
+      // Trigger notification refresh to update unread count
+      refreshNotifications();
     } catch (err) {
       console.error(err);
       alert("Lỗi khi tạo tour");
@@ -489,7 +490,7 @@ function ManualPlanner({ noLayout }) {
         {/* Success Modal */}
         {showSuccessModal && createdTour && (
           <div className="modal show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.4)" }}>
-            <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Tạo tour thành công!</h5>
@@ -499,11 +500,15 @@ function ManualPlanner({ noLayout }) {
                   <p>Bạn đã tạo tour <b>{createdTour.name}</b> thành công.</p>
                   <div className="mb-2">
                     <b>Thời gian:</b> {createdTour.start_time || "-"} đến {createdTour.end_time || "-"}
-                  </div>
-                  {/* Show summary if available */}
-                  {steps.length > 0 && (
-                    <div className="mb-3">
-                      <b>Kế hoạch:</b>
+                  </div>              
+                  {/* Auto reminder message */}
+                  {createdTour.start_time && (
+                    <div className="alert alert-info mt-3">
+                      <i className="bi bi-bell me-2"></i>
+                      <strong>Nhắc nhở tự động:</strong> Bạn sẽ nhận được thông báo nhắc nhở trước khi tour bắt đầu.
+                    </div>
+                  )}
+                  <b>Kế hoạch:</b>
                       <ul>
                         {sortedDays.map(dayNum => (
                           <li key={dayNum}>
@@ -514,21 +519,6 @@ function ManualPlanner({ noLayout }) {
                           </li>
                         ))}
                       </ul>
-                    </div>
-                  )}
-                  
-                  {/* Tour Reminder Section */}
-                  {createdTour.id && (
-                    <div className="mt-4">
-                      <TourReminder 
-                        tourId={createdTour.id}
-                        tourName={createdTour.name}
-                        onReminderSet={() => {
-                          // Optionally refresh notifications or show success message
-                        }}
-                      />
-                    </div>
-                  )}
                 </div>
                 <div className="modal-footer">
                   {createdTour.id && (

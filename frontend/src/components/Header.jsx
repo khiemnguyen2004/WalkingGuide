@@ -65,12 +65,13 @@ function Header() {
         </div>
         <div className="d-flex align-items-center gap-2 position-relative" ref={avatarRef}>
           {user && (
-            <Link to="/my-tours" className="btn btn-main d-flex align-items-center me-2" style={{gap: 8}}>
-              <i className="bi bi-person-walking" style={{fontSize: 20}}></i>
-              <span>Tour của tôi</span>
+            <Link to="/my-tours" className="btn d-flex align-items-center me-2 text-decoration-none" style={{gap: 8}}>
+              <i className="bi bi-person-walking" style={{fontSize: 20, color: '#1a5bb8'}}></i>
+              <span style={{color: '#1a5bb8'}}>Tour của tôi</span>
             </Link>
           )}
           {user && <NotificationIcon />}
+          
           <div className="dropdown">
             <button
               className="btn rounded-circle p-0 d-flex align-items-center justify-content-center border-0"
@@ -78,13 +79,44 @@ function Header() {
               onClick={() => setDropdownOpen((v) => !v)}
               aria-label="User menu"
             >
-              <i className="bi bi-person-circle" style={{ fontSize: 32, color: '#1a5bb8', padding: 0, background: 'none' }}></i>
+              {user && user.image_url ? (
+                <img 
+                  src={user.image_url.startsWith("http") ? user.image_url : `http://localhost:3000${user.image_url}`} 
+                  alt="User Avatar" 
+                  style={{ 
+                    width: 40, 
+                    height: 40, 
+                    objectFit: 'cover', 
+                    borderRadius: '50%',
+                    border: '2px solid #fff',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                />
+              ) : (
+                <i className="bi bi-person-circle" style={{ fontSize: 32, color: '#1a5bb8', padding: 0, background: 'none' }}></i>
+              )}
             </button>
             {dropdownOpen && (
               <div className="dropdown-menu dropdown-menu-end show mt-2 p-3 shadow" style={{ minWidth: 220, right: 0, left: 'auto' }}>
                 {user ? (
                   <>
-                    <div className="mb-2 text-center">
+                    <div className="mb-3 text-center">
+                      {user.image_url && (
+                        <div className="mb-2">
+                          <img 
+                            src={user.image_url.startsWith("http") ? user.image_url : `http://localhost:3000${user.image_url}`} 
+                            alt="User Avatar" 
+                            style={{ 
+                              width: 60, 
+                              height: 60, 
+                              objectFit: 'cover', 
+                              borderRadius: '50%',
+                              border: '3px solid #fff',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                            }}
+                          />
+                        </div>
+                      )}
                       <div className="fw-bold" style={{fontSize: '1.1rem'}}>{user.full_name}</div>
                       <div className="text-muted" style={{fontSize: '0.95rem'}}>{user.email}</div>
                     </div>

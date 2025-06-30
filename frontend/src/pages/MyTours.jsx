@@ -630,18 +630,30 @@ function MyTours() {
                           <i className="bi bi-calendar-day me-2"></i>Ngày {dayNum}
                         </h6>
                         <div className="d-flex gap-3 flex-wrap">
-                          {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step) => (
-                            <div key={step.id} className="text-center">
-                              <img
-                                src={places[step.place_id]?.image_url || "/default-place.jpg"}
-                                alt={places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
-                                style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 12, boxShadow: "0 2px 8px #b6e0fe33" }}
-                              />
-                              <div className="small mt-2" style={{maxWidth: 100, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color:'#1a1a1a', fontWeight: '500'}}>
-                                {places[step.place_id]?.name || `Địa điểm #${step.place_id}`}
+                          {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step) => {
+                            const place = places[step.place_id];
+                            const imageUrl = place?.image_url 
+                              ? (place.image_url.startsWith('http') 
+                                  ? place.image_url 
+                                  : `http://localhost:3000${place.image_url}`)
+                              : "/default-place.jpg";
+                            
+                            return (
+                              <div key={step.id} className="text-center">
+                                <img
+                                  src={imageUrl}
+                                  alt={place?.name || `Địa điểm #${step.place_id}`}
+                                  style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 12, boxShadow: "0 2px 8px #b6e0fe33" }}
+                                  onError={(e) => {
+                                    e.target.src = "/default-place.jpg";
+                                  }}
+                                />
+                                <div className="small mt-2" style={{maxWidth: 100, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color:'#1a1a1a', fontWeight: '500'}}>
+                                  {place?.name || `Địa điểm #${step.place_id}`}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ));
