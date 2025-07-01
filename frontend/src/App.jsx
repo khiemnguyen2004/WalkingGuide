@@ -22,10 +22,12 @@ import PlaceDetail from './pages/details/PlaceDetail';
 import TourDetail from './pages/details/TourDetail';
 import MyTours from "./pages/MyTours";
 import NotificationPage from "./pages/NotificationPage";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />

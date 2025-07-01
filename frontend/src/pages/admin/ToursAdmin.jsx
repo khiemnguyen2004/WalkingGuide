@@ -4,6 +4,8 @@ import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
 import { AuthContext } from "../../contexts/AuthContext.jsx";
 import CKEditorField from "../../components/CKEditorField";
+import placeApi from "../../api/placeApi";
+import tourStepApi from "../../api/tourStepApi";
 
 function ToursAdmin() {
   const { user } = useContext(AuthContext);
@@ -14,14 +16,35 @@ function ToursAdmin() {
   const [imagePreview, setImagePreview] = useState("");
   const [editId, setEditId] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [allPlaces, setAllPlaces] = useState([]);
+  const [selectedPlaces, setSelectedPlaces] = useState([]);
+  const [tourStepsMap, setTourStepsMap] = useState({});
+  const [selectedSteps, setSelectedSteps] = useState({});
+  const [totalCost, setTotalCost] = useState(0);
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   useEffect(() => {
     fetchTours();
+    placeApi.getAll().then(res => setAllPlaces(res.data)).catch(() => setAllPlaces([]));
   }, []);
 
   const fetchTours = async () => {
     const res = await axios.get("http://localhost:3000/api/tours");
     setTours(res.data);
+    // Fetch steps for all tours
+    const stepsMap = {};
+    await Promise.all(
+      res.data.map(async (tour) => {
+        try {
+          const stepsRes = await tourStepApi.getByTourId(tour.id);
+          stepsMap[tour.id] = stepsRes.data;
+        } catch {
+          stepsMap[tour.id] = [];
+        }
+      })
+    );
+    setTourStepsMap(stepsMap);
   };
 
   const handleImageChange = (e) => {
@@ -48,30 +71,75 @@ function ToursAdmin() {
     return response.data.url;
   };
 
+  const handleAddPlace = (placeId) => {
+    if (!selectedPlaces.includes(placeId)) {
+      setSelectedPlaces([...selectedPlaces, placeId]);
+      setSelectedSteps(prev => ({
+        ...prev,
+        [placeId]: { day: 1, stay_duration: 60, start_time: '', end_time: '' }
+      }));
+    }
+  };
+
+  const handleRemovePlace = (placeId) => {
+    setSelectedPlaces(selectedPlaces.filter(id => id !== placeId));
+    setSelectedSteps(prev => {
+      const copy = { ...prev };
+      delete copy[placeId];
+      return copy;
+    });
+  };
+
+  const handleStepChange = (placeId, field, value) => {
+    setSelectedSteps(prev => ({
+      ...prev,
+      [placeId]: { ...prev[placeId], [field]: value }
+    }));
+  };
+
+  const handleMovePlace = (index, direction) => {
+    const newArr = [...selectedPlaces];
+    const target = newArr[index];
+    newArr.splice(index, 1);
+    newArr.splice(index + direction, 0, target);
+    setSelectedPlaces(newArr);
+  };
+
   const handleCreate = async () => {
     if (!user || !user.id) {
       alert("Bạn cần đăng nhập để tạo tour.");
       return;
     }
-
     setIsUploading(true);
     try {
       let imageUrl = "";
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
       }
-
+      const steps = selectedPlaces.map((placeId, idx) => ({
+        place_id: placeId,
+        step_order: idx + 1,
+        day: selectedSteps[placeId]?.day || 1,
+        stay_duration: Number(selectedSteps[placeId]?.stay_duration) || 60,
+      }));
       await axios.post("http://localhost:3000/api/tours", {
         name,
         description,
         image_url: imageUrl,
         user_id: user.id,
+        total_cost: totalCost,
+        steps,
       });
       fetchTours();
       setName("");
       setDescription("");
       setImageFile(null);
       setImagePreview("");
+      setSelectedPlaces([]);
+      setSelectedSteps({});
+      setTotalCost(0);
+      setStartTime("");
+      setEndTime("");
     } catch (error) {
       console.error("Error creating tour:", error);
       alert("Có lỗi xảy ra khi tạo tour");
@@ -86,7 +154,18 @@ function ToursAdmin() {
     setDescription(tour.description);
     setImageFile(null);
     setImagePreview(tour.image_url || "");
-    
+    setTotalCost(tour.total_cost || 0);
+    // Load current stops for editing
+    const steps = tourStepsMap[tour.id] || [];
+    setSelectedPlaces(steps.sort((a, b) => a.step_order - b.step_order).map(s => s.place_id));
+    const stepsObj = {};
+    steps.forEach(s => {
+      stepsObj[s.place_id] = {
+        day: s.day || 1,
+        stay_duration: s.stay_duration || 60,
+      };
+    });
+    setSelectedSteps(stepsObj);
     // Scroll to top of the page to show the form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -98,11 +177,19 @@ function ToursAdmin() {
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
       }
-
+      // Send updated steps
+      const steps = selectedPlaces.map((placeId, idx) => ({
+        place_id: placeId,
+        step_order: idx + 1,
+        day: selectedSteps[placeId]?.day || 1,
+        stay_duration: Number(selectedSteps[placeId]?.stay_duration) || 60,
+      }));
       await axios.put(`http://localhost:3000/api/tours/${editId}`, {
         name,
         description,
         image_url: imageUrl,
+        total_cost: totalCost,
+        steps,
       });
       fetchTours();
       setEditId(null);
@@ -110,6 +197,11 @@ function ToursAdmin() {
       setDescription("");
       setImageFile(null);
       setImagePreview("");
+      setSelectedPlaces([]);
+      setSelectedSteps({});
+      setTotalCost(0);
+      setStartTime("");
+      setEndTime("");
     } catch (error) {
       console.error("Error updating tour:", error);
       alert("Có lỗi xảy ra khi cập nhật tour");
@@ -198,6 +290,62 @@ function ToursAdmin() {
                   placeholder="Mô tả"
                 />
                 
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Chọn các địa điểm cho tour (kéo để sắp xếp):</label>
+                  <div className="d-flex flex-wrap gap-2 mb-2">
+                    {allPlaces.map(place => (
+                      <button
+                        key={place.id}
+                        type="button"
+                        className={`btn btn-sm ${selectedPlaces.includes(place.id) ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => handleAddPlace(place.id)}
+                        disabled={selectedPlaces.includes(place.id)}
+                      >
+                        {place.name}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedPlaces.length > 0 && (
+                    <ul className="list-group">
+                      {selectedPlaces.map((placeId, idx) => {
+                        const place = allPlaces.find(p => p.id === placeId);
+                        const step = selectedSteps[placeId] || {};
+                        return (
+                          <li key={placeId} className="list-group-item d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <span>{place ? place.name : placeId}</span>
+                            {/* Day select dropdown, dynamic days */}
+                            <select
+                              className="form-select form-select-sm ms-2"
+                              style={{ width: 90, marginLeft: 8, marginRight: 8 }}
+                              value={step.day || 1}
+                              onChange={e => handleStepChange(placeId, 'day', Number(e.target.value))}
+                            >
+                              {[...Array(15)].map((_, i) => (
+                                <option key={i+1} value={i+1}>Ngày {i+1}</option>
+                              ))}
+                            </select>
+                            <input
+                              type="number"
+                              className="form-control form-control-sm ms-2"
+                              style={{ width: 70 }}
+                              min={1}
+                              value={step.stay_duration || 60}
+                              onChange={e => handleStepChange(placeId, 'stay_duration', e.target.value)}
+                              placeholder="Phút"
+                              title="Thời gian lưu trú (phút)"
+                            />
+                            <div>
+                              <button type="button" className="btn btn-sm btn-light me-1" disabled={idx === 0} onClick={() => handleMovePlace(idx, -1)}><i className="bi bi-arrow-up" /></button>
+                              <button type="button" className="btn btn-sm btn-light me-1" disabled={idx === selectedPlaces.length - 1} onClick={() => handleMovePlace(idx, 1)}><i className="bi bi-arrow-down" /></button>
+                              <button type="button" className="btn btn-sm btn-danger" onClick={() => handleRemovePlace(placeId)}><i className="bi bi-x" /></button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+                
                 {editId ? (
                   <>
                     <button 
@@ -233,6 +381,7 @@ function ToursAdmin() {
                     <th style={{ width: 150 }}>Tên tour</th>
                     <th style={{ width: 120 }}>Hình ảnh</th>
                     <th style={{ width: 200 }}>Mô tả</th>
+                    <th style={{ width: 180 }}>Địa điểm (stops)</th>
                     <th style={{ width: 70, textAlign: "center" }}>Hành động</th>
                   </tr>
                 </thead>
@@ -262,6 +411,18 @@ function ToursAdmin() {
                             ? t.description.substring(0, 60) + "..."
                             : t.description
                           : ""}
+                      </td>
+                      <td>
+                        <ul style={{ margin: 0, paddingLeft: 18 }}>
+                          {(tourStepsMap[t.id] || []).sort((a, b) => a.step_order - b.step_order).map((step, idx) => {
+                            const place = allPlaces.find(p => p.id === step.place_id);
+                            return (
+                              <li key={step.id || idx} style={{ fontSize: 13 }}>
+                                {place ? place.name : `ID ${step.place_id}`}
+                              </li>
+                            );
+                          })}
+                        </ul>
                       </td>
                       <td style={{ textAlign: "center" }}>
                         <button

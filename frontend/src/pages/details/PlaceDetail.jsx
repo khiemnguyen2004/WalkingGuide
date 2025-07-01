@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Header from '../../components/Header.jsx';
 import Footer from '../../components/Footer.jsx';
 import '../../css/PlaceDetailMap.css';
+import axios from 'axios';
 
 // Fix for default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -85,6 +86,10 @@ const PlaceDetail = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
+  const [routeSteps, setRouteSteps] = useState([]);
+  const [routePlaces, setRoutePlaces] = useState([]);
+  const [routeTour, setRouteTour] = useState(null);
+  const [allPlaces, setAllPlaces] = useState([]); // All places for map markers
 
   useEffect(() => {
     const fetchData = async () => {
@@ -103,7 +108,63 @@ const PlaceDetail = () => {
       }
     };
     fetchData();
+    // Fetch all places for map markers
+    axios.get('http://localhost:3000/api/places').then(res => setAllPlaces(res.data)).catch(() => setAllPlaces([]));
   }, [id]);
+
+  useEffect(() => {
+    if (!place) return;
+    // 1. Fetch all tours
+    const fetchNearestRoute = async () => {
+      try {
+        const toursRes = await axios.get('http://localhost:3000/api/tours');
+        const tours = toursRes.data;
+        let bestTour = null;
+        let bestSteps = [];
+        let minDistance = Infinity;
+        // 2. For each tour, fetch its steps
+        for (const tour of tours) {
+          const stepsRes = await axios.get(`http://localhost:3000/api/tour-steps/by-tour/${tour.id}`);
+          const steps = stepsRes.data;
+          // 3. Check if this tour includes the current place
+          const hasCurrentPlace = steps.some(s => s.place_id === place.id);
+          if (hasCurrentPlace && steps.length > 0) {
+            // 4. Calculate distance from current place to first step
+            const firstStep = steps[0];
+            const firstPlaceRes = await axios.get(`http://localhost:3000/api/places/${firstStep.place_id}`);
+            const firstPlace = firstPlaceRes.data;
+            const dist = Math.sqrt(
+              Math.pow(place.latitude - firstPlace.latitude, 2) +
+              Math.pow(place.longitude - firstPlace.longitude, 2)
+            );
+            if (dist < minDistance) {
+              minDistance = dist;
+              bestTour = tour;
+              bestSteps = steps;
+            }
+          }
+        }
+        if (bestSteps.length > 0) {
+          // 5. Fetch all places for the steps
+          const places = await Promise.all(
+            bestSteps.map(s => axios.get(`http://localhost:3000/api/places/${s.place_id}`).then(r => r.data))
+          );
+          setRouteSteps(bestSteps);
+          setRoutePlaces(places);
+          setRouteTour(bestTour);
+        } else {
+          setRouteSteps([]);
+          setRoutePlaces([]);
+          setRouteTour(null);
+        }
+      } catch (err) {
+        setRouteSteps([]);
+        setRoutePlaces([]);
+        setRouteTour(null);
+      }
+    };
+    fetchNearestRoute();
+  }, [place]);
 
   // ESC key handler
   useEffect(() => {
@@ -174,15 +235,50 @@ const PlaceDetail = () => {
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
-                    <Marker position={[parseFloat(place.latitude), parseFloat(place.longitude)]} icon={createCustomIcon(place)}>
-                      <Popup>
-                        <div className="text-center">
-                          <h5 className="text-primary mb-2">{place.name}</h5>
-                          {place.address && <p className="mb-1 small">{place.address}</p>}
-                          {place.city && <p className="mb-0 text-muted small">{place.city}</p>}
-                        </div>
-                      </Popup>
-                    </Marker>
+                    {/* Markers for route steps */}
+                    {routePlaces.map((p, idx) => (
+                      <Marker
+                        key={p.id}
+                        position={[parseFloat(p.latitude), parseFloat(p.longitude)]}
+                        icon={createCustomIcon(p.id === place.id ? { ...p, highlight: true } : p)}
+                      >
+                        <Popup>
+                          <div className="text-center">
+                            <h5 className="text-primary mb-2">{p.name}</h5>
+                            {p.address && <p className="mb-1 small">{p.address}</p>}
+                            {p.city && <p className="mb-0 text-muted small">{p.city}</p>}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                    {/* Fallback: marker for current place if no route */}
+                    {routePlaces.length === 0 && (
+                      <Marker position={[parseFloat(place.latitude), parseFloat(place.longitude)]} icon={createCustomIcon(place)}>
+                        <Popup>
+                          <div className="text-center">
+                            <h5 className="text-primary mb-2">{place.name}</h5>
+                            {place.address && <p className="mb-1 small">{place.address}</p>}
+                            {place.city && <p className="mb-0 text-muted small">{place.city}</p>}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    )}
+                    {/* Show all other places as default markers (not in route) */}
+                    {allPlaces.filter(p => !routePlaces.some(rp => rp.id === p.id)).map((p) => (
+                      <Marker
+                        key={p.id}
+                        position={[parseFloat(p.latitude), parseFloat(p.longitude)]}
+                        icon={createCustomIcon(p)}
+                      >
+                        <Popup>
+                          <div className="text-center">
+                            <h5 className="text-primary mb-2">{p.name}</h5>
+                            {p.address && <p className="mb-1 small">{p.address}</p>}
+                            {p.city && <p className="mb-0 text-muted small">{p.city}</p>}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
                   </MapContainer>
                 </div>
 
@@ -285,7 +381,7 @@ const PlaceDetail = () => {
                           {place.service && (
                             <div className="mb-4">
                               <h5 className="text-primary mb-3">
-                                <i className="bi bi-tools me-2"></i>
+                                <i className="bi bi-activity me-2"></i>
                                 Dịch vụ
                               </h5>
                               <div className="p-3 service-section">

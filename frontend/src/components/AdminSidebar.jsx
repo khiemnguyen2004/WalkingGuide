@@ -12,6 +12,13 @@ const adminNavLinks = [
   { to: "/admin/settings", icon: "bi-gear", label: "Cài đặt" },
 ];
 
+const isActive = (pathname, linkTo) => {
+  if (linkTo === "/admin/") {
+    return pathname === "/admin" || pathname === "/admin/";
+  }
+  return pathname.startsWith(linkTo);
+};
+
 const AdminSidebar = ({ alwaysExpanded }) => {
   const location = useLocation();
   return (
@@ -22,7 +29,7 @@ const AdminSidebar = ({ alwaysExpanded }) => {
             <li key={link.to}>
               <Link
                 to={link.to}
-                className={`admin-sidebar-link${location.pathname.startsWith(link.to) ? ' active' : ''}`}
+                className={`admin-sidebar-link${isActive(location.pathname, link.to) ? ' active' : ''}`}
               >
                 <i className={`bi ${link.icon}`} />
                 <span>{link.label}</span>

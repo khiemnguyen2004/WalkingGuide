@@ -123,13 +123,30 @@ module.exports = {
   editTour: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, image_url } = req.body;
+      const { name, description, image_url, steps } = req.body;
       const tour = await tourRepo.findOneBy({ id: parseInt(id) });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
       if (name !== undefined) tour.name = name;
       if (description !== undefined) tour.description = description;
       if (image_url !== undefined) tour.image_url = image_url;
       await tourRepo.save(tour);
+      // Update steps if provided
+      if (Array.isArray(steps)) {
+        // Delete old steps
+        await tourStepRepo.delete({ tour_id: tour.id });
+        // Insert new steps
+        for (const step of steps) {
+          await tourStepRepo.save({
+            tour_id: tour.id,
+            place_id: step.place_id,
+            step_order: step.step_order,
+            stay_duration: step.stay_duration || 60,
+            start_time: step.start_time,
+            end_time: step.end_time,
+            day: step.day || 1
+          });
+        }
+      }
       res.json(tour);
     } catch (err) {
       console.error("Lỗi khi sửa tour:", err);

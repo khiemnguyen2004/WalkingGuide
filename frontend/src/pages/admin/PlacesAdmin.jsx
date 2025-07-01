@@ -8,6 +8,7 @@ import "../../css/AdminLayout.css";
 import { getTags } from "../../api/tagApi";
 import { getPlaceTags, createPlaceTag, deletePlaceTag } from "../../api/placeTagApi";
 import { Modal, Button } from "react-bootstrap";
+import debounce from 'lodash.debounce';
 
 function PlacesAdmin() {
   const [places, setPlaces] = useState([]);
@@ -28,6 +29,8 @@ function PlacesAdmin() {
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagModalPlace, setTagModalPlace] = useState(null);
   const [tagModalSelected, setTagModalSelected] = useState([]);
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     fetchPlaces();
@@ -210,6 +213,53 @@ function PlacesAdmin() {
     closeTagModal();
   };
 
+  // Debounced geocode function (for lat/lng update only)
+  const geocodeAddress = debounce(async (address) => {
+    if (!address || address.length < 5) return;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        setLatitude(data[0].lat);
+        setLongitude(data[0].lon);
+      }
+    } catch (err) {}
+  }, 800);
+
+  // Debounced address suggestion fetch
+  const fetchAddressSuggestions = debounce(async (query) => {
+    if (!query || query.length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setAddressSuggestions(data);
+    } catch (err) {
+      setAddressSuggestions([]);
+    }
+  }, 400);
+
+  // Watch address changes for suggestions
+  useEffect(() => {
+    fetchAddressSuggestions(address);
+    geocodeAddress(address);
+    return () => {
+      fetchAddressSuggestions.cancel();
+      geocodeAddress.cancel();
+    };
+  }, [address]);
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion) => {
+    setAddress(suggestion.display_name);
+    setLatitude(suggestion.lat);
+    setLongitude(suggestion.lon);
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+  };
+
   return (
     <div className="min-vh-100 d-flex flex-row" style={{ background: "#f6f8fa" }}>
       <AdminSidebar alwaysExpanded />
@@ -271,12 +321,24 @@ function PlacesAdmin() {
                     />
                   </div>
                   <div className="col-md-6">
-                    <input
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="form-control mb-2"
-                      placeholder="Địa chỉ"
-                    />
+                    <div style={{position: 'relative'}}>
+                      <input
+                        value={address}
+                        onChange={(e) => { setAddress(e.target.value); setShowSuggestions(true); }}
+                        className="form-control mb-2"
+                        placeholder="Địa chỉ"
+                        autoComplete="off"
+                      />
+                      {showSuggestions && addressSuggestions.length > 0 && (
+                        <ul className="list-group position-absolute w-100 shadow" style={{zIndex: 10, top: '100%'}}>
+                          {addressSuggestions.map((s, idx) => (
+                            <li key={idx} className="list-group-item list-group-item-action" style={{cursor: 'pointer'}} onClick={() => handleSuggestionClick(s)}>
+                              {s.display_name}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <textarea

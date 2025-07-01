@@ -64,7 +64,7 @@ function SettingsAdmin() {
           </div>
           <main className="flex-grow-1 p-4">
             <div className="container">
-              <h2 className="fw-bold mb-4" style={{color: '#1a5bb8'}}>Cài đặt Footer</h2>
+              <h2 className="fw-bold mb-4" style={{color: '#1a5bb8'}}>Cài đặt</h2>
               <div className="card shadow-sm border-0 rounded-4 p-4 mb-4">
                 <div className="mb-3">
                   <label className="form-label fw-semibold" style={{color: '#223a5f'}}>Mô tả Footer</label>

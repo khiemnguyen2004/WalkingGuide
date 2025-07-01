@@ -1,9 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header.jsx';
-import Navbar from '../../components/Navbar.jsx';
 import Footer from '../../components/Footer.jsx';
 import tourApi from '../../api/tourApi';
+import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import axios from 'axios';
+import { FaClock, FaMapMarkerAlt } from 'react-icons/fa';
+
+const createCustomIcon = (place) => {
+  const iconSize = 40;
+  const iconAnchor = iconSize / 2;
+  if (place.image_url) {
+    const imageUrl = place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`;
+    return new L.DivIcon({
+      className: 'custom-marker',
+      html: `
+        <div style="
+          width: ${iconSize}px;
+          height: ${iconSize}px;
+          border-radius: 50%;
+          border: 2px solid #3498db;
+          overflow: hidden;
+          background: white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <img 
+            src="${imageUrl}" 
+            alt="${place.name}"
+            style="
+              width: 100%;
+              height: 100%;
+              margin-left: 11px;
+              object-fit: cover;
+            "
+            onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\\"bi bi-geo-alt-fill\\" style=\\"font-size: 20px; color: #3498db;\\"></i>';"
+          />
+        </div>
+      `,
+      iconSize: [iconSize, iconSize],
+      iconAnchor: [iconAnchor, iconAnchor],
+      popupAnchor: [0, -iconAnchor - 5],
+    });
+  } else {
+    return new L.DivIcon({
+      className: 'custom-marker',
+      html: `
+        <div style="
+          width: ${iconSize}px;
+          height: ${iconSize}px;
+          border-radius: 50%;
+          border: 2px solid #3498db;
+          background: white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <i class=\"bi bi-geo-alt-fill\" style=\"font-size: 24px; color: #3498db;\"></i>
+        </div>
+      `,
+      iconSize: [iconSize, iconSize],
+      iconAnchor: [iconAnchor, iconAnchor],
+      popupAnchor: [0, -iconAnchor - 5],
+    });
+  }
+};
 
 const TourDetail = () => {
   const [tour, setTour] = useState(null);
@@ -12,6 +78,7 @@ const TourDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [newestTours, setNewestTours] = useState([]);
+  const [routePlaces, setRoutePlaces] = useState([]);
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -49,6 +116,41 @@ const TourDetail = () => {
     fetchNewest();
   }, [id]);
 
+  useEffect(() => {
+    if (!tour || !tour.steps || tour.steps.length === 0) {
+      setRoutePlaces([]);
+      return;
+    }
+    // Fetch all places for the steps in order
+    const fetchPlaces = async () => {
+      const places = await Promise.all(
+        tour.steps.sort((a, b) => a.step_order - b.step_order).map(s => axios.get(`http://localhost:3000/api/places/${s.place_id}`).then(r => r.data))
+      );
+      setRoutePlaces(places);
+    };
+    fetchPlaces();
+  }, [tour]);
+
+  useEffect(() => {
+    if (!tour || !tour.steps || tour.steps.length === 0) return;
+    // Attach place object to each step if missing
+    const fetchStepPlaces = async () => {
+      const stepsWithPlace = await Promise.all(
+        tour.steps.map(async (step) => {
+          if (step.place) return step;
+          try {
+            const res = await axios.get(`http://localhost:3000/api/places/${step.place_id}`);
+            return { ...step, place: res.data };
+          } catch {
+            return step;
+          }
+        })
+      );
+      setTour((prev) => ({ ...prev, steps: stepsWithPlace }));
+    };
+    fetchStepPlaces();
+  }, [tour]);
+
   // Helper to chunk array into groups of 3
   function chunkArray(arr, size) {
     const result = [];
@@ -77,43 +179,99 @@ const TourDetail = () => {
   return (
     <div className="min-vh-100 d-flex flex-column luxury-home-container">
       <Header />
-      <Navbar />
       <main className="flex-grow-1">
         <div className="container mx-auto p-4 max-w-3xl">
-          <div style={{ background: 'rgba(245, 250, 255, 0.95)', borderRadius: '1.5rem', boxShadow: '0 4px 24px 0 rgba(31, 38, 135, 0.10)', padding: '2.5rem 2rem', margin: '2rem 0' }}>
-            <h1 className="text-3xl font-bold mb-2 text-gray-800 text-center">{tour.name}</h1>
-            {tour.created_at && (
-              <div className="text-center text-muted mb-2" style={{fontSize: '1rem'}}>
-                Ngày tạo: {new Date(tour.created_at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          <div style={{ background: 'rgba(245, 250, 255, 0.95)', borderRadius: '1.5rem', boxShadow: '0 4px 24px 0 rgba(31, 38, 135, 0.10)', padding: '2.5rem 2rem', margin: '2rem 0' }}>            {/* HERO SECTION: Tour image as background with overlay and title */}
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              minHeight: 380,
+              maxHeight: 520,
+              borderRadius: '1.5rem',
+              overflow: 'hidden',
+              marginBottom: 40,
+              boxShadow: '0 4px 32px 0 rgba(177, 178, 189, 0.13)'
+            }}>
+              <img
+                src={tour.image_url.startsWith('http') ? tour.image_url : `http://localhost:3000${tour.image_url}`}
+                alt={tour.name}
+                style={{
+                  width: '100%',
+                  height: 520,
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  filter: 'brightness(0.6)',
+                  borderRadius: '1.5rem',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  zIndex: 1
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.65) 100%)',
+                zIndex: 2
+              }} />
+              <div style={{
+                position: 'relative',
+                zIndex: 3,
+                height: 520,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 2.5rem',
+                textAlign: 'center',
+              }}>
+                <h1 className="display-3 fw-bold mb-3" style={{ color: '#fff', textShadow: '0 2px 24px #000a', letterSpacing: '-1.5px', fontSize: '3.2rem' }}>{tour.name}</h1>
               </div>
-            )}
-            {tour.image_url && (
-              <div className="d-flex justify-content-center mb-4">
-                <img
-                  src={tour.image_url.startsWith('http') ? tour.image_url : `http://localhost:3000${tour.image_url}`}
-                  alt={tour.name}
-                  style={{ maxWidth: '420px', maxHeight: '260px', width: '100%', objectFit: 'cover', borderRadius: '1rem', boxShadow: '0 2px 12px #b6e0fe55' }}
-                />
+            </div>
+            {/* DESCRIPTION SECTION */}
+            <div className="mb-5 p-4" style={{ background: '#fafdff', borderRadius: '1.25rem', boxShadow: '0 2px 12px #b6e0fe22' }}>
+              <h2 className="h5 fw-bold mb-3" style={{ color: '#3c69b0', letterSpacing: '-0.5px' }}>Giới thiệu về tour</h2>
+              <hr style={{ margin: '0 0 1.5rem 0', borderColor: '#e3f0ff' }} />
+              <div className="prose prose-lg" style={{ color: '#223a5f', fontSize: '1.15rem', lineHeight: 1.7 }}>
+                <div dangerouslySetInnerHTML={{ __html: tour.description }} />
               </div>
-            )}
-            <div className="text-gray-600 mb-4 d-flex flex-wrap gap-4 justify-content-center align-items-center" style={{ fontSize: '1.05rem' }}>
-              <span className="d-flex align-items-center gap-2">
-                Người tạo: <b>{tour.user_id}</b>
-              </span>
-              <span>Chi phí: <b>{tour.total_cost}</b></span>
-              {tour.start_time && (
-                <span>Bắt đầu: <b>{tour.start_time}</b></span>
-              )}
-              {tour.end_time && (
-                <span>Kết thúc: <b>{tour.end_time}</b></span>
-              )}
             </div>
-            <div className="prose prose-lg mb-4" style={{ color: '#223a5f', fontSize: '1.15rem', lineHeight: 1.7 }}>
-              <div dangerouslySetInnerHTML={{ __html: tour.description }} />
-            </div>
+            <div style={{ width: '100%', maxWidth: '100%', height: 340, borderRadius: '1.5rem', overflow: 'hidden', boxShadow: '0 4px 24px #b6e0fe55', border: '1px solid #e3f0ff', flex: '1 1 400px', background: '#fafdff' }}>
+                <MapContainer
+                  center={routePlaces.length > 0 ? [
+                    routePlaces.reduce((sum, p) => sum + parseFloat(p.latitude), 0) / routePlaces.length,
+                    routePlaces.reduce((sum, p) => sum + parseFloat(p.longitude), 0) / routePlaces.length
+                  ] : [0, 0]}
+                  zoom={13}
+                  style={{ width: '100%', height: '100%' }}
+                  scrollWheelZoom={false}
+                  dragging={false}
+                  doubleClickZoom={false}
+                  boxZoom={false}
+                  keyboard={false}
+                  zoomControl={false}
+                >
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  <Polyline positions={routePlaces.map(p => [parseFloat(p.latitude), parseFloat(p.longitude)])} pathOptions={{ color: '#1a5bb8', weight: 4, opacity: 0.8 }} />
+                  {routePlaces.map((p, idx) => (
+                    <Marker key={p.id} position={[parseFloat(p.latitude), parseFloat(p.longitude)]} icon={createCustomIcon(p)}>
+                      <Popup>
+                        <div className="text-center">
+                          <h5 className="text-primary mb-2">{p.name}</h5>
+                          {p.address && <p className="mb-1 small">{p.address}</p>}
+                          {p.city && <p className="mb-0 text-muted small">{p.city}</p>}
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
             {tour.steps && tour.steps.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold mb-2">Các điểm đến:</h2>
+                <h2 className="text-xl fw-bold mb-3 mt-4" style={{ color: '#3c69b0' }}>Các điểm đến:</h2>
                 {(() => {
                   const stepsByDay = tour.steps.reduce((acc, step) => {
                     const day = step.day || 1;
@@ -126,20 +284,21 @@ const TourDetail = () => {
                     <div>
                       {sortedDays.map(dayNum => (
                         <div key={dayNum} className="mb-3">
-                          <h4 className="fw-bold mb-2">Ngày {dayNum}</h4>
-                          <ul className="list-disc pl-6">
+                          <h4 className="fw-bold mb-2" style={{ color: '#3c69b0' }}>Ngày {dayNum}</h4>
+                          <div>
                             {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step, idx) => (
-                              <li key={idx} className="mb-2">
-                                <strong>{step.place_name || (step.place && step.place.name)}</strong> (Thời gian lưu trú: {step.stay_duration} phút)
-                                {step.start_time && (
-                                  <span> | Bắt đầu: <b>{step.start_time}</b></span>
+                              <div key={idx} className="mb-4" style={{ position: 'relative', paddingLeft: 0 }}>
+                                <div style={{ fontWeight: 700, color: '#3c69b0', fontSize: '1.12rem', marginBottom: 4 }}>
+                                  {step.place_name || (step.place && step.place.name)}
+                                </div>
+                                {step.place && step.place.description && (
+                                  <div style={{ color: '#223a5f', fontSize: '1.01rem', background: '#fafdff', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 6px #e3f0ff33' }}>
+                                    {step.place.description.replace(/<[^>]+>/g, '').slice(0, 180)}{step.place.description.length > 180 ? '...' : ''}
+                                  </div>
                                 )}
-                                {step.end_time && (
-                                  <span> | Kết thúc: <b>{step.end_time}</b></span>
-                                )}
-                              </li>
+                              </div>
                             ))}
-                          </ul>
+                          </div>
                         </div>
                       ))}
                     </div>

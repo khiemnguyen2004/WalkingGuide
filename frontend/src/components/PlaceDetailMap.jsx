@@ -537,7 +537,7 @@ function PlaceDetailMap({ place, onClose }) {
                 {selectedPlace && selectedPlace.service && (
                   <div className="mb-4">
                     <h5 className="text-primary mb-3">
-                      <i className="bi bi-tools me-2"></i>
+                      <i className="bi bi-activity me-2"></i>
                       Dịch vụ
                     </h5>
                     <div className="p-3 service-section">
