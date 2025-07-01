@@ -13,36 +13,67 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Custom marker icons
-const createCustomIcon = (type) => {
-  const iconSize = [32, 32];
-  const iconAnchor = [16, 32];
-  
-  let iconUrl;
-  let iconColor;
-  
-  switch (type) {
-    case 'restaurant':
-      iconColor = 'red';
-      break;
-    case 'hotel':
-      iconColor = 'blue';
-      break;
-    case 'coffee':
-      iconColor = 'orange';
-      break;
-    default:
-      iconColor = 'red';
+// Custom circular marker with place image (copied from Map.jsx)
+const createCustomIcon = (place) => {
+  const iconSize = 40;
+  const iconAnchor = iconSize / 2;
+  if (place.image_url) {
+    const imageUrl = place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`;
+    return new L.DivIcon({
+      className: 'custom-marker',
+      html: `
+        <div style="
+          width: ${iconSize}px;
+          height: ${iconSize}px;
+          border-radius: 50%;
+          border: 2px solid #3498db;
+          overflow: hidden;
+          background: white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <img 
+            src="${imageUrl}" 
+            alt="${place.name}"
+            style="
+              width: 100%;
+              height: 100%;
+              margin-left: 11px;
+              object-fit: cover;
+            "
+            onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\\"bi bi-geo-alt-fill\\" style=\\"font-size: 20px; color: #3498db;\\"></i>';"
+          />
+        </div>
+      `,
+      iconSize: [iconSize, iconSize],
+      iconAnchor: [iconAnchor, iconAnchor],
+      popupAnchor: [0, -iconAnchor - 5],
+    });
+  } else {
+    return new L.DivIcon({
+      className: 'custom-marker',
+      html: `
+        <div style="
+          width: ${iconSize}px;
+          height: ${iconSize}px;
+          border-radius: 50%;
+          border: 2px solid #3498db;
+          background: white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <i class=\"bi bi-geo-alt-fill\" style=\"font-size: 24px; color: #3498db;\"></i>
+        </div>
+      `,
+      iconSize: [iconSize, iconSize],
+      iconAnchor: [iconAnchor, iconAnchor],
+      popupAnchor: [0, -iconAnchor - 5],
+    });
   }
-  
-  return new L.Icon({
-    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-    shadowSize: [41, 41]
-  });
 };
 
 // Current location icon
@@ -385,7 +416,7 @@ function PlaceDetailMap({ place, onClose }) {
             <Marker
               key={place.id}
               position={[parseFloat(place.latitude), parseFloat(place.longitude)]}
-              icon={createCustomIcon(place.type || 'default')}
+              icon={createCustomIcon(place)}
               eventHandlers={{
                 click: () => handlePlaceClick(place)
               }}
