@@ -411,11 +411,11 @@ body{
 .bg-planner-map::before {
   content: '';
   position: absolute;
-  top: 0;
+  top: -200px;
   left: 0;
   transform: translateX(-50%);
   width: 182vw;
-  height: 100%;
+  height: calc(100% + 200px);
   background-image: url('/src/images/bg-image.jpg');
   background-size: 100% 100%;
   background-position: center top;
@@ -426,6 +426,54 @@ body{
   background-color: rgba(0, 0, 0, 0.45);
   background-blend-mode: darken;
 }
+
+/* Hero section that uses the same background */
+.hero-with-bg {
+  position: relative;
+  z-index: 1;
+  padding: 4rem 0 2rem 0;
+  margin-bottom: 0;
+  color: white;
+  text-align: center;
+}
+
+.hero-with-bg h1 {
+  color: white;
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  animation: slideInLeft 0.8s;
+}
+
+.hero-with-bg p {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin-bottom: 2rem;
+  animation: fadeInCard 1.1s;
+}
+
+.hero-with-bg .btn-main {
+  background: linear-gradient(90deg, #5b9df9 0%, #3498db 100%);
+  color: white !important;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border-radius: 0.7rem;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  animation: fadeInCard 1.3s;
+}
+
+.hero-with-bg .btn-main:hover {
+  background: linear-gradient(90deg, #3498db 0%, #5b9df9 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
 @media (max-width: 991px) {
   .bg-planner-map {
     width: 100%;
@@ -434,6 +482,14 @@ body{
     left: 50%;
     right: 50%;
     border-radius: 0;
+  }
+  
+  .hero-with-bg h1 {
+    font-size: 2.5rem;
+  }
+  
+  .hero-with-bg p {
+    font-size: 1.2rem;
   }
 }
 

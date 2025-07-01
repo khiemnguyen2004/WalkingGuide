@@ -478,7 +478,7 @@ function UserPage() {
                 {userTours.slice(0, 5).map(tour => {
                   console.log("UserPage - Rendering tour:", tour.name, "image_url:", tour.image_url); // Debug log
                   return (
-                    <div key={tour.id} className="tour-item">
+                  <div key={tour.id} className="tour-item">
                       <div className="tour-image">
                         {tour.image_url ? (
                           <img
@@ -515,22 +515,22 @@ function UserPage() {
                           </div>
                         )}
                       </div>
-                      <div className="tour-info">
-                        <h3 className="tour-title">{tour.name}</h3>
-                        <p className="tour-description">{tour.description}</p>
-                        <div className="tour-meta">
-                          <span className="tour-date">
-                            {tour.start_time && tour.end_time 
-                              ? `${formatDate(tour.start_time)} - ${formatDate(tour.end_time)}`
-                              : 'Chưa đặt ngày'
-                            }
-                          </span>
-                          <span className={`tour-status status-planned`}>
-                            Đã lên kế hoạch
-                          </span>
-                        </div>
+                    <div className="tour-info">
+                      <h3 className="tour-title">{tour.name}</h3>
+                      <p className="tour-description">{tour.description}</p>
+                      <div className="tour-meta">
+                        <span className="tour-date">
+                          {tour.start_time && tour.end_time 
+                            ? `${formatDate(tour.start_time)} - ${formatDate(tour.end_time)}`
+                            : 'Chưa đặt ngày'
+                          }
+                        </span>
+                        <span className={`tour-status status-planned`}>
+                          Đã lên kế hoạch
+                        </span>
                       </div>
                     </div>
+                  </div>
                   );
                 })}
               </div>

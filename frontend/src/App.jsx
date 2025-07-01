@@ -12,6 +12,7 @@ import UsersAdmin from "./pages/admin/UsersAdmin";
 import PlacesAdmin from "./pages/admin/PlacesAdmin";
 import ToursAdmin from "./pages/admin/ToursAdmin";
 import TagsAdmin from "./pages/admin/TagsAdmin";
+import SettingsAdmin from "./pages/admin/SettingsAdmin";
 import { PrivateRoute, AdminRoute } from "./components/ProtectedRoute";
 import ManualPlanner from "./components/ManualPlanner";
 import TourList from "./components/TourList";
@@ -40,6 +41,7 @@ function App() {
         <Route path="/admin/articles" element={<AdminRoute><ArticlesAdmin /></AdminRoute>} />
         <Route path="/admin/tours" element={<AdminRoute><ToursAdmin /></AdminRoute>} />
         <Route path="/admin/tags" element={<AdminRoute><TagsAdmin /></AdminRoute>} />
+        <Route path="/admin/settings" element={<AdminRoute><SettingsAdmin /></AdminRoute>} />
         <Route path="/manual-planner" element={<PrivateRoute><ManualPlanner /></PrivateRoute>} />
         <Route path="/my-tours" element={<PrivateRoute><MyTours /></PrivateRoute>} />
         <Route path="/ai/generate-tour" element={<PrivateRoute><AutoPlanner /></PrivateRoute>} />

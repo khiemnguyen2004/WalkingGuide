@@ -500,7 +500,7 @@ function ManualPlanner({ noLayout }) {
                   <p>Bạn đã tạo tour <b>{createdTour.name}</b> thành công.</p>
                   <div className="mb-2">
                     <b>Thời gian:</b> {createdTour.start_time || "-"} đến {createdTour.end_time || "-"}
-                  </div>              
+                  </div>
                   {/* Auto reminder message */}
                   {createdTour.start_time && (
                     <div className="alert alert-info mt-3">
@@ -508,7 +508,7 @@ function ManualPlanner({ noLayout }) {
                       <strong>Nhắc nhở tự động:</strong> Bạn sẽ nhận được thông báo nhắc nhở trước khi tour bắt đầu.
                     </div>
                   )}
-                  <b>Kế hoạch:</b>
+                      <b>Kế hoạch:</b>
                       <ul>
                         {sortedDays.map(dayNum => (
                           <li key={dayNum}>

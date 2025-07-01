@@ -639,16 +639,16 @@ function MyTours() {
                               : "/default-place.jpg";
                             
                             return (
-                              <div key={step.id} className="text-center">
-                                <img
+                            <div key={step.id} className="text-center">
+                              <img
                                   src={imageUrl}
                                   alt={place?.name || `Địa điểm #${step.place_id}`}
-                                  style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 12, boxShadow: "0 2px 8px #b6e0fe33" }}
+                                style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 12, boxShadow: "0 2px 8px #b6e0fe33" }}
                                   onError={(e) => {
                                     e.target.src = "/default-place.jpg";
                                   }}
-                                />
-                                <div className="small mt-2" style={{maxWidth: 100, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color:'#1a1a1a', fontWeight: '500'}}>
+                              />
+                              <div className="small mt-2" style={{maxWidth: 100, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color:'#1a1a1a', fontWeight: '500'}}>
                                   {place?.name || `Địa điểm #${step.place_id}`}
                                 </div>
                               </div>

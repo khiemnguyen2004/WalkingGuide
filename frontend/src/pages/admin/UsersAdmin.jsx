@@ -55,20 +55,20 @@ function UsersAdmin() {
         imageUrl = await uploadImage(imageFile);
       }
 
-      await axios.post("http://localhost:3000/api/users", {
-        full_name: fullName,
-        email,
+    await axios.post("http://localhost:3000/api/users", {
+      full_name: fullName,
+      email,
         image_url: imageUrl,
-        password, // required
-        role,
-      });
-      fetchUsers();
-      setFullName("");
-      setEmail("");
+      password, // required
+      role,
+    });
+    fetchUsers();
+    setFullName("");
+    setEmail("");
       setImageFile(null);
       setImagePreview("");
-      setPassword("");
-      setRole("USER");
+    setPassword("");
+    setRole("USER");
     } catch (error) {
       console.error("Error creating user:", error);
       alert("Có lỗi xảy ra khi tạo người dùng");
@@ -98,21 +98,21 @@ function UsersAdmin() {
         imageUrl = await uploadImage(imageFile);
       }
 
-      await axios.put(`http://localhost:3000/api/users/${editId}`, {
-        full_name: fullName,
-        email,
+    await axios.put(`http://localhost:3000/api/users/${editId}`, {
+      full_name: fullName,
+      email,
         image_url: imageUrl,
-        password_hash: password || undefined,
-        role,
-      });
-      fetchUsers();
-      setEditId(null);
-      setFullName("");
-      setEmail("");
+      password_hash: password || undefined,
+      role,
+    });
+    fetchUsers();
+    setEditId(null);
+    setFullName("");
+    setEmail("");
       setImageFile(null);
       setImagePreview("");
-      setPassword("");
-      setRole("USER");
+    setPassword("");
+    setRole("USER");
     } catch (error) {
       console.error("Error updating user:", error);
       alert("Có lỗi xảy ra khi cập nhật người dùng");
