@@ -126,108 +126,108 @@ function HomePage() {
               <p>Tìm kiếm địa điểm, tạo lộ trình cá nhân hoặc để chúng tôi gợi ý chuyến đi hoàn hảo cho bạn!</p>
               <a href="#planner-section" className="btn btn-main">Bắt đầu lên kế hoạch</a>
             </section>
-            <div className={`row mb-5 g-4 luxury-planner-row${onlyOneOpen ? ' justify-content-center' : ''}`}> 
-              <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showManual || !onlyOneOpen ? 'block' : 'none' }}>
-                <div className={`luxury-card luxury-planner-card manual-homepage p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showManual && onlyOneOpen ? ' full-width' : ''}`}>
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <div className="d-flex align-items-center gap-2">
-                      <h2 className="h5 fw-bold mb-0">Tự tạo lộ trình</h2>
-                      <i className="bi bi-car-front" style={{fontSize: 20, marginLeft: 6, color: '#1a2a47'}} aria-label="manual icon"></i>
-                    </div>
-                    <button className="btn btn-link p-0" onClick={() => { setShowManual(v => !v); if (!showManual) setShowAuto(false); }} aria-label="Toggle Manual Planner">
-                      <i className={`bi ${showManual ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
-                    </button>
+          <div className={`row mb-5 g-4 luxury-planner-row${onlyOneOpen ? ' justify-content-center' : ''}`}> 
+            <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showManual || !onlyOneOpen ? 'block' : 'none' }}>
+              <div className={`luxury-card luxury-planner-card manual-homepage p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showManual && onlyOneOpen ? ' full-width' : ''}`}>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <div className="d-flex align-items-center gap-2">
+                    <h2 className="h5 fw-bold mb-0">Tự tạo lộ trình</h2>
+                    <i className="bi bi-car-front" style={{fontSize: 20, marginLeft: 6, color: '#1a2a47'}} aria-label="manual icon"></i>
                   </div>
-                  <p className="text-center text-muted mb-3">Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ <b>thủ công</b> để tự tạo tour theo ý thích của mình.</p>
-                  {showManual && <ManualPlanner noLayout />}
+                  <button className="btn btn-link p-0" onClick={() => { setShowManual(v => !v); if (!showManual) setShowAuto(false); }} aria-label="Toggle Manual Planner">
+                    <i className={`bi ${showManual ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
+                  </button>
                 </div>
+                <p className="text-center text-muted mb-3">Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ <b>thủ công</b> để tự tạo tour theo ý thích của mình.</p>
+                {showManual && <ManualPlanner noLayout />}
               </div>
-              <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showAuto || !onlyOneOpen ? 'block' : 'none' }}>
-                <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showAuto && onlyOneOpen ? ' full-width' : ''}`}>
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <div className="d-flex align-items-center gap-2">
-                      <h2 className="h5 fw-bold mb-0">Tạo lộ trình tự động</h2>
-                      <i className="bi bi-robot" style={{fontSize: 20, marginLeft: 6, color: '#1a2a47'}} aria-label="autopilot icon"></i>
-                    </div>
-                    <button className="btn btn-link p-0" onClick={() => { setShowAuto(v => !v); if (!showAuto) setShowManual(false); }} aria-label="Toggle Auto Planner">
-                      <i className={`bi ${showAuto ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
-                    </button>
+            </div>
+            <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showAuto || !onlyOneOpen ? 'block' : 'none' }}>
+              <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showAuto && onlyOneOpen ? ' full-width' : ''}`}>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <div className="d-flex align-items-center gap-2">
+                    <h2 className="h5 fw-bold mb-0">Tạo lộ trình tự động</h2>
+                    <i className="bi bi-robot" style={{fontSize: 20, marginLeft: 6, color: '#1a2a47'}} aria-label="autopilot icon"></i>
                   </div>
-                  <p className="text-center text-muted mb-3">Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ <b>tự động</b> để chúng tôi đề xuất tour cho bạn!</p>
-                  {showAuto && <AutoPlanner noLayout />}
+                  <button className="btn btn-link p-0" onClick={() => { setShowAuto(v => !v); if (!showAuto) setShowManual(false); }} aria-label="Toggle Auto Planner">
+                    <i className={`bi ${showAuto ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
+                  </button>
                 </div>
+                <p className="text-center text-muted mb-3">Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ <b>tự động</b> để chúng tôi đề xuất tour cho bạn!</p>
+                {showAuto && <AutoPlanner noLayout />}
               </div>
-              <section className="mb-6">
-              <h2 className="h4 mb-3 fw-bold text-center text-light">
-                Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!{' '}
-                <a href="#" onClick={handleExploreMapClick} className="arrow-link ms-2" style={{textDecoration: 'none'}}>
-                  <i className="bi bi-arrow-right" style={{fontSize: 24, verticalAlign: 'middle', color: '#fff'}}></i>
-                </a>
-              </h2>
-              {/* Search bar for place */}
-              <div className="mb-3 position-relative" style={{maxWidth: 400, margin: '0 auto'}}>
-                <div className="input-group shadow rounded-pill">
-                  <span className="input-group-text bg-white border-0 rounded-start-pill" style={{paddingRight: 0}}>
-                    <i className="bi bi-search text-primary" style={{fontSize: 20}}></i>
-                  </span>
-                  <input
-                    type="text"
-                    className="form-control border-0 rounded-end-pill"
-                    placeholder="Tìm địa điểm..."
-                    value={placeQuery}
-                    onChange={handlePlaceInput}
-                    onKeyDown={handlePlaceKeyDown}
-                    style={{boxShadow: 'none', background: 'white'}}
-                  />
-                  {placeQuery && (
-                    <button className="btn btn-link px-2" style={{color: '#fff'}} onClick={clearSearch} tabIndex={-1}>
-                      <i className="bi bi-x-circle" style={{fontSize: 20}}></i>
-                    </button>
-                  )}
-                </div>
-                {placeSuggestions.length > 0 && (
-                  <ul className="list-group position-absolute shadow-lg rounded-4 mt-1" style={{zIndex: 10, width: '100%', overflow: 'hidden'}}>
-                    {placeSuggestions.map((place, idx) => (
-                      <li
-                        key={place.id}
-                        className={`list-group-item list-group-item-action d-flex align-items-center gap-2 py-2 px-3 border-0 ${idx === highlightedIndex ? 'bg-primary text-white' : ''}`}
-                        onClick={() => handlePlaceSelect(place)}
-                        onMouseEnter={() => setHighlightedIndex(idx)}
-                        style={{cursor: 'pointer', fontWeight: 500, fontSize: '1rem', borderBottom: idx !== placeSuggestions.length - 1 ? '1px solid #f1f3f4' : 'none', background: idx === highlightedIndex ? '#3498db' : 'white'}}
-                      >
-                        <i className="bi bi-geo-alt-fill text-primary" style={{fontSize: 18, color: idx === highlightedIndex ? 'white' : '#3498db'}}></i>
-                        <span>{place.name}</span>
-                      </li>
-                    ))}
-                  </ul>
+            </div>
+            <section className="mb-6">
+            <h2 className="h4 mb-3 fw-bold text-center text-light">
+              Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!{' '}
+              <a href="#" onClick={handleExploreMapClick} className="arrow-link ms-2" style={{textDecoration: 'none'}}>
+                <i className="bi bi-arrow-right" style={{fontSize: 24, verticalAlign: 'middle', color: '#fff'}}></i>
+              </a>
+            </h2>
+            {/* Search bar for place */}
+            <div className="mb-3 position-relative" style={{maxWidth: 400, margin: '0 auto'}}>
+              <div className="input-group shadow rounded-pill">
+                <span className="input-group-text bg-white border-0 rounded-start-pill" style={{paddingRight: 0}}>
+                  <i className="bi bi-search text-primary" style={{fontSize: 20}}></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control border-0 rounded-end-pill"
+                  placeholder="Tìm địa điểm..."
+                  value={placeQuery}
+                  onChange={handlePlaceInput}
+                  onKeyDown={handlePlaceKeyDown}
+                  style={{boxShadow: 'none', background: 'white'}}
+                />
+                {placeQuery && (
+                  <button className="btn btn-link px-2" style={{color: '#fff'}} onClick={clearSearch} tabIndex={-1}>
+                    <i className="bi bi-x-circle" style={{fontSize: 20}}></i>
+                  </button>
                 )}
               </div>
-              <div id="map-section" className="card shadow-lg border-0 rounded-4">
-                <div className="card-body" style={{ height: "24rem" }}>
-                  <ErrorBoundary>
-                    <Map
-                      ref={mapRef}
-                      locations={selectedPlace ? [{
-                        id: selectedPlace.id,
-                        name: selectedPlace.name,
-                        lat: selectedPlace.latitude,
-                        lng: selectedPlace.longitude,
-                        image_url: selectedPlace.image_url,
-                      }] : places.map((p) => ({
-                        id: p.id,
-                        name: p.name,
-                        lat: p.latitude,
-                        lng: p.longitude,
-                        image_url: p.image_url,
-                      }))}
-                      className="w-100 h-100"
-                      selectedPlace={selectedPlace}
-                    />
-                  </ErrorBoundary>
-                </div>
-              </div>
-            </section>
+              {placeSuggestions.length > 0 && (
+                <ul className="list-group position-absolute shadow-lg rounded-4 mt-1" style={{zIndex: 10, width: '100%', overflow: 'hidden'}}>
+                  {placeSuggestions.map((place, idx) => (
+                    <li
+                      key={place.id}
+                      className={`list-group-item list-group-item-action d-flex align-items-center gap-2 py-2 px-3 border-0 ${idx === highlightedIndex ? 'bg-primary text-white' : ''}`}
+                      onClick={() => handlePlaceSelect(place)}
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                      style={{cursor: 'pointer', fontWeight: 500, fontSize: '1rem', borderBottom: idx !== placeSuggestions.length - 1 ? '1px solid #f1f3f4' : 'none', background: idx === highlightedIndex ? '#3498db' : 'white'}}
+                    >
+                      <i className="bi bi-geo-alt-fill text-primary" style={{fontSize: 18, color: idx === highlightedIndex ? 'white' : '#3498db'}}></i>
+                      <span>{place.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
+            <div id="map-section" className="card shadow-lg border-0 rounded-4">
+              <div className="card-body" style={{ height: "24rem" }}>
+                <ErrorBoundary>
+                  <Map
+                    ref={mapRef}
+                    locations={selectedPlace ? [{
+                      id: selectedPlace.id,
+                      name: selectedPlace.name,
+                      lat: selectedPlace.latitude,
+                      lng: selectedPlace.longitude,
+                      image_url: selectedPlace.image_url,
+                    }] : places.map((p) => ({
+                      id: p.id,
+                      name: p.name,
+                      lat: p.latitude,
+                      lng: p.longitude,
+                        image_url: p.image_url,
+                    }))}
+                    className="w-100 h-100"
+                    selectedPlace={selectedPlace}
+                  />
+                </ErrorBoundary>
+              </div>
+            </div>
+          </section>
+          </div>
         </div>
         
         </div>
@@ -335,23 +335,23 @@ function HomePage() {
                           {group.map((t) => (
                     <div className="col" key={t.id}>
                       <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                                <Link to={`/tours/${t.id}`} className="text-decoration-none">
-                                  {t.image_url ? (
-                                    <img
-                                      src={t.image_url.startsWith("http") ? t.image_url : `http://localhost:3000${t.image_url}`}
-                                      alt={t.name}
-                                      className="card-img-top luxury-img-top"
-                                      style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
-                                      onError={(e) => { e.target.style.display = 'none'; }}
-                                    />
-                                  ) : (
-                                    <div 
-                                      className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                                      style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
-                                    >
-                                      <i className="bi bi-map"></i>
-                                    </div>
-                                  )}
+                        <Link to={`/tours/${t.id}`} className="text-decoration-none">
+                          {t.image_url ? (
+                            <img
+                              src={t.image_url.startsWith("http") ? t.image_url : `http://localhost:3000${t.image_url}`}
+                              alt={t.name}
+                              className="card-img-top luxury-img-top"
+                              style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div 
+                              className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                              style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                            >
+                              <i className="bi bi-map"></i>
+                            </div>
+                          )}
                           <div className="card-body luxury-card-body">
                                     <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{t.name}</h3>
                                     {t.description && (
@@ -366,6 +366,11 @@ function HomePage() {
                                     )}
                           </div>
                         </Link>
+                        <div className="px-3 pb-3">
+                          <Link to={`/tours/${t.id}`} className="btn btn-main w-100 mt-2">
+                            Bắt đầu chuyến đi
+                          </Link>
+                        </div>
                       </div>
                     </div>
                           ))}

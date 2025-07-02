@@ -322,13 +322,13 @@ function PlacesAdmin() {
                   </div>
                   <div className="col-md-6">
                     <div style={{position: 'relative'}}>
-                      <input
-                        value={address}
+                    <input
+                      value={address}
                         onChange={(e) => { setAddress(e.target.value); setShowSuggestions(true); }}
-                        className="form-control mb-2"
-                        placeholder="Địa chỉ"
+                      className="form-control mb-2"
+                      placeholder="Địa chỉ"
                         autoComplete="off"
-                      />
+                    />
                       {showSuggestions && addressSuggestions.length > 0 && (
                         <ul className="list-group position-absolute w-100 shadow" style={{zIndex: 10, top: '100%'}}>
                           {addressSuggestions.map((s, idx) => (

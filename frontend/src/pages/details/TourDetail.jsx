@@ -1,13 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header.jsx';
 import Footer from '../../components/Footer.jsx';
 import tourApi from '../../api/tourApi';
-import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import { FaClock, FaMapMarkerAlt } from 'react-icons/fa';
+
+// Component to handle map centering
+const MapCenterHandler = ({ places }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (places && places.length > 0) {
+      if (places.length === 1) {
+        // Single place - center on it
+        map.setView([parseFloat(places[0].latitude), parseFloat(places[0].longitude)], 14);
+      } else {
+        // Multiple places - fit bounds
+        const bounds = L.latLngBounds(places.map(p => [parseFloat(p.latitude), parseFloat(p.longitude)]));
+        map.fitBounds(bounds, { padding: [20, 20] });
+      }
+    }
+  }, [places, map]);
+  
+  return null;
+};
 
 const createCustomIcon = (place) => {
   const iconSize = 40;
@@ -192,9 +212,9 @@ const TourDetail = () => {
               marginBottom: 40,
               boxShadow: '0 4px 32px 0 rgba(177, 178, 189, 0.13)'
             }}>
-              <img
-                src={tour.image_url.startsWith('http') ? tour.image_url : `http://localhost:3000${tour.image_url}`}
-                alt={tour.name}
+                <img
+                  src={tour.image_url.startsWith('http') ? tour.image_url : `http://localhost:3000${tour.image_url}`}
+                  alt={tour.name}
                 style={{
                   width: '100%',
                   height: 520,
@@ -236,26 +256,29 @@ const TourDetail = () => {
               <h2 className="h5 fw-bold mb-3" style={{ color: '#3c69b0', letterSpacing: '-0.5px' }}>Giới thiệu về tour</h2>
               <hr style={{ margin: '0 0 1.5rem 0', borderColor: '#e3f0ff' }} />
               <div className="prose prose-lg" style={{ color: '#223a5f', fontSize: '1.15rem', lineHeight: 1.7 }}>
-                <div dangerouslySetInnerHTML={{ __html: tour.description }} />
-              </div>
+              <div dangerouslySetInnerHTML={{ __html: tour.description }} />
+            </div>
             </div>
             <div style={{ width: '100%', maxWidth: '100%', height: 340, borderRadius: '1.5rem', overflow: 'hidden', boxShadow: '0 4px 24px #b6e0fe55', border: '1px solid #e3f0ff', flex: '1 1 400px', background: '#fafdff' }}>
                 <MapContainer
-                  center={routePlaces.length > 0 ? [
-                    routePlaces.reduce((sum, p) => sum + parseFloat(p.latitude), 0) / routePlaces.length,
-                    routePlaces.reduce((sum, p) => sum + parseFloat(p.longitude), 0) / routePlaces.length
-                  ] : [0, 0]}
+                  center={[10.8231, 106.6297]}
                   zoom={13}
                   style={{ width: '100%', height: '100%' }}
                   scrollWheelZoom={false}
-                  dragging={false}
+                  dragging={true}
                   doubleClickZoom={false}
                   boxZoom={false}
                   keyboard={false}
-                  zoomControl={false}
+                  zoomControl={true}
                 >
+                  <MapCenterHandler places={routePlaces} />
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                  <Polyline positions={routePlaces.map(p => [parseFloat(p.latitude), parseFloat(p.longitude)])} pathOptions={{ color: '#1a5bb8', weight: 4, opacity: 0.8 }} />
+                  {routePlaces.length > 1 && (
+                    <Polyline 
+                      positions={routePlaces.map(p => [parseFloat(p.latitude), parseFloat(p.longitude)])} 
+                      pathOptions={{ color: '#1a5bb8', weight: 4, opacity: 0.8 }} 
+                    />
+                  )}
                   {routePlaces.map((p, idx) => (
                     <Marker key={p.id} position={[parseFloat(p.latitude), parseFloat(p.longitude)]} icon={createCustomIcon(p)}>
                       <Popup>
@@ -308,11 +331,11 @@ const TourDetail = () => {
             )}
             <div className="d-flex justify-content-center">
               <button
-                onClick={() => navigate(-1)}
+                onClick={() => alert('Đã thêm vào chuyến đi của tôi!')}
                 className="mt-6 btn btn-main"
-                style={{ minWidth: 140 }}
+                style={{ minWidth: 200 }}
               >
-                Quay lại
+                Thêm vào chuyến đi của tôi
               </button>
             </div>
           </div>

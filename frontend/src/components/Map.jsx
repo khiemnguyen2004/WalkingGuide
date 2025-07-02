@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -159,9 +159,27 @@ function MapAutoCenter({ locations, selectedCity }) {
 }
 
 function Map({ locations = [], className, selectedCity }) {
-  const defaultCenter = [21.0285, 105.8542]; // Hà Nội
+  const defaultCenter = [10.8231, 106.6297]; // Ho Chi Minh City
   let center = defaultCenter;
   let zoom = 13;
+
+  const [currentLocation, setCurrentLocation] = useState(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCurrentLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          // Do nothing if denied
+        }
+      );
+    }
+  }, []);
 
   const validLocations = locations.filter(
     (loc) => typeof loc.lat === "number" && typeof loc.lng === "number" && !isNaN(loc.lat) && !isNaN(loc.lng)
@@ -189,6 +207,11 @@ function Map({ locations = [], className, selectedCity }) {
           <MapAutoCenter locations={validLocations} selectedCity={selectedCity} />
           <CurrentLocationButton />
           <ZoomControls />
+          {currentLocation && (
+            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={defaultIcon}>
+              <Popup>Vị trí của bạn</Popup>
+            </Marker>
+          )}
           {validLocations.map((location) => (
             <Marker key={location.id} position={[location.lat, location.lng]} icon={createCustomIcon(location)}>
               <Popup>{location.name}</Popup>
