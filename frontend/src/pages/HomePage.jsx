@@ -10,6 +10,8 @@ import AutoPlanner from "../components/AutoPlanner.jsx";
 import PlaceDetailMap from "../components/PlaceDetailMap";
 import "../css/HomePage.css";
 import "../css/luxury-home.css";
+import { Modal } from "react-bootstrap";
+import RatingStars from '../components/RatingStars.jsx';
 
 // Helper to chunk array into groups of 3
 function chunkArray(arr, size) {
@@ -34,7 +36,11 @@ function HomePage() {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [showPlaceDetailMap, setShowPlaceDetailMap] = useState(false);
   const [placeForDetailMap, setPlaceForDetailMap] = useState(null);
+  const [showAllPlaces, setShowAllPlaces] = useState(false);
+  const [showAllTours, setShowAllTours] = useState(false);
   const mapRef = useRef();
+  const [showManualModal, setShowManualModal] = useState(false);
+  const [showAutoModal, setShowAutoModal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -126,37 +132,56 @@ function HomePage() {
               <p>Tìm kiếm địa điểm, tạo lộ trình cá nhân hoặc để chúng tôi gợi ý chuyến đi hoàn hảo cho bạn!</p>
               <a href="#planner-section" className="btn btn-main">Bắt đầu lên kế hoạch</a>
             </section>
-          <div className={`row mb-5 g-4 luxury-planner-row${onlyOneOpen ? ' justify-content-center' : ''}`}> 
-            <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showManual || !onlyOneOpen ? 'block' : 'none' }}>
-              <div className={`luxury-card luxury-planner-card manual-homepage p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showManual && onlyOneOpen ? ' full-width' : ''}`}>
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <h2 className="h5 fw-bold mb-0">Tự tạo lộ trình</h2>
-                    <i className="bi bi-car-front" style={{fontSize: 20, marginLeft: 6, color: '#1a2a47'}} aria-label="manual icon"></i>
-                  </div>
-                  <button className="btn btn-link p-0" onClick={() => { setShowManual(v => !v); if (!showManual) setShowAuto(false); }} aria-label="Toggle Manual Planner">
-                    <i className={`bi ${showManual ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
-                  </button>
+          <div className={`row mb-5 g-4 luxury-planner-row justify-content-center`}> 
+            <div className="col-12 col-md-6 d-flex justify-content-center mb-4">
+              <div
+                className="luxury-card luxury-planner-card manual-homepage p-4 d-flex flex-column align-items-center justify-content-center text-center hover-shadow"
+                style={{ maxWidth: '500px', cursor: 'pointer' }}
+                onClick={() => setShowManualModal(true)}
+              >
+                <div className="d-flex align-items-center gap-2 mb-2 justify-content-center">
+                  <h2 className="h5 fw-bold mb-0">Tự tạo lộ trình</h2>
+                  <i className="bi bi-car-front" style={{fontSize: 20, marginLeft: 6, color: '#3498db'}} aria-label="manual icon"></i>
                 </div>
-                <p className="text-center text-muted mb-3">Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ <b>thủ công</b> để tự tạo tour theo ý thích của mình.</p>
-                {showManual && <ManualPlanner noLayout />}
+                <p className="text-muted mb-0">Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ <b>thủ công</b> để tự tạo tour theo ý thích của mình.</p>
               </div>
             </div>
-            <div className={`col-12 ${onlyOneOpen ? 'col-lg-10' : 'col-lg-6'}`} style={{ display: showAuto || !onlyOneOpen ? 'block' : 'none' }}>
-              <div className={`luxury-card luxury-planner-card p-4 mb-4 d-flex flex-column h-100 justify-content-center align-items-stretch${showAuto && onlyOneOpen ? ' full-width' : ''}`}>
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <h2 className="h5 fw-bold mb-0">Tạo lộ trình tự động</h2>
-                    <i className="bi bi-robot" style={{fontSize: 20, marginLeft: 6, color: '#1a2a47'}} aria-label="autopilot icon"></i>
-                  </div>
-                  <button className="btn btn-link p-0" onClick={() => { setShowAuto(v => !v); if (!showAuto) setShowManual(false); }} aria-label="Toggle Auto Planner">
-                    <i className={`bi ${showAuto ? "bi-chevron-up" : "bi-chevron-down"}`} style={{fontSize: 22}}></i>
-                  </button>
+            <div className="col-12 col-md-6 d-flex justify-content-center mb-4">
+              <div
+                className="luxury-card luxury-planner-card p-4 d-flex flex-column align-items-center justify-content-center text-center hover-shadow"
+                style={{ maxWidth: '500px', cursor: 'pointer' }}
+                onClick={() => setShowAutoModal(true)}
+              >
+                <div className="d-flex align-items-center gap-2 mb-2 justify-content-center">
+                  <h2 className="h5 fw-bold mb-0">Tạo lộ trình tự động</h2>
+                  <i className="bi bi-robot" style={{fontSize: 20, marginLeft: 6, color: '#3498db'}} aria-label="autopilot icon"></i>
                 </div>
-                <p className="text-center text-muted mb-3">Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ <b>tự động</b> để chúng tôi đề xuất tour cho bạn!</p>
-                {showAuto && <AutoPlanner noLayout />}
+                <p className="text-muted mb-0">Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ <b>tự động</b> để chúng tôi đề xuất tour cho bạn!</p>
               </div>
             </div>
+          </div>
+
+          {/* Manual Planner Modal */}
+          <Modal show={showManualModal} onHide={() => setShowManualModal(false)} size="lg" centered dialogClassName="luxury-modal">
+            <Modal.Header closeButton className="luxury-modal-header">
+              <span className="modal-icon me-2"><i className="bi bi-pencil-square"></i></span>
+              <Modal.Title className="luxury-modal-title">Tự tạo lộ trình</Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="luxury-modal-body">
+              <ManualPlanner noLayout />
+            </Modal.Body>
+          </Modal>
+
+          {/* Auto Planner Modal */}
+          <Modal show={showAutoModal} onHide={() => setShowAutoModal(false)} size="lg" centered dialogClassName="luxury-modal">
+            <Modal.Header closeButton className="luxury-modal-header">
+              <span className="modal-icon me-2"><i className="bi bi-robot"></i></span>
+              <Modal.Title className="luxury-modal-title">Tạo lộ trình tự động</Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="luxury-modal-body">
+              <AutoPlanner noLayout />
+            </Modal.Body>
+          </Modal>
             <section className="mb-6">
             <h2 className="h4 mb-3 fw-bold text-center text-light">
               Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!{' '}
@@ -230,7 +255,7 @@ function HomePage() {
           </div>
         </div>
         
-        </div>
+        {/* </div> */}
         {/* <hr className="my-5 luxury-divider" /> */}
         {loading ? (
           <p className="text-muted text-center">Đang tải dữ liệu...</p>
@@ -242,80 +267,147 @@ function HomePage() {
               <h2 className="h4 mb-4 fw-bold luxury-section-title">
                 Điểm đến nổi bật
               </h2>
-              {/* Bootstrap Carousel for all places, 3 per slide */}
               {sortedPlaces.length === 0 ? (
                 <p className="text-muted text-center">Không có địa điểm nào để hiển thị.</p>
-              ) : (
-                <div id="placesCarousel" className="carousel slide" data-bs-ride="carousel">
-                  <div className="carousel-inner">
-                    {chunkArray(sortedPlaces, 3).map((group, idx) => (
-                      <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(p => p.id || p._id || p.name).join('-')}>
-                        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
-                          {group.map((p) => (
-                            <div className="col" key={p.id || p._id || p.name}>
-                              <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                                <Link to={`/places/${p.id || p._id}`} className="text-decoration-none">
-                                  <img
-                                    src={p.image_url ? (p.image_url.startsWith("http") ? p.image_url : `http://localhost:3000${p.image_url}`) : "/default-place.jpg"}
-                                    alt={p.name}
-                                    className="card-img-top luxury-img-top"
-                                    style={{
-                                      height: 220,
-                                      objectFit: "cover",
-                                      borderTopLeftRadius: "1.5rem",
-                                      borderTopRightRadius: "1.5rem",
-                                    }}
-                                    onError={(e) => {
-                                      e.target.src = "/default-place.jpg";
-                                    }}
-                                  />
-                                  <div className="card-body luxury-card-body">
-                                    <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{p.name}</h3>
-                                    {p.city && (
-                                      <p className="card-text text-primary mb-1 small">
-                                        <i className="bi bi-geo-alt-fill me-1"></i>
-                                        {p.city}
-                                      </p>
-                                    )}
-                                    <p className="card-text text-muted mb-2 luxury-desc">
-                                      {p.description
-                                        ? `${p.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`
-                                        : "Chưa có mô tả"}
-                                    </p>
-                                    {p.service && (
-                                      <p className="card-text text-muted mb-2 small">
-                                        <i className="bi bi-activity me-1"></i>
-                                        {p.service.length > 80 ? `${p.service.substring(0, 80)}...` : p.service}
-                                      </p>
-                                    )}
-                                    <p className="card-text text-muted small mb-0 luxury-rating">
-                                      <span className="luxury-star">★</span>{" "}
-                                      {p.rating?.toFixed ? p.rating.toFixed(1) : p.rating}/5
-                                    </p>
-                                  </div>
-                                </Link>
+              ) : showAllPlaces ? (
+                <>
+                  <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {sortedPlaces.map((p) => (
+                      <div className="col" key={p.id || p._id || p.name}>
+                        <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                          <Link to={`/places/${p.id || p._id}`} className="text-decoration-none">
+                            <img
+                              src={p.image_url ? (p.image_url.startsWith("http") ? p.image_url : `http://localhost:3000${p.image_url}`) : "/default-place.jpg"}
+                              alt={p.name}
+                              className="card-img-top luxury-img-top"
+                              style={{
+                                height: 220,
+                                objectFit: "cover",
+                                borderTopLeftRadius: "1.5rem",
+                                borderTopRightRadius: "1.5rem",
+                              }}
+                              onError={(e) => {
+                                e.target.src = "/default-place.jpg";
+                              }}
+                            />
+                            <div className="card-body luxury-card-body">
+                              <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{p.name}</h3>
+                              {p.city && (
+                                <p className="card-text text-primary mb-1 small">
+                                  <i className="bi bi-geo-alt-fill me-1"></i>
+                                  {p.city}
+                                </p>
+                              )}
+                              <p className="card-text text-muted mb-2 luxury-desc">
+                                {p.description
+                                  ? `${p.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`
+                                  : "Chưa có mô tả"}
+                              </p>
+                              {p.service && (
+                                <p className="card-text text-muted mb-2 small">
+                                  <i className="bi bi-activity me-1"></i>
+                                  {p.service.length > 80 ? `${p.service.substring(0, 80)}...` : p.service}
+                                </p>
+                              )}
+                              <div className="mb-2">
+                                <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                                <span style={{ fontWeight: 600, marginLeft: 4 }}>{p.rating ? p.rating.toFixed(1) : '0.0'}</span>
+                                <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
                               </div>
                             </div>
-                          ))}
+                          </Link>
                         </div>
                       </div>
                     ))}
                   </div>
-                  {sortedPlaces.length > 3 && (
-                    <>
-                      <button className="carousel-control-prev" type="button" data-bs-target="#placesCarousel" data-bs-slide="prev"
-                        style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
-                        <span className="visually-hidden">Previous</span>
+                  <div className="d-flex justify-content-center mt-4">
+                    <button
+                      className="btn btn-main btn-lg px-5"
+                      onClick={() => setShowAllPlaces(false)}
+                    >
+                      Ẩn bớt
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div id="placesCarousel" className="carousel slide" data-bs-ride="carousel">
+                    <div className="carousel-inner">
+                      {chunkArray(sortedPlaces, 3).map((group, idx) => (
+                        <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(p => p.id || p._id || p.name).join('-')}>
+                          <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
+                            {group.map((p) => (
+                              <div className="col" key={p.id || p._id || p.name}>
+                                <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                                  <Link to={`/places/${p.id || p._id}`} className="text-decoration-none">
+                                    <img
+                                      src={p.image_url ? (p.image_url.startsWith("http") ? p.image_url : `http://localhost:3000${p.image_url}`) : "/default-place.jpg"}
+                                      alt={p.name}
+                                      className="card-img-top luxury-img-top"
+                                      style={{
+                                        height: 220,
+                                        objectFit: "cover",
+                                        borderTopLeftRadius: "1.5rem",
+                                        borderTopRightRadius: "1.5rem",
+                                      }}
+                                      onError={(e) => {
+                                        e.target.src = "/default-place.jpg";
+                                      }}
+                                    />
+                                    <div className="card-body luxury-card-body">
+                                      <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{p.name}</h3>
+                                      {p.city && (
+                                        <p className="card-text text-primary mb-1 small">
+                                          <i className="bi bi-geo-alt-fill me-1"></i>
+                                          {p.city}
+                                        </p>
+                                      )}
+                                      <p className="card-text text-muted mb-2 luxury-desc">
+                                        {p.description
+                                          ? `${p.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`
+                                          : "Chưa có mô tả"}
+                                      </p>
+                                      {p.service && (
+                                        <p className="card-text text-muted mb-2 small">
+                                          <i className="bi bi-activity me-1"></i>
+                                          {p.service.length > 80 ? `${p.service.substring(0, 80)}...` : p.service}
+                                        </p>
+                                      )}
+                                      <div className="mb-2">
+                                        <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                                        <span style={{ fontWeight: 600, marginLeft: 4 }}>{p.rating ? p.rating.toFixed(1) : '0.0'}</span>
+                                        <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                                      </div>
+                                    </div>
+                                  </Link>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Carousel controls for places */}
+                    <button className="carousel-control-prev" type="button" data-bs-target="#placesCarousel" data-bs-slide="prev"
+                      style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                      <span className="visually-hidden">Previous</span>
+                    </button>
+                    <button className="carousel-control-next" type="button" data-bs-target="#placesCarousel" data-bs-slide="next"
+                      style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                      <span className="visually-hidden">Next</span>
+                    </button>
+                    <div className="d-flex justify-content-center mt-4">
+                      <button
+                        className="btn btn-main btn-lg px-5"
+                        onClick={() => setShowAllPlaces(true)}
+                      >
+                        Khám phá thêm
                       </button>
-                      <button className="carousel-control-next" type="button" data-bs-target="#placesCarousel" data-bs-slide="next"
-                        style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
-                        <span className="visually-hidden">Next</span>
-                      </button>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                </>
               )}
             </section>
             <hr className="my-5 luxury-divider" />
@@ -323,73 +415,147 @@ function HomePage() {
               <h2 className="h4 mb-4 fw-bold luxury-section-title">
                 Chuyến đi & Lịch trình
               </h2>
-              {/* Bootstrap Carousel for all tours, 3 per slide */}
-                {tours.length === 0 ? (
-                  <p className="text-muted">Không có tour nào để hiển thị.</p>
-                ) : (
-                <div id="toursCarousel" className="carousel slide" data-bs-ride="carousel">
-                  <div className="carousel-inner">
-                    {chunkArray(tours, 3).map((group, idx) => (
-                      <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(t => t.id).join('-')}>
-                        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
-                          {group.map((t) => (
-                    <div className="col" key={t.id}>
-                      <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                        <Link to={`/tours/${t.id}`} className="text-decoration-none">
-                          {t.image_url ? (
-                            <img
-                              src={t.image_url.startsWith("http") ? t.image_url : `http://localhost:3000${t.image_url}`}
-                              alt={t.name}
-                              className="card-img-top luxury-img-top"
-                              style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
-                              onError={(e) => { e.target.style.display = 'none'; }}
-                            />
-                          ) : (
-                            <div 
-                              className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                              style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
-                            >
-                              <i className="bi bi-map"></i>
+              {tours.length === 0 ? (
+                <p className="text-muted">Không có tour nào để hiển thị.</p>
+              ) : showAllTours ? (
+                <>
+                  <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {tours.map((t) => (
+                      <div className="col" key={t.id}>
+                        <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                          <Link to={`/tours/${t.id}`} className="text-decoration-none">
+                            {t.image_url ? (
+                              <img
+                                src={t.image_url.startsWith("http") ? t.image_url : `http://localhost:3000${t.image_url}`}
+                                alt={t.name}
+                                className="card-img-top luxury-img-top"
+                                style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            ) : (
+                              <div 
+                                className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                              >
+                                <i className="bi bi-map"></i>
+                              </div>
+                            )}
+                            <div className="card-body luxury-card-body">
+                              <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{t.name}</h3>
+                              {t.description && (
+                                <p className="card-text text-muted mb-2 luxury-desc">
+                                  {`${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`}
+                                </p>
+                              )}
+                              <div className="mb-2">
+                                <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                                <span style={{ fontWeight: 600, marginLeft: 4 }}>{t.rating ? t.rating.toFixed(1) : '0.0'}</span>
+                                <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                              </div>
+                              {t.total_cost && (
+                                <p className="card-text text-muted small mb-0 luxury-rating">
+                                  <span className="luxury-money">💰</span> {t.total_cost} VND
+                                </p>
+                              )}
                             </div>
-                          )}
-                          <div className="card-body luxury-card-body">
-                                    <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{t.name}</h3>
-                                    {t.description && (
-                            <p className="card-text text-muted mb-2 luxury-desc">
-                                        {`${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`}
-                            </p>
-                                    )}
-                                    {t.total_cost && (
-                            <p className="card-text text-muted small mb-0 luxury-rating">
-                                        <span className="luxury-money">💰</span> {t.total_cost} VND
-                            </p>
-                                    )}
-                          </div>
-                        </Link>
-                        <div className="px-3 pb-3">
-                          <Link to={`/tours/${t.id}`} className="btn btn-main w-100 mt-2">
-                            Bắt đầu chuyến đi
                           </Link>
-                        </div>
-                      </div>
-                    </div>
-                          ))}
+                          <div className="px-3 pb-3">
+                            <Link to={`/tours/${t.id}`} className="btn btn-main w-100 mt-2">
+                              Bắt đầu chuyến đi
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     ))}
-              </div>
-                  {/* Always show controls for consistency */}
-                  <button className="carousel-control-prev" type="button" data-bs-target="#toursCarousel" data-bs-slide="prev"
-                    style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
-                    <span className="visually-hidden">Previous</span>
-                  </button>
-                  <button className="carousel-control-next" type="button" data-bs-target="#toursCarousel" data-bs-slide="next"
-                    style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
-                    <span className="visually-hidden">Next</span>
-                  </button>
-                </div>
+                  </div>
+                  <div className="d-flex justify-content-center mt-4">
+                    <button
+                      className="btn btn-main btn-lg px-5"
+                      onClick={() => setShowAllTours(false)}
+                    >
+                      Ẩn bớt
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div id="toursCarousel" className="carousel slide" data-bs-ride="carousel">
+                    <div className="carousel-inner">
+                      {chunkArray(tours, 3).map((group, idx) => (
+                        <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(t => t.id).join('-')}>
+                          <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
+                            {group.map((t) => (
+                              <div className="col" key={t.id}>
+                                <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                                  <Link to={`/tours/${t.id}`} className="text-decoration-none">
+                                    {t.image_url ? (
+                                      <img
+                                        src={t.image_url.startsWith("http") ? t.image_url : `http://localhost:3000${t.image_url}`}
+                                        alt={t.name}
+                                        className="card-img-top luxury-img-top"
+                                        style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                      />
+                                    ) : (
+                                      <div 
+                                        className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                        style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                                      >
+                                        <i className="bi bi-map"></i>
+                                      </div>
+                                    )}
+                                    <div className="card-body luxury-card-body">
+                                      <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{t.name}</h3>
+                                      {t.description && (
+                                        <p className="card-text text-muted mb-2 luxury-desc">
+                                          {`${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`}
+                                        </p>
+                                      )}
+                                      <div className="mb-2">
+                                        <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                                        <span style={{ fontWeight: 600, marginLeft: 4 }}>{t.rating ? t.rating.toFixed(1) : '0.0'}</span>
+                                        <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                                      </div>
+                                      {t.total_cost && (
+                                        <p className="card-text text-muted small mb-0 luxury-rating">
+                                          <span className="luxury-money">💰</span> {t.total_cost} VND
+                                        </p>
+                                      )}
+                                    </div>
+                                  </Link>
+                                  <div className="px-3 pb-3">
+                                    <Link to={`/tours/${t.id}`} className="btn btn-main w-100 mt-2">
+                                      Bắt đầu chuyến đi
+                                    </Link>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Carousel controls for tours */}
+                    <button className="carousel-control-prev" type="button" data-bs-target="#toursCarousel" data-bs-slide="prev"
+                      style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                      <span className="visually-hidden">Previous</span>
+                    </button>
+                    <button className="carousel-control-next" type="button" data-bs-target="#toursCarousel" data-bs-slide="next"
+                      style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                      <span className="visually-hidden">Next</span>
+                    </button>
+                    <div className="d-flex justify-content-center mt-4">
+                      <button
+                        className="btn btn-main btn-lg px-5"
+                        onClick={() => setShowAllTours(true)}
+                      >
+                        Cùng tham gia ngay
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
             </section>
             {/* Fast Plan Banner Section with Winding Route and Random Places */}
@@ -422,7 +588,7 @@ function HomePage() {
                     // Predefined positions for 5 stops along the SVG path
                     const stopPositions = [40, 220, 450, 680, 860];
                     return picks.map((place, idx) => (
-                      <Link to={`/places/${place.id}`} key={place.id} className="route-stop d-flex flex-column align-items-center position-absolute text-decoration-none route-stop-link" style={{zIndex: 2, left: `calc(${stopPositions[idx] / 9}% - 32px)`, top: idx % 2 === 0 ? 0 : 60, minWidth: 80, cursor: 'pointer'}}>
+                      <Link to={`/places/${place.id}`} key={place.id} className="route-stop d-flex flex-column align-items-center position-absolute text-decoration-none route-stop-link" style={{zIndex: 2, left: `${stopPositions[idx] / 9}%`, top: idx % 2 === 0 ? 0 : 60, minWidth: 80, cursor: 'pointer'}}>
                         <div className="route-img-wrapper mb-2 shadow-lg rounded-circle bg-white d-flex align-items-center justify-content-center" style={{width: 64, height: 64, overflow: 'hidden', border: '3px solid #fff', transition: 'box-shadow 0.2s, border-color 0.2s'}}>
                           {place.image_url ? (
                             <img src={place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`} alt={place.name} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
@@ -441,7 +607,6 @@ function HomePage() {
                 <a href="#planner-section" className="btn btn-main btn-lg mt-2 px-4 py-2" style={{fontSize: '1.2rem'}}>Bắt đầu với AutoPlanner</a>
               </div>
             </section>
-            <hr className="my-5 luxury-divider" />
             <section className="cards-section mb-6">
               <h2 className="h4 mb-4 fw-bold luxury-section-title">
                 Hãy tham khảo những chia sẻ thú vị từ các du khách

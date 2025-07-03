@@ -1,12 +1,21 @@
 import axiosClient from "./axiosClient";
 
-const API_BASE = "http://localhost:3000/api/tours";
+const API_BASE = "/tours";
+const API_LIKE = "/tour-likes";
+const API_RATING = "/tour-ratings";
 
 const tourApi = {
   getAll: () => axiosClient.get(API_BASE),
   getById: (id) => axiosClient.get(`${API_BASE}/${id}`),
   getUserTours: (userId) => axiosClient.get(`${API_BASE}/user/${userId}`),
   cloneTour: (tourId, userId) => axiosClient.post(`${API_BASE}/${tourId}/clone`, { user_id: userId }),
+  like: (tourId) => axiosClient.post(`${API_LIKE}/like`, { tour_id: tourId }),
+  unlike: (tourId) => axiosClient.post(`${API_LIKE}/unlike`, { tour_id: tourId }),
+  isLiked: (tourId) => axiosClient.get(`${API_LIKE}/is-liked`, { params: { tour_id: tourId } }),
+  countLikes: (tourId) => axiosClient.get(`${API_LIKE}/count`, { params: { tour_id: tourId } }),
+  rate: (tourId, rating) => axiosClient.post(`${API_RATING}/rate`, { tour_id: tourId, rating }),
+  getAverageRating: (tourId) => axiosClient.get(`${API_RATING}/average`, { params: { tour_id: tourId } }),
+  getUserRating: (tourId) => axiosClient.get(`${API_RATING}/user`, { params: { tour_id: tourId } }),
 };
 
 export default tourApi;

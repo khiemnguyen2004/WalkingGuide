@@ -1,9 +1,17 @@
 const placeService = require("../services/placeService");
+const placeRatingService = require("../services/placeRatingService");
 
 module.exports = {
   getAll: async (req, res) => {
     const places = await placeService.findAll();
-    res.json(places);
+    // Fetch average rating for each place
+    const placesWithRating = await Promise.all(
+      places.map(async (place) => {
+        const rating = await placeRatingService.getPlaceAverageRating(place.id);
+        return { ...place, rating };
+      })
+    );
+    res.json(placesWithRating);
   },
   getById: async (req, res) => {
     const place = await placeService.findById(req.params.id);

@@ -1,6 +1,7 @@
 const express = require("express");
 require("dotenv").config(); 
 const { AppDataSource } = require("./data-source");
+const mainRouter = require("./routes/index.js");
 
 const app = express();
 const userRoutes = require("./routes/userRoutes");
@@ -34,6 +35,7 @@ AppDataSource.initialize()
     app.use("/api/tags", tagRoutes);
     app.use("/api/place-tags", placeTagRoutes);
     app.use("/api/notifications", notificationRoutes);
+    app.use("/api", mainRouter);
     app.use("/uploads", express.static("uploads"));
     app.listen(3000, () => console.log("Server is running on port 3000"));
   })

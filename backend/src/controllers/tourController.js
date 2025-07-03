@@ -1,5 +1,6 @@
 const { AppDataSource } = require("../data-source");
 const notiService = require("../services/notificationService");
+const tourRatingService = require("../services/tourRatingService");
 
 const tourRepo = AppDataSource.getRepository("Tour");
 const tourStepRepo = AppDataSource.getRepository("TourStep");
@@ -13,7 +14,14 @@ module.exports = {
         .innerJoin("users", "user", "tour.user_id = user.id")
         .where("user.role = :role", { role: "ADMIN" })
         .getMany();
-      res.json(tours);
+      // Fetch average rating for each tour
+      const toursWithRating = await Promise.all(
+        tours.map(async (tour) => {
+          const rating = await tourRatingService.getTourAverageRating(tour.id);
+          return { ...tour, rating };
+        })
+      );
+      res.json(toursWithRating);
     } catch (err) {
       console.error("Lỗi khi lấy danh sách tour:", err);
       res.status(500).json({ error: "Lỗi server" });

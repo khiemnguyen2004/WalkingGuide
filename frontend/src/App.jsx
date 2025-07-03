@@ -50,6 +50,7 @@ function App() {
         <Route path="/articles/:id" element={<ArticleDetail />} />
         <Route path="/places/:id" element={<PlaceDetail />} />
         <Route path="/tours/:id" element={<TourDetail />} />
+        <Route path="/place-ratings/rate/:id" element={<PlaceDetail />} />
       </Routes>
     </Router>
   );

@@ -10,6 +10,8 @@ import axios from 'axios';
 import { FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 import { AuthContext } from '../../contexts/AuthContext.jsx';
 import AuthModal from '../../components/AuthModal.jsx';
+import LikeButton from '../../components/LikeButton.jsx';
+import RatingStars from '../../components/RatingStars.jsx';
 
 // Component to handle map centering
 const MapCenterHandler = ({ places }) => {
@@ -147,35 +149,29 @@ const TourDetail = () => {
       setRoutePlaces([]);
       return;
     }
-    // Fetch all places for the steps in order
-    const fetchPlaces = async () => {
+    // Fetch all places for the steps in order, attach to steps, and update state once
+    const fetchPlacesAndAttach = async () => {
+      const sortedSteps = [...tour.steps].sort((a, b) => a.step_order - b.step_order);
+      // Only fetch for valid place_id
+      const validSteps = sortedSteps.filter(s => s.place_id && !isNaN(Number(s.place_id)));
       const places = await Promise.all(
-        tour.steps.sort((a, b) => a.step_order - b.step_order).map(s => axios.get(`http://localhost:3000/api/places/${s.place_id}`).then(r => r.data))
+        validSteps.map(s => axios.get(`http://localhost:3000/api/places/${Number(s.place_id)}`).then(r => r.data))
       );
       setRoutePlaces(places);
+      // Attach place objects to valid steps, leave others unchanged
+      let placeIdx = 0;
+      const stepsWithPlace = sortedSteps.map((step) => {
+        if (step.place_id && !isNaN(Number(step.place_id))) {
+          const place = places[placeIdx];
+          placeIdx++;
+          return { ...step, place };
+        }
+        return step;
+      });
+      setTour(prev => ({ ...prev, steps: stepsWithPlace }));
     };
-    fetchPlaces();
-  }, [tour]);
-
-  useEffect(() => {
-    if (!tour || !tour.steps || tour.steps.length === 0) return;
-    // Attach place object to each step if missing
-    const fetchStepPlaces = async () => {
-      const stepsWithPlace = await Promise.all(
-        tour.steps.map(async (step) => {
-          if (step.place) return step;
-          try {
-            const res = await axios.get(`http://localhost:3000/api/places/${step.place_id}`);
-            return { ...step, place: res.data };
-          } catch {
-            return step;
-          }
-        })
-      );
-      setTour((prev) => ({ ...prev, steps: stepsWithPlace }));
-    };
-    fetchStepPlaces();
-  }, [tour]);
+    fetchPlacesAndAttach();
+  }, [tour?.id, tour?.steps?.length]);
 
   // Helper to chunk array into groups of 3
   function chunkArray(arr, size) {
@@ -258,7 +254,7 @@ const TourDetail = () => {
                 left: 0,
                 width: '100%',
                 height: '100%',
-                background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.65) 100%)',
+                background: 'linear-gradient(180deg, rgba(24, 24, 24, 0.55) 0%, rgba(134, 132, 132, 0.18) 60%, rgba(60, 60, 60, 0.65) 100%)',
                 zIndex: 2
               }} />
               <div style={{
@@ -273,6 +269,10 @@ const TourDetail = () => {
                 textAlign: 'center',
               }}>
                 <h1 className="display-3 fw-bold mb-3" style={{ color: '#fff', textShadow: '0 2px 24px #000a', letterSpacing: '-1.5px', fontSize: '3.2rem' }}>{tour.name}</h1>
+                <div className="d-flex gap-3 justify-content-center align-items-center mb-2">
+                  <LikeButton id={tour.id} type="tour" />
+                  <RatingStars id={tour.id} type="tour" />
+                </div>
               </div>
             </div>
             {/* DESCRIPTION SECTION */}

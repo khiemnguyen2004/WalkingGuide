@@ -207,7 +207,7 @@ function MyTours() {
               <div className="text-muted" style={{fontSize: '1.08rem'}}>Danh sách các tour bạn đã tạo hoặc tham gia</div>
             </div>
             <button
-              className="btn btn-primary ms-auto"
+              className="btn btn-main ms-auto"
               style={{ borderRadius: 8, fontWeight: 600 }}
               onClick={() => setShowAddModal(true)}
             >

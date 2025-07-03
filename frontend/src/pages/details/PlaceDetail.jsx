@@ -7,6 +7,9 @@ import Header from '../../components/Header.jsx';
 import Footer from '../../components/Footer.jsx';
 import '../../css/PlaceDetailMap.css';
 import axios from 'axios';
+import LikeButton from '../../components/LikeButton';
+import RatingStars from '../../components/RatingStars';
+import CommentSection from '../../components/CommentSection';
 
 // Fix for default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -389,7 +392,17 @@ const PlaceDetail = () => {
                               </div>
                             </div>
                           )}
-
+                          <div className="card shadow-sm p-4 mb-4" style={{ borderRadius: 20, background: 'linear-gradient(120deg, #f8fafc 0%, #e3f0ff 100%)' }}>
+                              <h5 className="text-warning mb-3">
+                                <i className="bi bi-star-fill me-2"></i>
+                                Đánh giá
+                              </h5>
+                            <div className="d-flex align-items-center gap-4 mb-3 flex-wrap">
+                              <LikeButton placeId={place.id} />
+                              <RatingStars placeId={place.id} />
+                            </div>
+                            <CommentSection placeId={place.id} />
+                          </div>
                           {/* Action Buttons */}
                           <div className="d-flex gap-2 justify-content-center pt-3">
                             <button
