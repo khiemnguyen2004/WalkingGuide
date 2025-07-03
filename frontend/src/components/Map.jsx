@@ -164,22 +164,28 @@ function Map({ locations = [], className, selectedCity }) {
   let zoom = 13;
 
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [showLocationAlert, setShowLocationAlert] = useState(false);
+  const [locationAlertMessage, setLocationAlertMessage] = useState('');
 
-  useEffect(() => {
+  const getCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setCurrentLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation([latitude, longitude]);
+          setMapCenter([latitude, longitude]);
         },
         (error) => {
-          // Do nothing if denied
+          console.error('Error getting location:', error);
+          setLocationAlertMessage('Không thể lấy vị trí hiện tại. Vui lòng kiểm tra quyền truy cập vị trí.');
+          setShowLocationAlert(true);
         }
       );
+    } else {
+      setLocationAlertMessage('Trình duyệt của bạn không hỗ trợ định vị.');
+      setShowLocationAlert(true);
     }
-  }, []);
+  };
 
   const validLocations = locations.filter(
     (loc) => typeof loc.lat === "number" && typeof loc.lng === "number" && !isNaN(loc.lat) && !isNaN(loc.lng)
@@ -194,6 +200,15 @@ function Map({ locations = [], className, selectedCity }) {
 
   return (
     <div className={className} style={{ height: "24rem", width: "100%", background: "#e9ecef", borderRadius: "1.5rem", overflow: "hidden" }}>
+      {/* Location Alert */}
+      {showLocationAlert && (
+        <div className="alert alert-warning alert-dismissible fade show position-absolute top-0 start-0 m-3" style={{zIndex: 1000}} role="alert">
+          <i className="bi bi-geo-alt me-2"></i>
+          {locationAlertMessage}
+          <button type="button" className="btn-close" onClick={() => setShowLocationAlert(false)}></button>
+        </div>
+      )}
+      
       {validLocations.length === 0 ? (
         <div className="text-center text-muted h-100 d-flex align-items-center justify-content-center">
           Không có địa điểm hợp lệ để hiển thị

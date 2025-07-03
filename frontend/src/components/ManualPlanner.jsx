@@ -21,6 +21,9 @@ function ManualPlanner({ noLayout }) {
   const [createdTour, setCreatedTour] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const userId = user ? user.id : null;
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState('danger');
 
   useEffect(() => {
     axios.get("http://localhost:3000/api/places").then((res) => {
@@ -80,20 +83,31 @@ function ManualPlanner({ noLayout }) {
     setSteps(newSteps);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validation
     if (!tourName.trim()) {
-      alert("Vui lòng nhập tên tour!");
+      setAlertMessage('Vui lòng nhập tên tour!');
+      setAlertType('warning');
+      setShowAlert(true);
       return;
     }
+    
     if (steps.length === 0) {
-      alert("Vui lòng thêm ít nhất một địa điểm!");
+      setAlertMessage('Vui lòng thêm ít nhất một địa điểm!');
+      setAlertType('warning');
+      setShowAlert(true);
       return;
     }
+    
     if (steps.some(step => !step.place_id)) {
-      alert("Vui lòng chọn địa điểm cho tất cả các bước!");
+      setAlertMessage('Vui lòng chọn địa điểm cho tất cả các bước!');
+      setAlertType('warning');
+      setShowAlert(true);
       return;
     }
-
+    
     setIsSubmitting(true);
     try {
       const res = await axios.post("http://localhost:3000/api/tours", {
@@ -115,9 +129,10 @@ function ManualPlanner({ noLayout }) {
       
       // Trigger notification refresh to update unread count
       refreshNotifications();
-    } catch (err) {
-      console.error(err);
-      alert("Lỗi khi tạo tour");
+    } catch (error) {
+      setAlertMessage('Lỗi khi tạo tour');
+      setAlertType('danger');
+      setShowAlert(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -157,6 +172,15 @@ function ManualPlanner({ noLayout }) {
     <div className="luxury-planner-container">
       <h2 className="luxury-section-title mb-4">Tự tạo lộ trình cho riêng bạn</h2>
       
+      {/* Alert Component */}
+      {showAlert && (
+        <div className={`alert alert-${alertType} alert-dismissible fade show`} role="alert">
+          <i className={`bi ${alertType === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-exclamation-circle-fill'} me-2`}></i>
+          {alertMessage}
+          <button type="button" className="btn-close" onClick={() => setShowAlert(false)}></button>
+        </div>
+      )}
+
       {/* Tour Basic Info */}
       <div className="luxury-card mb-4">
         <div className="luxury-card-body">

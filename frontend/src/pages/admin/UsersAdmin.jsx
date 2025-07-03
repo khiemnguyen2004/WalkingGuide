@@ -13,6 +13,11 @@ function UsersAdmin() {
   const [password, setPassword] = useState("");
   const [editId, setEditId] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState('danger');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -70,8 +75,10 @@ function UsersAdmin() {
     setPassword("");
     setRole("USER");
     } catch (error) {
-      console.error("Error creating user:", error);
-      alert("Có lỗi xảy ra khi tạo người dùng");
+      console.error('Error creating user:', error);
+      setAlertMessage('Có lỗi xảy ra khi tạo người dùng');
+      setAlertType('danger');
+      setShowAlert(true);
     } finally {
       setIsUploading(false);
     }
@@ -114,18 +121,39 @@ function UsersAdmin() {
     setPassword("");
     setRole("USER");
     } catch (error) {
-      console.error("Error updating user:", error);
-      alert("Có lỗi xảy ra khi cập nhật người dùng");
+      console.error('Error updating user:', error);
+      setAlertMessage('Có lỗi xảy ra khi cập nhật người dùng');
+      setAlertType('danger');
+      setShowAlert(true);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa người dùng này?")) {
-      await axios.delete(`http://localhost:3000/api/users/${id}`);
+    setUserToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      await axios.delete(`http://localhost:3000/api/users/${userToDelete}`);
       fetchUsers();
+      setShowDeleteModal(false);
+      setUserToDelete(null);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setAlertMessage('Có lỗi xảy ra khi xóa người dùng');
+      setAlertType('danger');
+      setShowAlert(true);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setUserToDelete(null);
   };
 
   const clearForm = () => {
@@ -163,6 +191,15 @@ function UsersAdmin() {
           <div className="admin-dashboard-cards-row">
             <div className="container py-4">
               <h2>Quản lý người dùng</h2>
+
+              {/* Alert Component */}
+              {showAlert && (
+                <div className={`alert alert-${alertType} alert-dismissible fade show`} role="alert">
+                  <i className={`bi ${alertType === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-exclamation-circle-fill'} me-2`}></i>
+                  {alertMessage}
+                  <button type="button" className="btn-close" onClick={() => setShowAlert(false)}></button>
+                </div>
+              )}
 
               <div className="mb-3">
                 <input
@@ -317,6 +354,37 @@ function UsersAdmin() {
           </div>
         </main>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <div className={`modal fade ${showDeleteModal ? 'show' : ''}`} 
+           style={{ display: showDeleteModal ? 'block' : 'none' }} 
+           tabIndex="-1">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content border-0 shadow-lg">
+            <div className="modal-header bg-danger text-white">
+              <h5 className="modal-title">
+                <i className="bi bi-exclamation-triangle me-2"></i>
+                Xác nhận xóa
+              </h5>
+              <button type="button" className="btn-close btn-close-white" onClick={cancelDelete}></button>
+            </div>
+            <div className="modal-body">
+              <p className="mb-0">Bạn có chắc muốn xóa người dùng này? Hành động này không thể hoàn tác.</p>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={cancelDelete}>
+                <i className="bi bi-x-circle me-1"></i>
+                Hủy
+              </button>
+              <button type="button" className="btn btn-danger" onClick={confirmDelete}>
+                <i className="bi bi-trash me-1"></i>
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {showDeleteModal && <div className="modal-backdrop fade show"></div>}
     </div>
   );
 }

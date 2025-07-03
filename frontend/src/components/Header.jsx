@@ -18,7 +18,31 @@ function Header() {
   const avatarRef = useRef();
 
   const handleLogout = () => {
-    setShowConfirm(true);
+    logout();
+    // Replace alert with modern notification
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'position-fixed top-0 end-0 p-3';
+    toastContainer.style.zIndex = '9999';
+    toastContainer.innerHTML = `
+      <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          <strong class="me-auto">Thành công</strong>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+          Đăng xuất thành công!
+        </div>
+      </div>
+    `;
+    document.body.appendChild(toastContainer);
+    
+    // Remove toast after 3 seconds
+    setTimeout(() => {
+      if (toastContainer.parentNode) {
+        toastContainer.parentNode.removeChild(toastContainer);
+      }
+    }, 3000);
   };
   const confirmLogout = () => {
     logout();
@@ -67,7 +91,7 @@ function Header() {
           {user && (
             <Link to="/my-tours" className="btn d-flex align-items-center me-2 text-decoration-none" style={{gap: 8}}>
               <i className="bi bi-person-walking" style={{fontSize: 20, color: '#1a5bb8'}}></i>
-              <span style={{color: '#1a5bb8'}}>Tour của tôi</span>
+              <span style={{color: '#1a5bb8'}}>Tour của bạn</span>
             </Link>
           )}
           {user && <NotificationIcon />}

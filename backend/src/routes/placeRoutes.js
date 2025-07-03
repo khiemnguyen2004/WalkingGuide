@@ -4,6 +4,7 @@ const placeController = require("../controllers/placeController");
 
 // Remove duplicate and incorrect handlers, use only controller
 router.get("/", placeController.getAll);
+router.get("/search", placeController.getByCity);
 router.get("/:id", placeController.getById);
 router.post("/", placeController.create);
 router.put("/:id", placeController.update);

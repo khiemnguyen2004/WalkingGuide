@@ -8,7 +8,8 @@ const places = [
     latitude: 20.9101,
     longitude: 107.1839,
     image_url: "https://cdn.vietnam.travel/sites/default/files/halongbay.jpg",
-    rating: 4.9
+    rating: 4.9,
+    city: "Hạ Long"
   },
   {
     name: "Phố cổ Hội An",
@@ -16,7 +17,8 @@ const places = [
     latitude: 15.8801,
     longitude: 108.3380,
     image_url: "https://cdn.vietnam.travel/sites/default/files/hoian.jpg",
-    rating: 4.8
+    rating: 4.8,
+    city: "Hội An"
   },
   {
     name: "Bà Nà Hills",
@@ -24,7 +26,8 @@ const places = [
     latitude: 16.0218,
     longitude: 108.0179,
     image_url: "https://cdn.vietnam.travel/sites/default/files/banahills.jpg",
-    rating: 4.7
+    rating: 4.7,
+    city: "Đà Nẵng"
   },
   {
     name: "Sa Pa",
@@ -32,7 +35,8 @@ const places = [
     latitude: 22.3402,
     longitude: 103.8448,
     image_url: "https://cdn.vietnam.travel/sites/default/files/sapa.jpg",
-    rating: 4.8
+    rating: 4.8,
+    city: "Sa Pa"
   },
   {
     name: "Đà Lạt",
@@ -40,7 +44,8 @@ const places = [
     latitude: 11.9404,
     longitude: 108.4583,
     image_url: "https://cdn.vietnam.travel/sites/default/files/dalat.jpg",
-    rating: 4.7
+    rating: 4.7,
+    city: "Đà Lạt"
   },
   {
     name: "Côn Đảo",
@@ -48,7 +53,8 @@ const places = [
     latitude: 8.6956,
     longitude: 106.6013,
     image_url: "https://cdn.vietnam.travel/sites/default/files/condao.jpg",
-    rating: 4.6
+    rating: 4.6,
+    city: "Côn Đảo"
   },
   {
     name: "Ninh Bình",
@@ -56,7 +62,8 @@ const places = [
     latitude: 20.2506,
     longitude: 105.9745,
     image_url: "https://cdn.vietnam.travel/sites/default/files/ninhbinh.jpg",
-    rating: 4.8
+    rating: 4.8,
+    city: "Ninh Bình"
   },
   {
     name: "Mũi Né",
@@ -64,7 +71,8 @@ const places = [
     latitude: 10.9333,
     longitude: 108.2833,
     image_url: "https://cdn.vietnam.travel/sites/default/files/muine.jpg",
-    rating: 4.5
+    rating: 4.5,
+    city: "Phan Thiết"
   },
   {
     name: "Cần Thơ",
@@ -72,7 +80,8 @@ const places = [
     latitude: 10.0452,
     longitude: 105.7469,
     image_url: "https://cdn.vietnam.travel/sites/default/files/cantho.jpg",
-    rating: 4.6
+    rating: 4.6,
+    city: "Cần Thơ"
   },
   {
     name: "Phú Quốc",
@@ -80,7 +89,8 @@ const places = [
     latitude: 10.2270,
     longitude: 103.9637,
     image_url: "https://cdn.vietnam.travel/sites/default/files/phuquoc.jpg",
-    rating: 4.9
+    rating: 4.9,
+    city: "Phú Quốc"
   }
 ];
 

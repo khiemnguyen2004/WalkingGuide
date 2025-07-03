@@ -203,7 +203,7 @@ function MyTours() {
           <div className="d-flex align-items-center mb-4" style={{background: 'linear-gradient(90deg, #b6e0fe 0%, #5b9df9 100%)', borderRadius: '1.5rem', padding: '1.5rem 2rem', boxShadow: '0 4px 24px 0 rgba(31, 38, 135, 0.10)'}}>
             <i className="bi bi-person-walking text-primary" style={{fontSize: 38, marginRight: 18}}></i>
             <div>
-              <h2 className="h3 fw-bold mb-1" style={{color: '#1a5bb8'}}>Tour của tôi</h2>
+              <h2 className="h3 fw-bold mb-1" style={{color: '#1a5bb8'}}>Tour của bạn</h2>
               <div className="text-muted" style={{fontSize: '1.08rem'}}>Danh sách các tour bạn đã tạo hoặc tham gia</div>
             </div>
             <button
@@ -277,11 +277,14 @@ function MyTours() {
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{borderRadius:16, boxShadow:'0 4px 24px #1a5bb822'}}>
                 <div className="modal-header">
-                  <h5 className="modal-title">Lỗi</h5>
+                  <h5 className="modal-title text-danger"><i className="bi bi-x-circle-fill me-2"></i>Lỗi</h5>
                   <button type="button" className="btn-close" onClick={() => setDeleteError("")}></button>
                 </div>
                 <div className="modal-body text-center">
-                  <p>{deleteError}</p>
+                  <div className="alert alert-danger d-flex align-items-center justify-content-center" role="alert">
+                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>{deleteError}</div>
+                  </div>
                   <button className="btn btn-main mt-3" onClick={() => setDeleteError("")}>Đóng</button>
                 </div>
               </div>
@@ -496,11 +499,21 @@ function MyTours() {
             <div className="col-12 col-lg-4">
               <div className="list-group">
                 {loading ? (
-                  <div className="text-muted">Đang tải...</div>
+                  <div className="text-center py-4">
+                    <div className="spinner-border text-primary" role="status"></div>
+                    <div className="mt-2 text-muted">Đang tải dữ liệu tour của bạn...</div>
+                  </div>
                 ) : error ? (
-                  <div className="text-danger">{error}</div>
+                  <div className="alert alert-danger d-flex align-items-center" role="alert">
+                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>{error}</div>
+                  </div>
                 ) : tours.length === 0 ? (
-                  <div className="text-muted">Bạn chưa có tour nào.</div>
+                  <div className="text-center py-5" style={{color: '#6c757d'}}>
+                    <i className="bi bi-inbox" style={{fontSize: '3rem', marginBottom: '1rem'}}></i>
+                    <div className="fw-bold mb-1">Bạn chưa có tour nào</div>
+                    <div className="small">Hãy tạo tour đầu tiên để bắt đầu hành trình của bạn!</div>
+                  </div>
                 ) : (
                   tours.map(t => (
                     <div key={t.id} className="d-flex align-items-center mb-2">

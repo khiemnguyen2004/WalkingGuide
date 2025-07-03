@@ -31,6 +31,8 @@ function PlacesAdmin() {
   const [tagModalSelected, setTagModalSelected] = useState([]);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [placeToDelete, setPlaceToDelete] = useState(null);
 
   useEffect(() => {
     fetchPlaces();
@@ -173,10 +175,26 @@ function PlacesAdmin() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa địa điểm này?")) {
-      await axios.delete(`http://localhost:3000/api/places/${id}`);
+    setPlaceToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!placeToDelete) return;
+    
+    try {
+      await axios.delete(`http://localhost:3000/api/places/${placeToDelete}`);
       fetchPlaces();
+      setShowDeleteModal(false);
+      setPlaceToDelete(null);
+    } catch (error) {
+      console.error('Error deleting place:', error);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setPlaceToDelete(null);
   };
 
   // Helper to get tags for a place
@@ -560,6 +578,37 @@ function PlacesAdmin() {
           <Button variant="primary" onClick={handleTagModalSave}>Lưu</Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <div className={`modal fade ${showDeleteModal ? 'show' : ''}`} 
+           style={{ display: showDeleteModal ? 'block' : 'none' }} 
+           tabIndex="-1">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content border-0 shadow-lg">
+            <div className="modal-header bg-danger text-white">
+              <h5 className="modal-title">
+                <i className="bi bi-exclamation-triangle me-2"></i>
+                Xác nhận xóa
+              </h5>
+              <button type="button" className="btn-close btn-close-white" onClick={cancelDelete}></button>
+            </div>
+            <div className="modal-body">
+              <p className="mb-0">Bạn có chắc muốn xóa địa điểm này? Hành động này không thể hoàn tác.</p>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={cancelDelete}>
+                <i className="bi bi-x-circle me-1"></i>
+                Hủy
+              </button>
+              <button type="button" className="btn btn-danger" onClick={confirmDelete}>
+                <i className="bi bi-trash me-1"></i>
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {showDeleteModal && <div className="modal-backdrop fade show"></div>}
     </div>
   );
 }

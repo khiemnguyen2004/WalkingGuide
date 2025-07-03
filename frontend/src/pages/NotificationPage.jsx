@@ -10,6 +10,8 @@ const NotificationPage = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -55,14 +57,26 @@ const NotificationPage = () => {
   };
 
   const handleDeleteNotification = async (notificationId) => {
-    if (!window.confirm('Bạn có chắc muốn xóa thông báo này?')) return;
+    setNotificationToDelete(notificationId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!notificationToDelete) return;
     
     try {
-      await deleteNotification(notificationId);
-      setNotifications(prev => prev.filter(notif => notif.notification_id !== notificationId));
+      await deleteNotification(notificationToDelete);
+      setNotifications(prev => prev.filter(notif => notif.notification_id !== notificationToDelete));
+      setShowDeleteModal(false);
+      setNotificationToDelete(null);
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setNotificationToDelete(null);
   };
 
   const formatDate = (dateString) => {
@@ -226,6 +240,37 @@ const NotificationPage = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Delete Confirmation Modal */}
+      <div className={`modal fade ${showDeleteModal ? 'show' : ''}`} 
+           style={{ display: showDeleteModal ? 'block' : 'none' }} 
+           tabIndex="-1">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content border-0 shadow-lg">
+            <div className="modal-header bg-danger text-white">
+              <h5 className="modal-title">
+                <i className="bi bi-exclamation-triangle me-2"></i>
+                Xác nhận xóa
+              </h5>
+              <button type="button" className="btn-close btn-close-white" onClick={cancelDelete}></button>
+            </div>
+            <div className="modal-body">
+              <p className="mb-0">Bạn có chắc muốn xóa thông báo này? Hành động này không thể hoàn tác.</p>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={cancelDelete}>
+                <i className="bi bi-x-circle me-1"></i>
+                Hủy
+              </button>
+              <button type="button" className="btn btn-danger" onClick={confirmDelete}>
+                <i className="bi bi-trash me-1"></i>
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {showDeleteModal && <div className="modal-backdrop fade show"></div>}
     </div>
   );
 };

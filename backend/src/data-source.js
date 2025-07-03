@@ -8,7 +8,7 @@ const Tour = require("./models/Tour");
 const TourStep = require("./models/Tour_Step");
 const Article = require("./models/Article");
 const Comment = require("./models/Comment");
-const FavoritePlace = require("./models/Favorite_Place");
+const FavoriteTour = require("./models/Favorite_Tour");
 const Notification = require("./models/Notification");
 
 const AppDataSource = new DataSource({
@@ -29,11 +29,11 @@ const AppDataSource = new DataSource({
     TourStep,
     Article,
     Comment,
-    FavoritePlace,
+    FavoriteTour,
     Notification,
   ],
   migrations: [
-    "src/migrations/1751256168870-UpdateImageToUserAndTour.js",
+    "src/migrations/1751450828370-AddFavouriteTour.js",
   ],
   subscribers: [],
 });

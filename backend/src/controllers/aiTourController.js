@@ -8,7 +8,7 @@ module.exports = {
   
   generateTour: async (req, res) => {
     try {
-      const { interests, budget, days, user_id, tag_ids, start_time, end_time } = req.body;
+      const { interests, budget, days, user_id, tag_ids, start_time, end_time, city } = req.body;
       if (!user_id) {
         return res.status(400).json({ error: "Thiếu dữ liệu đầu vào" });
       }
@@ -41,25 +41,67 @@ module.exports = {
         matchedTagIds = [...new Set(matchedTagIds)];
       }
 
-      // 2. Filter places by matchedTagIds (if any)
+      // 2. Filter places by both city and matchedTagIds
       let allPlaces;
-      if (matchedTagIds.length > 0) {
-        allPlaces = await placeRepo
-          .createQueryBuilder("place")
-          .innerJoin("place_tags", "pt", "pt.place_id = place.id")
-          .where("pt.tag_id IN (:...tagIds)", { tagIds: matchedTagIds })
-          .getMany();
-      } else {
-        allPlaces = await placeRepo.find();
+      let queryBuilder = placeRepo.createQueryBuilder("place");
+
+      // Add city filter if provided - use exact matching
+      if (city && city.trim()) {
+        queryBuilder = queryBuilder.where("LOWER(TRIM(place.city)) = :city", { 
+          city: city.toLowerCase().trim()
+        });
       }
 
+      // Add tag filter if tags are provided
+      if (matchedTagIds.length > 0) {
+        if (city && city.trim()) {
+          // Both city and tags are provided - use AND condition
+          queryBuilder = queryBuilder
+            .innerJoin("place_tags", "pt", "pt.place_id = place.id")
+            .andWhere("pt.tag_id IN (:...tagIds)", { tagIds: matchedTagIds });
+        } else {
+          // Only tags are provided
+          queryBuilder = queryBuilder
+            .innerJoin("place_tags", "pt", "pt.place_id = place.id")
+            .where("pt.tag_id IN (:...tagIds)", { tagIds: matchedTagIds });
+        }
+      }
+
+      allPlaces = await queryBuilder.getMany();
+
       if (allPlaces.length === 0) {
-        return res.status(404).json({ error: "Không tìm thấy địa điểm phù hợp" });
+        let errorMessage = "Không tìm thấy địa điểm phù hợp";
+        if (city && matchedTagIds.length > 0) {
+          errorMessage = `Không tìm thấy địa điểm nào tại ${city} với các thẻ đã chọn`;
+        } else if (city) {
+          errorMessage = `Không tìm thấy địa điểm nào tại ${city}`;
+        } else if (matchedTagIds.length > 0) {
+          errorMessage = "Không tìm thấy địa điểm nào với các thẻ đã chọn";
+        }
+        return res.status(404).json({ error: errorMessage });
+      }
+
+      // Create tour description based on filters
+      let tourDescription = "Tour được tạo tự động";
+      if (city && matchedTagIds.length > 0) {
+        const tagNames = await tagRepo
+          .createQueryBuilder("tag")
+          .where("tag.id IN (:...tagIds)", { tagIds: matchedTagIds })
+          .getMany();
+        tourDescription = `Tour khám phá ${city} với các địa điểm: ${tagNames.map(t => t.name).join(", ")}`;
+      } else if (city) {
+        tourDescription = `Tour khám phá ${city}`;
+      } else if (matchedTagIds.length > 0) {
+        const tagNames = await tagRepo
+          .createQueryBuilder("tag")
+          .where("tag.id IN (:...tagIds)", { tagIds: matchedTagIds })
+          .getMany();
+        tourDescription = `Tour với các địa điểm: ${tagNames.map(t => t.name).join(", ")}`;
       }
 
       const tour = {
         name: `Tour AI tự động`,
-        description: `Gợi ý từ AI với sở thích: ${interests?.join(", ")}`,
+        description: tourDescription,
         user_id: user_id,
         total_cost: 0,
         start_time: start_time || null,

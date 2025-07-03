@@ -50,10 +50,26 @@ module.exports = {
         total_cost: tour.total_cost,
       });
 
+      // Clone steps from the original tour
+      const originalSteps = await tourStepRepo.find({ where: { tour_id: tour.id } });
+      const newSteps = [];
+      for (const step of originalSteps) {
+        const newStep = await tourStepRepo.save({
+          tour_id: newTour.id,
+          place_id: step.place_id,
+          step_order: step.step_order,
+          stay_duration: step.stay_duration,
+          start_time: step.start_time,
+          end_time: step.end_time,
+          day: step.day,
+        });
+        newSteps.push(newStep);
+      }
+
       // Create notification for cloned tour
       await notiService.createTourCreated(userId, newTour.name);
 
-      res.status(201).json(newTour);
+      res.status(201).json({ tour: newTour, steps: newSteps });
     } catch (err) {
       console.error("Lỗi khi clone tour:", err);
       res.status(500).json({ error: "Lỗi server khi clone tour" });

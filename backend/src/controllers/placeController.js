@@ -9,6 +9,14 @@ module.exports = {
     const place = await placeService.findById(req.params.id);
     place ? res.json(place) : res.status(404).json({ message: "Not found" });
   },
+  getByCity: async (req, res) => {
+    const { city } = req.query;
+    if (!city) {
+      return res.status(400).json({ message: "City parameter is required" });
+    }
+    const places = await placeService.findByCity(city);
+    res.json(places);
+  },
   create: async (req, res) => {
     const newPlace = await placeService.create(req.body);
     res.status(201).json(newPlace);

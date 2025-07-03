@@ -3,6 +3,8 @@ import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext.jsx";
 import Header from "./Header.jsx";
 import Footer from "./Footer.jsx";
+import CityAutocomplete from "./CityAutocomplete.jsx";
+import placeApi from "../api/placeApi.js";
 import "../css/luxury-home.css";
 
 const AutoPlanner = ({ noLayout }) => {
@@ -20,31 +22,151 @@ const AutoPlanner = ({ noLayout }) => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [start_time, setStart_time] = useState("");
   const [end_time, setEnd_time] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [selectedCity, setSelectedCity] = useState("");
+  const [cityPlaces, setCityPlaces] = useState([]);
+  const [showCityPlaces, setShowCityPlaces] = useState(false);
+  const [isLoadingCityPlaces, setIsLoadingCityPlaces] = useState(false);
+  const [showCreatePlaceModal, setShowCreatePlaceModal] = useState(false);
+  const [newPlaceData, setNewPlaceData] = useState({
+    name: "",
+    description: "",
+    address: "",
+    opening_hours: "",
+    service: ""
+  });
 
   useEffect(() => {
     axios.get("http://localhost:3000/api/tags").then(res => setTags(res.data));
   }, []);
+
+  const searchPlacesByCity = async (city) => {
+    if (!city) return;
+    
+    setIsLoadingCityPlaces(true);
+    try {
+      const response = await placeApi.searchByCity(city);
+      setCityPlaces(response.data);
+      setShowCityPlaces(true);
+    } catch (error) {
+      console.error('Error searching places by city:', error);
+      setCityPlaces([]);
+    } finally {
+      setIsLoadingCityPlaces(false);
+    }
+  };
+
+  const handleCityChange = (city) => {
+    setSelectedCity(city);
+    if (city) {
+      searchPlacesByCity(city);
+    } else {
+      setCityPlaces([]);
+      setShowCityPlaces(false);
+    }
+  };
+
+  const createPlaceForCity = async () => {
+    if (!selectedCity || !newPlaceData.name || !newPlaceData.description) {
+      setAlertMessage('Vui lòng nhập đầy đủ thông tin cho địa điểm mới!');
+      setShowAlert(true);
+      return;
+    }
+
+    try {
+      // Get coordinates for the city using Nominatim
+      const geocodeResponse = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(selectedCity)}&countrycodes=vn&limit=1`
+      );
+      const geocodeData = await geocodeResponse.json();
+      
+      let latitude = 10.8231; // Default to Ho Chi Minh City
+      let longitude = 106.6297;
+      
+      if (geocodeData.length > 0) {
+        latitude = parseFloat(geocodeData[0].lat);
+        longitude = parseFloat(geocodeData[0].lon);
+      }
+
+      const placeData = {
+        name: newPlaceData.name,
+        description: newPlaceData.description,
+        latitude: latitude,
+        longitude: longitude,
+        city: selectedCity,
+        address: newPlaceData.address,
+        opening_hours: newPlaceData.opening_hours,
+        service: newPlaceData.service,
+        image_url: "" // Default empty image
+      };
+
+      await placeApi.create(placeData);
+      
+      // Refresh city places
+      await searchPlacesByCity(selectedCity);
+      
+      // Reset form
+      setNewPlaceData({
+        name: "",
+        description: "",
+        address: "",
+        opening_hours: "",
+        service: ""
+      });
+      setShowCreatePlaceModal(false);
+      
+      setAlertMessage('Đã tạo địa điểm mới thành công!');
+      setShowAlert(true);
+    } catch (error) {
+      console.error('Error creating place:', error);
+      setAlertMessage('Có lỗi xảy ra khi tạo địa điểm mới!');
+      setShowAlert(true);
+    }
+  };
 
   const generateTour = async () => {
     if (!user?.id || isNaN(Number(user.id))) {
       setError("Vui lòng nhập đầy đủ thông tin!");
       return;
     }
+
+    // Validate that at least one filter is provided
+    if (!selectedCity && selectedTags.length === 0 && !interests.trim()) {
+      setError("Vui lòng chọn ít nhất một thành phố hoặc thẻ địa điểm!");
+      return;
+    }
+
     try {
       setError("");
       setIsGenerating(true);
-      const res = await axios.post("http://localhost:3000/api/ai/generate-tour", {
+      
+      const requestData = {
         interests: interests.split(",").map(i => i.trim()).filter(Boolean),
         total_cost: total_cost ? parseFloat(total_cost) : 0,
         user_id: Number(user.id),
         tag_ids: selectedTags.map(Number),
         start_time: start_time,
-        end_time: end_time
+        end_time: end_time,
+        city: selectedCity
+      };
+
+      // Log the request for debugging
+      console.log("Generating tour with:", {
+        city: selectedCity,
+        tags: selectedTags,
+        interests: requestData.interests
       });
+
+      const res = await axios.post("http://localhost:3000/api/ai/generate-tour", requestData);
       setTourData(res.data);
     } catch (err) {
       console.error(err);
-      setError("Không thể tạo tour. Hãy kiểm tra lại dữ liệu.");
+      if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else {
+        setError("Không thể tạo tour. Hãy kiểm tra lại dữ liệu.");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -94,9 +216,10 @@ const AutoPlanner = ({ noLayout }) => {
       
       // Trigger notification refresh to update unread count
       refreshNotifications();
-    } catch (err) {
-      console.error(err);
-      alert("Lỗi khi lưu tour vào hệ thống!");
+    } catch (error) {
+      console.error('Error saving tour:', error);
+      setAlertMessage('Lỗi khi lưu tour vào hệ thống!');
+      setShowAlert(true);
     } finally {
       setIsSaving(false);
     }
@@ -146,12 +269,19 @@ const AutoPlanner = ({ noLayout }) => {
 
   const mainContent = (
     <div className="luxury-planner-container">
-      <h2 className="luxury-section-title mb-4">Tạo lộ trình tự động</h2>
+      
+      {/* Alert Component */}
+      {showAlert && (
+        <div className="alert alert-danger alert-dismissible fade show" role="alert">
+          <i className="bi bi-exclamation-triangle-fill me-2"></i>
+          {alertMessage}
+          <button type="button" className="btn-close" onClick={() => setShowAlert(false)}></button>
+        </div>
+      )}
       
       {/* Tour Configuration */}
       <div className="luxury-card mb-4">
         <div className="luxury-card-body">
-          <h4 className="mb-3">Cấu hình tour</h4>
           <div className="row g-3">
             <div className="col-md-6">
               <label className="form-label fw-bold">Tên tour</label>
@@ -160,6 +290,14 @@ const AutoPlanner = ({ noLayout }) => {
                 value={tourName}
                 onChange={e => setTourName(e.target.value)}
                 placeholder="Nhập tên tour (tuỳ chọn)"
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Thành phố</label>
+              <CityAutocomplete
+                value={selectedCity}
+                onChange={handleCityChange}
+                placeholder="Chọn thành phố..."
               />
             </div>
             <div className="col-md-6">
@@ -270,6 +408,109 @@ const AutoPlanner = ({ noLayout }) => {
               )}
             </div>
           </div>
+
+          {/* City Places Section */}
+          {showCityPlaces && (
+            <div className="mt-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0">
+                  <i className="bi bi-geo-alt me-2 text-primary"></i>
+                  Địa điểm tại {selectedCity}
+                </h5>
+                <button
+                  className="btn btn-outline-primary btn-sm"
+                  onClick={() => setShowCreatePlaceModal(true)}
+                >
+                  <i className="bi bi-plus-circle me-1"></i>
+                  Thêm địa điểm mới
+                </button>
+              </div>
+              
+              {isLoadingCityPlaces ? (
+                <div className="text-center py-3">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-2 text-muted">Đang tìm địa điểm...</p>
+                </div>
+              ) : cityPlaces.length > 0 ? (
+                <div className="row g-3">
+                  {cityPlaces.map((place) => (
+                    <div key={place.id} className="col-md-6 col-lg-4">
+                      <div className="card h-100 border-0 shadow-sm">
+                        {place.image_url && (
+                          <img
+                            src={place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`}
+                            className="card-img-top"
+                            alt={place.name}
+                            style={{ height: '150px', objectFit: 'cover' }}
+                          />
+                        )}
+                        <div className="card-body">
+                          <h6 className="card-title text-primary">{place.name}</h6>
+                          <p className="card-text small text-muted">
+                            {htmlToPlainText(place.description).substring(0, 100)}...
+                          </p>
+                          {place.address && (
+                            <p className="card-text small">
+                              <i className="bi bi-geo-alt me-1"></i>
+                              {place.address}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <i className="bi bi-map text-muted" style={{ fontSize: '3rem' }}></i>
+                  <p className="mt-2 text-muted">Chưa có địa điểm nào tại {selectedCity}</p>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => setShowCreatePlaceModal(true)}
+                  >
+                    <i className="bi bi-plus-circle me-1"></i>
+                    Tạo địa điểm đầu tiên
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Filter Summary */}
+          {(selectedCity || selectedTags.length > 0) && (
+            <div className="mt-4">
+              <div className="alert alert-info border-0 shadow-sm">
+                <h6 className="mb-2">
+                  <i className="bi bi-funnel me-2"></i>
+                  Bộ lọc tour
+                </h6>
+                <div className="d-flex flex-wrap gap-2">
+                  {selectedCity && (
+                    <span className="badge bg-primary">
+                      <i className="bi bi-geo-alt me-1"></i>
+                      Thành phố: {selectedCity}
+                    </span>
+                  )}
+                  {selectedTags.map(tagId => {
+                    const tag = tags.find(t => String(t.id) === String(tagId));
+                    if (!tag) return null;
+                    return (
+                      <span key={tag.id} className="badge bg-success">
+                        <i className="bi bi-tag me-1"></i>
+                        {tag.name}
+                      </span>
+                    );
+                  })}
+                </div>
+                <small className="text-muted mt-2 d-block">
+                  Tour sẽ được tạo với các địa điểm phù hợp với bộ lọc trên
+                </small>
+              </div>
+            </div>
+          )}
+
           <div className="text-center mt-4">
             <button
               onClick={generateTour}
@@ -405,6 +646,86 @@ const AutoPlanner = ({ noLayout }) => {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Place Modal */}
+      {showCreatePlaceModal && (
+        <div className="modal show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.4)" }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="bi bi-plus-circle me-2 text-primary"></i>
+                  Thêm địa điểm mới tại {selectedCity}
+                </h5>
+                <button type="button" className="btn-close" onClick={() => setShowCreatePlaceModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold">Tên địa điểm *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={newPlaceData.name}
+                      onChange={(e) => setNewPlaceData({...newPlaceData, name: e.target.value})}
+                      placeholder="Nhập tên địa điểm"
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold">Địa chỉ</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={newPlaceData.address}
+                      onChange={(e) => setNewPlaceData({...newPlaceData, address: e.target.value})}
+                      placeholder="Nhập địa chỉ chi tiết"
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-bold">Mô tả *</label>
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      value={newPlaceData.description}
+                      onChange={(e) => setNewPlaceData({...newPlaceData, description: e.target.value})}
+                      placeholder="Mô tả về địa điểm này..."
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold">Giờ mở cửa</label>
+                    <textarea
+                      className="form-control"
+                      rows="2"
+                      value={newPlaceData.opening_hours}
+                      onChange={(e) => setNewPlaceData({...newPlaceData, opening_hours: e.target.value})}
+                      placeholder="VD: 8:00 - 22:00 hàng ngày"
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold">Dịch vụ</label>
+                    <textarea
+                      className="form-control"
+                      rows="2"
+                      value={newPlaceData.service}
+                      onChange={(e) => setNewPlaceData({...newPlaceData, service: e.target.value})}
+                      placeholder="VD: Ăn uống, Giải trí, Mua sắm"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowCreatePlaceModal(false)}>
+                  Hủy
+                </button>
+                <button type="button" className="btn btn-primary" onClick={createPlaceForCity}>
+                  <i className="bi bi-plus-circle me-1"></i>
+                  Tạo địa điểm
+                </button>
+              </div>
             </div>
           </div>
         </div>

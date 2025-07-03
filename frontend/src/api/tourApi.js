@@ -6,6 +6,7 @@ const tourApi = {
   getAll: () => axiosClient.get(API_BASE),
   getById: (id) => axiosClient.get(`${API_BASE}/${id}`),
   getUserTours: (userId) => axiosClient.get(`${API_BASE}/user/${userId}`),
+  cloneTour: (tourId, userId) => axiosClient.post(`${API_BASE}/${tourId}/clone`, { user_id: userId }),
 };
 
 export default tourApi;

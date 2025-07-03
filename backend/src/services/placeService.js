@@ -17,6 +17,15 @@ module.exports = {
     return await placeRepository.findOneBy({ id });
   },
 
+  async findByCity(city) {
+    return await placeRepository
+      .createQueryBuilder("place")
+      .where("LOWER(TRIM(place.city)) = :city", { 
+        city: city.toLowerCase().trim() 
+      })
+      .getMany();
+  },
+
   async update(id, data) {
     await placeRepository.update(id, data);
     return await placeRepository.findOneBy({ id });

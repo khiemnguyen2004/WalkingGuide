@@ -8,6 +8,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import { FaClock, FaMapMarkerAlt } from 'react-icons/fa';
+import { AuthContext } from '../../contexts/AuthContext.jsx';
+import AuthModal from '../../components/AuthModal.jsx';
 
 // Component to handle map centering
 const MapCenterHandler = ({ places }) => {
@@ -99,6 +101,10 @@ const TourDetail = () => {
   const navigate = useNavigate();
   const [newestTours, setNewestTours] = useState([]);
   const [routePlaces, setRoutePlaces] = useState([]);
+  const [addLoading, setAddLoading] = useState(false);
+  const [addSuccess, setAddSuccess] = useState(null);
+  const [addError, setAddError] = useState(null);
+  const { user } = React.useContext(AuthContext);
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -179,6 +185,24 @@ const TourDetail = () => {
     }
     return result;
   }
+
+  const handleAddToMyTours = async () => {
+    if (!user) {
+      setAddError('Bạn cần đăng nhập để thêm vào chuyến đi của tôi.');
+      return;
+    }
+    setAddLoading(true);
+    setAddSuccess(null);
+    setAddError(null);
+    try {
+      await tourApi.cloneTour(tour.id, user.id);
+      setAddSuccess('Đã thêm vào chuyến đi của tôi!');
+    } catch (err) {
+      setAddError('Không thể thêm vào chuyến đi của tôi.');
+    } finally {
+      setAddLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -331,13 +355,26 @@ const TourDetail = () => {
             )}
             <div className="d-flex justify-content-center">
               <button
-                onClick={() => alert('Đã thêm vào chuyến đi của tôi!')}
+                onClick={handleAddToMyTours}
                 className="mt-6 btn btn-main"
                 style={{ minWidth: 200 }}
+                disabled={addLoading}
               >
-                Thêm vào chuyến đi của tôi
+                {addLoading ? 'Đang thêm...' : 'Thêm vào chuyến đi của tôi'}
               </button>
             </div>
+            {/* Pretty success modal */}
+            <AuthModal open={!!addSuccess} onClose={() => setAddSuccess(null)}>
+              <div className="text-center">
+                <div style={{ fontSize: 48, color: '#28a745', marginBottom: 16 }}>
+                  <i className="bi bi-check-circle-fill"></i>
+                </div>
+                <h4 className="mb-3" style={{ color: '#28a745' }}>Thành công!</h4>
+                <div className="mb-4">{addSuccess}</div>
+                <button className="btn btn-main px-4" onClick={() => setAddSuccess(null)}>Đóng</button>
+              </div>
+            </AuthModal>
+            {addError && <div className="alert alert-danger text-center mt-3">{addError}</div>}
           </div>
         </div>
       </main>

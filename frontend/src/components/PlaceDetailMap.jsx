@@ -187,6 +187,8 @@ function PlaceDetailMap({ place, onClose }) {
   const [defaultCenter, setDefaultCenter] = useState([10.8231, 106.6297]); // Default to Ho Chi Minh City
   const [loading, setLoading] = useState(true);
   const mapRef = useRef(null);
+  const [showLocationAlert, setShowLocationAlert] = useState(false);
+  const [locationAlertMessage, setLocationAlertMessage] = useState('');
 
   // Initialize selectedPlace with the passed place prop
   useEffect(() => {
@@ -333,6 +335,26 @@ function PlaceDetailMap({ place, onClose }) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
     return tempDiv.textContent || tempDiv.innerText || '';
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation([latitude, longitude]);
+          setDefaultCenter([latitude, longitude]);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setLocationAlertMessage('Không thể lấy vị trí hiện tại. Vui lòng kiểm tra quyền truy cập vị trí.');
+          setShowLocationAlert(true);
+        }
+      );
+    } else {
+      setLocationAlertMessage('Trình duyệt của bạn không hỗ trợ định vị.');
+      setShowLocationAlert(true);
+    }
   };
 
   // Show loading state
@@ -566,6 +588,15 @@ function PlaceDetailMap({ place, onClose }) {
           </div>
         </div>
       </div>
+
+      {/* Location Alert */}
+      {showLocationAlert && (
+        <div className="alert alert-warning alert-dismissible fade show position-absolute top-0 start-0 m-3" style={{zIndex: 1000}} role="alert">
+          <i className="bi bi-geo-alt me-2"></i>
+          {locationAlertMessage}
+          <button type="button" className="btn-close" onClick={() => setShowLocationAlert(false)}></button>
+        </div>
+      )}
     </div>
   );
 }
