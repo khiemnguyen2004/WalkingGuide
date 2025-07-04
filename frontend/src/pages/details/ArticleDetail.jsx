@@ -5,6 +5,7 @@ import Navbar from '../../components/Navbar.jsx';
 import Footer from '../../components/Footer.jsx';
 import userApi from '../../api/userApi';
 import articleApi from '../../api/articleApi';
+import { AuthContext } from '../../contexts/AuthContext.jsx';
 
 const ArticleDetail = () => {
   const [article, setArticle] = useState(null);
@@ -14,6 +15,14 @@ const ArticleDetail = () => {
   const [newestArticles, setNewestArticles] = useState([]);
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = React.useContext(AuthContext);
+  const [likeCount, setLikeCount] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [commentError, setCommentError] = useState("");
+  const [userMap, setUserMap] = useState({});
 
   useEffect(() => {
     if (!id || isNaN(id)) {
@@ -78,7 +87,70 @@ const ArticleDetail = () => {
       }
     };
     fetchNewest();
-  }, [id]);
+
+    // Fetch likes and comments
+    if (!id) return;
+    // Fetch like count
+    fetch(`http://localhost:3000/api/article-likes/${id}/likes`)
+      .then(res => res.json())
+      .then(data => setLikeCount(data.count || 0));
+    // Fetch liked status
+    if (user) {
+      fetch(`http://localhost:3000/api/article-likes/is-liked?article_id=${id}&user_id=${user.id}`)
+        .then(res => res.json())
+        .then(data => setLiked(!!data.liked));
+    } else {
+      setLiked(false);
+    }
+    // Fetch comments
+    fetch(`http://localhost:3000/api/article-comments/${id}`)
+      .then(res => res.json())
+      .then(data => setComments(Array.isArray(data) ? data : []));
+    // Fetch all users for comment display
+    userApi.getAll().then(res => {
+      const map = {};
+      (res.data || []).forEach(u => { map[u.id] = u.full_name || `User #${u.id}`; });
+      setUserMap(map);
+    });
+  }, [id, user]);
+
+  // Like/unlike handlers
+  const handleLike = async () => {
+    if (!user) return;
+    const url = liked ? 'unlike' : 'like';
+    await fetch(`http://localhost:3000/api/article-likes/${url}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ article_id: id, user_id: user.id })
+    });
+    setLiked(!liked);
+    setLikeCount(likeCount + (liked ? -1 : 1));
+  };
+
+  // Add comment handler
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!user || !commentText.trim()) return;
+    setCommentLoading(true);
+    setCommentError("");
+    try {
+      const res = await fetch(`http://localhost:3000/api/article-comments/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ article_id: id, user_id: user.id, content: commentText })
+      });
+      if (!res.ok) throw new Error('Lỗi khi gửi bình luận');
+      setCommentText("");
+      // Refresh comments
+      fetch(`http://localhost:3000/api/article-comments/${id}`)
+        .then(res => res.json())
+        .then(data => setComments(Array.isArray(data) ? data : []));
+    } catch (err) {
+      setCommentError(err.message);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -108,7 +180,6 @@ const ArticleDetail = () => {
   return (
     <div className="min-vh-100 d-flex flex-column luxury-home-container">
       <Header />
-      <Navbar />
       <main className="flex-grow-1">
         <div className="container mx-auto p-4 max-w-3xl">
           <div style={{ background: 'rgba(245, 250, 255, 0.95)', borderRadius: '1.5rem', boxShadow: '0 4px 24px 0 rgba(31, 38, 135, 0.10)', padding: '2.5rem 2rem', margin: '2rem 0' }}>
@@ -131,9 +202,56 @@ const ArticleDetail = () => {
               <span className="d-flex align-items-center gap-2">
                 Người đăng: <b>{admin ? admin.full_name : 'Admin'}</b>
               </span>
+              {/* Like button */}
+              <span className="d-flex align-items-center gap-2 ms-3">
+                <button
+                  className={`btn btn-sm ${liked ? 'btn-danger' : 'btn-outline-danger'}`}
+                  onClick={handleLike}
+                  disabled={!user}
+                  title={user ? (liked ? 'Bỏ thích' : 'Thích bài viết') : 'Đăng nhập để thích'}
+                  style={{ minWidth: 40 }}
+                >
+                  <i className={`bi ${liked ? 'bi-heart-fill' : 'bi-heart'}`}></i>
+                  <span className="ms-1">{likeCount}</span>
+                </button>
+              </span>
             </div>
             <div className="prose prose-lg mb-4" style={{ color: '#223a5f', fontSize: '1.15rem', lineHeight: 1.7 }}>
               <div dangerouslySetInnerHTML={{ __html: article.content }} />
+            </div>
+            {/* Comments Section */}
+            <div className="mt-5">
+              <h4 className="fw-bold mb-3">Bình luận ({comments.length})</h4>
+              {user ? (
+                <form className="mb-3 d-flex gap-2" onSubmit={handleAddComment}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Viết bình luận..."
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
+                    disabled={commentLoading}
+                  />
+                  <button className="btn btn-main" type="submit" disabled={commentLoading || !commentText.trim()}>
+                    {commentLoading ? <i className="bi bi-send fa-spin"></i> : <i className="bi bi-send"></i>}
+                  </button>
+                </form>
+              ) : (
+                <div className="alert alert-warning">Bạn cần đăng nhập để bình luận.</div>
+              )}
+              {commentError && <div className="alert alert-danger">{commentError}</div>}
+              <div className="comments-list">
+                {comments.length === 0 ? (
+                  <div className="text-muted">Chưa có bình luận nào.</div>
+                ) : (
+                  comments.map((c, idx) => (
+                    <div key={c.id || idx} className="mb-3 p-2 bg-light rounded">
+                      <b>{c.user_id && userMap[c.user_id] ? userMap[c.user_id] : 'Ẩn danh'}:</b> {c.content}
+                      <div className="text-muted small">{c.created_at ? new Date(c.created_at).toLocaleString('vi-VN') : ''}</div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
             <div className="d-flex justify-content-center">
               <button

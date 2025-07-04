@@ -14,6 +14,8 @@ const PlaceLike = require("./models/PlaceLike");
 const PlaceRating = require("./models/PlaceRating");
 const TourLike = require("./models/TourLike");
 const TourRating = require("./models/TourRating");
+const ArticleLike = require("./models/ArticleLike");
+const ArticleComment = require("./models/ArticleComment");
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -39,9 +41,11 @@ const AppDataSource = new DataSource({
     PlaceRating,
     TourLike,
     TourRating,
+    ArticleLike,
+    ArticleComment,
   ],
   migrations: [
-    "src/migrations/1751450828370-AddFavouriteTour.js",
+    "src/migrations/1757050000000-create-article-like-comment.js",
   ],
   subscribers: [],
 });
