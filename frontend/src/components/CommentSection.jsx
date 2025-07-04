@@ -74,7 +74,7 @@ const CommentSection = ({ placeId }) => {
               <span className="fw-bold" style={{ color: '#1a2a47' }}>{c.user_full_name || `Người dùng #${c.comment_user_id || c.user_id}`}:</span> {c.comment_content || c.content}
             </div>
             {user && (user.id === c.comment_user_id || user.id === c.user_id) && (
-              <button className="btn btn-link text-danger btn-sm" onClick={() => handleDelete(c.comment_id || c.id)}>
+              <button className="btn btn-link text-danger btn-sm text-decoration-none" onClick={() => handleDelete(c.comment_id || c.id)}>
                 Xóa
               </button>
             )}

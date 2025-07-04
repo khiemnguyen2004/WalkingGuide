@@ -1,3 +1,5 @@
+@import '../components/LanguageSwitcher.css';
+
 body{
   font-family: Arial, Helvetica, sans-serif !important;
 }
@@ -11,7 +13,7 @@ body{
 .luxury-home-container {
   background: var(--luxury-gradient);
   min-height: auto;
-  animation: fadeInBg 1.2s ease;
+  /* animation: fadeInBg 1.2s ease; */
   padding-left: 220px;
   margin-top: 0 !important;
   width:auto !important;
@@ -214,7 +216,7 @@ body{
   margin-bottom: 0 !important;
   font-size: 1.1rem;
   font-weight: 500;
-  animation: fadeInBg 1.2s;
+  /* animation: fadeInBg 1.2s; */
 }
 
 .luxury-navbar a, .luxury-navbar .nav-link {
@@ -239,7 +241,7 @@ body{
   letter-spacing: 1.2px;
   font-weight: 500;
   margin-top: 2rem;
-  animation: fadeInBg 1.2s;
+  /* animation: fadeInBg 1.2s; */
 }
 
 .herosection {

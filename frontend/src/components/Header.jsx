@@ -7,6 +7,8 @@ import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import ConfirmModal from "./ConfirmModal";
 import NotificationIcon from "./NotificationIcon";
+import LanguageSwitcher from './LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 function Header() {
   const { user, logout } = useContext(AuthContext);
@@ -16,6 +18,7 @@ function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const avatarRef = useRef();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -88,10 +91,11 @@ function Header() {
           </Link>
         </div>
         <div className="d-flex align-items-center gap-2 position-relative" ref={avatarRef}>
+          <LanguageSwitcher />
           {user && (
             <Link to="/my-tours" className="btn d-flex align-items-center me-2 text-decoration-none" style={{gap: 8}}>
               <i className="bi bi-person-walking" style={{fontSize: 20, color: '#1a5bb8'}}></i>
-              <span style={{color: '#1a5bb8'}}>Tour của bạn</span>
+              <span style={{color: '#1a5bb8'}}>{t('My Tours')}</span>
             </Link>
           )}
           {user && <NotificationIcon />}
@@ -147,26 +151,26 @@ function Header() {
                     <hr className="my-2" />
                     {user.role === "ADMIN" && (
                       <Link to="/admin" className="dropdown-item text-decoration-none" onClick={()=>setDropdownOpen(false)}>
-                        <i className="bi bi-gear-wide-connected me-2"></i>Trang quản trị
+                        <i className="bi bi-gear-wide-connected me-2"></i>{t('Admin Dashboard')}
                       </Link>
                     )}
                     <Link to="/users" className="dropdown-item text-decoration-none me-2" onClick={()=>setDropdownOpen(false)}>
-                      <i className="bi bi-person-circle me-2"></i>Hồ sơ cá nhân
+                      <i className="bi bi-person-circle me-2"></i>{t('Profile')}
                     </Link>
                     <Link to="/notifications" className="dropdown-item text-decoration-none me-2" onClick={()=>setDropdownOpen(false)}>
-                      <i className="bi bi-bell me-2"></i>Thông báo
+                      <i className="bi bi-bell me-2"></i>{t('Notifications')}
                     </Link>
                     <button className="dropdown-item text-danger mt-2" onClick={handleLogout}>
-                      <i className="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                      <i className="bi bi-box-arrow-right me-2"></i>{t('Logout')}
                     </button>
                   </>
                 ) : (
                   <>
                     <button className="dropdown-item" onClick={openLogin}>
-                      <i className="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+                      <i className="bi bi-box-arrow-in-right me-2"></i>{t('Login')}
                     </button>
                     <button className="dropdown-item" onClick={openRegister}>
-                      <i className="bi bi-person-plus me-2"></i>Đăng ký
+                      <i className="bi bi-person-plus me-2"></i>{t('Register')}
                     </button>
                   </>
                 )}

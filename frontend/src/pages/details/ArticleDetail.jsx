@@ -23,6 +23,8 @@ const ArticleDetail = () => {
   const [commentLoading, setCommentLoading] = useState(false);
   const [commentError, setCommentError] = useState("");
   const [userMap, setUserMap] = useState({});
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
 
   useEffect(() => {
     if (!id || isNaN(id)) {
@@ -152,6 +154,61 @@ const ArticleDetail = () => {
     }
   };
 
+  // Edit comment handler
+  const handleEditComment = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentText(comment.content);
+  };
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingCommentText("");
+  };
+  const handleSaveEdit = async (comment) => {
+    if (!editingCommentText.trim()) return;
+    setCommentLoading(true);
+    setCommentError("");
+    try {
+      const res = await fetch(`http://localhost:3000/api/article-comments/${comment.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: editingCommentText, user_id: user.id })
+      });
+      if (!res.ok) throw new Error('Lỗi khi sửa bình luận');
+      setEditingCommentId(null);
+      setEditingCommentText("");
+      // Refresh comments
+      fetch(`http://localhost:3000/api/article-comments/${id}`)
+        .then(res => res.json())
+        .then(data => setComments(Array.isArray(data) ? data : []));
+    } catch (err) {
+      setCommentError(err.message);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+  // Delete comment handler
+  const handleDeleteComment = async (comment) => {
+    if (!window.confirm('Bạn có chắc muốn xóa bình luận này?')) return;
+    setCommentLoading(true);
+    setCommentError("");
+    try {
+      const res = await fetch(`http://localhost:3000/api/article-comments/${comment.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id })
+      });
+      if (!res.ok) throw new Error('Lỗi khi xóa bình luận');
+      // Refresh comments
+      fetch(`http://localhost:3000/api/article-comments/${id}`)
+        .then(res => res.json())
+        .then(data => setComments(Array.isArray(data) ? data : []));
+    } catch (err) {
+      setCommentError(err.message);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -246,7 +303,39 @@ const ArticleDetail = () => {
                 ) : (
                   comments.map((c, idx) => (
                     <div key={c.id || idx} className="mb-3 p-2 bg-light rounded">
-                      <b>{c.user_id && userMap[c.user_id] ? userMap[c.user_id] : 'Ẩn danh'}:</b> {c.content}
+                      <b>{c.user_id && userMap[c.user_id] ? userMap[c.user_id] : 'Ẩn danh'}:</b>{' '}
+                      {editingCommentId === c.id ? (
+                        <>
+                          <input
+                            type="text"
+                            className="form-control d-inline-block w-auto"
+                            value={editingCommentText}
+                            onChange={e => setEditingCommentText(e.target.value)}
+                            disabled={commentLoading}
+                            style={{ maxWidth: 300, marginRight: 8 }}
+                          />
+                          <button className="btn btn-success btn-sm me-1" onClick={() => handleSaveEdit(c)} disabled={commentLoading || !editingCommentText.trim()}>
+                            Lưu
+                          </button>
+                          <button className="btn btn-secondary btn-sm" onClick={handleCancelEdit} disabled={commentLoading}>
+                            Hủy
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {c.content}
+                          {user && c.user_id === user.id && (
+                            <>
+                              <button className="btn btn-link btn-sm text-primary ms-2 text-decoration-none" onClick={() => handleEditComment(c)} disabled={commentLoading}>
+                                Sửa
+                              </button>
+                              <button className="btn btn-link btn-sm text-danger text-decoration-none" onClick={() => handleDeleteComment(c)} disabled={commentLoading}>
+                                Xóa
+                              </button>
+                            </>
+                          )}
+                        </>
+                      )}
                       <div className="text-muted small">{c.created_at ? new Date(c.created_at).toLocaleString('vi-VN') : ''}</div>
                     </div>
                   ))

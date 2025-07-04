@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
@@ -23,6 +24,7 @@ function chunkArray(arr, size) {
 }
 
 function HomePage() {
+  const { t } = useTranslation();
   const [places, setPlaces] = useState([]);
   const [tours, setTours] = useState([]);
   const [articles, setArticles] = useState([]);
@@ -128,9 +130,9 @@ function HomePage() {
           <div className="bg-planner-map" id="planner-section">
             {/* Hero Section with shared background */}
             <section className="hero-with-bg">
-              <h1>Khám phá & Lên Kế Hoạch Du Lịch Thông Minh</h1>
-              <p>Tìm kiếm địa điểm, tạo lộ trình cá nhân hoặc để chúng tôi gợi ý chuyến đi hoàn hảo cho bạn!</p>
-              <a href="#planner-section" className="btn btn-main">Bắt đầu lên kế hoạch</a>
+              <h1>{t('Discover & Plan Your Smart Trip')}</h1>
+              <p>{t('Find places, create your own itinerary, or let us suggest the perfect trip for you!')}</p>
+              <a href="#planner-section" className="btn btn-main">{t('Start Planning')}</a>
             </section>
           <div className={`row mb-5 g-4 luxury-planner-row justify-content-center`}> 
             <div className="col-12 col-md-6 d-flex justify-content-center mb-4">
@@ -140,10 +142,10 @@ function HomePage() {
                 onClick={() => setShowManualModal(true)}
               >
                 <div className="d-flex align-items-center gap-2 mb-2 justify-content-center">
-                  <h2 className="h5 fw-bold mb-0">Tự tạo lộ trình</h2>
+                  <h2 className="h5 fw-bold mb-0">{t('Manual Planning')}</h2>
                   <i className="bi bi-car-front" style={{fontSize: 20, marginLeft: 6, color: '#3498db'}} aria-label="manual icon"></i>
                 </div>
-                <p className="text-muted mb-0">Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ <b>thủ công</b> để tự tạo tour theo ý thích của mình.</p>
+                <p className="text-muted mb-0">{t('Want to plan your own trip? Use manual mode to create your custom tour.')}</p>
               </div>
             </div>
             <div className="col-12 col-md-6 d-flex justify-content-center mb-4">
@@ -153,10 +155,10 @@ function HomePage() {
                 onClick={() => setShowAutoModal(true)}
               >
                 <div className="d-flex align-items-center gap-2 mb-2 justify-content-center">
-                  <h2 className="h5 fw-bold mb-0">Tạo lộ trình tự động</h2>
+                  <h2 className="h5 fw-bold mb-0">{t('Auto Planning')}</h2>
                   <i className="bi bi-robot" style={{fontSize: 20, marginLeft: 6, color: '#3498db'}} aria-label="autopilot icon"></i>
                 </div>
-                <p className="text-muted mb-0">Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ <b>tự động</b> để chúng tôi đề xuất tour cho bạn!</p>
+                <p className="text-muted mb-0">{t('Want us to create a suitable itinerary? Try auto mode for our suggestions!')}</p>
               </div>
             </div>
           </div>
@@ -165,7 +167,7 @@ function HomePage() {
           <Modal show={showManualModal} onHide={() => setShowManualModal(false)} size="lg" centered dialogClassName="luxury-modal">
             <Modal.Header closeButton className="luxury-modal-header">
               <span className="modal-icon me-2"><i className="bi bi-pencil-square"></i></span>
-              <Modal.Title className="luxury-modal-title">Tự tạo lộ trình</Modal.Title>
+              <Modal.Title className="luxury-modal-title">{t('Manual Planning')}</Modal.Title>
             </Modal.Header>
             <Modal.Body className="luxury-modal-body">
               <ManualPlanner noLayout />
@@ -176,7 +178,7 @@ function HomePage() {
           <Modal show={showAutoModal} onHide={() => setShowAutoModal(false)} size="lg" centered dialogClassName="luxury-modal">
             <Modal.Header closeButton className="luxury-modal-header">
               <span className="modal-icon me-2"><i className="bi bi-robot"></i></span>
-              <Modal.Title className="luxury-modal-title">Tạo lộ trình tự động</Modal.Title>
+              <Modal.Title className="luxury-modal-title">{t('Auto Planning')}</Modal.Title>
             </Modal.Header>
             <Modal.Body className="luxury-modal-body">
               <AutoPlanner noLayout />
@@ -184,7 +186,7 @@ function HomePage() {
           </Modal>
             <section className="mb-6">
             <h2 className="h4 mb-3 fw-bold text-center text-light">
-              Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!{' '}
+              {t('No plans yet? Explore the travel map!')}{' '}
               <a href="#" onClick={handleExploreMapClick} className="arrow-link ms-2" style={{textDecoration: 'none'}}>
                 <i className="bi bi-arrow-right" style={{fontSize: 24, verticalAlign: 'middle', color: '#fff'}}></i>
               </a>
@@ -198,7 +200,7 @@ function HomePage() {
                 <input
                   type="text"
                   className="form-control border-0 rounded-end-pill"
-                  placeholder="Tìm địa điểm..."
+                  placeholder={t('Search for a place...')}
                   value={placeQuery}
                   onChange={handlePlaceInput}
                   onKeyDown={handlePlaceKeyDown}
@@ -258,17 +260,17 @@ function HomePage() {
         {/* </div> */}
         {/* <hr className="my-5 luxury-divider" /> */}
         {loading ? (
-          <p className="text-muted text-center">Đang tải dữ liệu...</p>
+          <p className="text-muted text-center">{t('Loading data...')}</p>
         ) : error ? (
           <p className="text-danger text-center">{error}</p>
         ) : (
           <>
             <section className="cards-section mb-6">
               <h2 className="h4 mb-4 fw-bold luxury-section-title">
-                Điểm đến nổi bật
+                {t('Featured Destinations')}
               </h2>
               {sortedPlaces.length === 0 ? (
-                <p className="text-muted text-center">Không có địa điểm nào để hiển thị.</p>
+                <p className="text-muted text-center">{t('No destinations to display.')}</p>
               ) : showAllPlaces ? (
                 <>
                   <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -301,7 +303,7 @@ function HomePage() {
                               <p className="card-text text-muted mb-2 luxury-desc">
                                 {p.description
                                   ? `${p.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`
-                                  : "Chưa có mô tả"}
+                                  : t("No description available")}
                               </p>
                               {p.service && (
                                 <p className="card-text text-muted mb-2 small">
@@ -325,7 +327,7 @@ function HomePage() {
                       className="btn btn-main btn-lg px-5"
                       onClick={() => setShowAllPlaces(false)}
                     >
-                      Ẩn bớt
+                      {t('Show Less')}
                     </button>
                   </div>
                 </>
@@ -365,7 +367,7 @@ function HomePage() {
                                       <p className="card-text text-muted mb-2 luxury-desc">
                                         {p.description
                                           ? `${p.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`
-                                          : "Chưa có mô tả"}
+                                          : t("No description available")}
                                       </p>
                                       {p.service && (
                                         <p className="card-text text-muted mb-2 small">
@@ -403,7 +405,7 @@ function HomePage() {
                         className="btn btn-main btn-lg px-5"
                         onClick={() => setShowAllPlaces(true)}
                       >
-                        Khám phá thêm
+                        {t('Explore More')}
                       </button>
                     </div>
                   </div>
@@ -413,21 +415,21 @@ function HomePage() {
             <hr className="my-5 luxury-divider" />
             <section className="cards-section mb-6">
               <h2 className="h4 mb-4 fw-bold luxury-section-title">
-                Chuyến đi & Lịch trình
+                {t('Trips & Itineraries')}
               </h2>
               {tours.length === 0 ? (
-                <p className="text-muted">Không có tour nào để hiển thị.</p>
+                <p className="text-muted">{t('No tours to display.')}</p>
               ) : showAllTours ? (
                 <>
                   <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                    {tours.map((t) => (
-                      <div className="col" key={t.id}>
+                    {tours.map((tour) => (
+                      <div className="col" key={tour.id}>
                         <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                          <Link to={`/tours/${t.id}`} className="text-decoration-none">
-                            {t.image_url ? (
+                          <Link to={`/tours/${tour.id}`} className="text-decoration-none">
+                            {tour.image_url ? (
                               <img
-                                src={t.image_url.startsWith("http") ? t.image_url : `http://localhost:3000${t.image_url}`}
-                                alt={t.name}
+                                src={tour.image_url.startsWith("http") ? tour.image_url : `http://localhost:3000${tour.image_url}`}
+                                alt={tour.name}
                                 className="card-img-top luxury-img-top"
                                 style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
                                 onError={(e) => { e.target.style.display = 'none'; }}
@@ -441,27 +443,27 @@ function HomePage() {
                               </div>
                             )}
                             <div className="card-body luxury-card-body">
-                              <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{t.name}</h3>
-                              {t.description && (
+                              <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{tour.name}</h3>
+                              {tour.description && (
                                 <p className="card-text text-muted mb-2 luxury-desc">
-                                  {`${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`}
+                                  {`${tour.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`}
                                 </p>
                               )}
                               <div className="mb-2">
                                 <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                                <span style={{ fontWeight: 600, marginLeft: 4 }}>{t.rating ? t.rating.toFixed(1) : '0.0'}</span>
+                                <span style={{ fontWeight: 600, marginLeft: 4 }}>{tour.rating ? tour.rating.toFixed(1) : '0.0'}</span>
                                 <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
                               </div>
-                              {t.total_cost && (
+                              {tour.total_cost && (
                                 <p className="card-text text-muted small mb-0 luxury-rating">
-                                  <span className="luxury-money">💰</span> {t.total_cost} VND
+                                  <span className="luxury-money">💰</span> {tour.total_cost} VND
                                 </p>
                               )}
                             </div>
                           </Link>
                           <div className="px-3 pb-3">
-                            <Link to={`/tours/${t.id}`} className="btn btn-main w-100 mt-2">
-                              Bắt đầu chuyến đi
+                            <Link to={`/tours/${tour.id}`} className="btn btn-main w-100 mt-2">
+                              {t('Start Tour')}
                             </Link>
                           </div>
                         </div>
@@ -473,7 +475,7 @@ function HomePage() {
                       className="btn btn-main btn-lg px-5"
                       onClick={() => setShowAllTours(false)}
                     >
-                      Ẩn bớt
+                      {t('Show Less')}
                     </button>
                   </div>
                 </>
@@ -482,16 +484,16 @@ function HomePage() {
                   <div id="toursCarousel" className="carousel slide" data-bs-ride="carousel">
                     <div className="carousel-inner">
                       {chunkArray(tours, 3).map((group, idx) => (
-                        <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(t => t.id).join('-')}>
+                        <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(tour => tour.id).join('-')}>
                           <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
-                            {group.map((t) => (
-                              <div className="col" key={t.id}>
+                            {group.map((tour) => (
+                              <div className="col" key={tour.id}>
                                 <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                                  <Link to={`/tours/${t.id}`} className="text-decoration-none">
-                                    {t.image_url ? (
+                                  <Link to={`/tours/${tour.id}`} className="text-decoration-none">
+                                    {tour.image_url ? (
                                       <img
-                                        src={t.image_url.startsWith("http") ? t.image_url : `http://localhost:3000${t.image_url}`}
-                                        alt={t.name}
+                                        src={tour.image_url.startsWith("http") ? tour.image_url : `http://localhost:3000${tour.image_url}`}
+                                        alt={tour.name}
                                         className="card-img-top luxury-img-top"
                                         style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
                                         onError={(e) => { e.target.style.display = 'none'; }}
@@ -505,27 +507,27 @@ function HomePage() {
                                       </div>
                                     )}
                                     <div className="card-body luxury-card-body">
-                                      <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{t.name}</h3>
-                                      {t.description && (
+                                      <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{tour.name}</h3>
+                                      {tour.description && (
                                         <p className="card-text text-muted mb-2 luxury-desc">
-                                          {`${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`}
+                                          {`${tour.description.replace(/<[^>]+>/g, '').substring(0, 100)}...`}
                                         </p>
                                       )}
                                       <div className="mb-2">
                                         <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                                        <span style={{ fontWeight: 600, marginLeft: 4 }}>{t.rating ? t.rating.toFixed(1) : '0.0'}</span>
+                                        <span style={{ fontWeight: 600, marginLeft: 4 }}>{tour.rating ? tour.rating.toFixed(1) : '0.0'}</span>
                                         <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
                                       </div>
-                                      {t.total_cost && (
+                                      {tour.total_cost && (
                                         <p className="card-text text-muted small mb-0 luxury-rating">
-                                          <span className="luxury-money">💰</span> {t.total_cost} VND
+                                          <span className="luxury-money">💰</span> {tour.total_cost} VND
                                         </p>
                                       )}
                                     </div>
                                   </Link>
                                   <div className="px-3 pb-3">
-                                    <Link to={`/tours/${t.id}`} className="btn btn-main w-100 mt-2">
-                                      Bắt đầu chuyến đi
+                                    <Link to={`/tours/${tour.id}`} className="btn btn-main w-100 mt-2">
+                                      {t('Start Tour')}
                                     </Link>
                                   </div>
                                 </div>
@@ -551,7 +553,7 @@ function HomePage() {
                         className="btn btn-main btn-lg px-5"
                         onClick={() => setShowAllTours(true)}
                       >
-                        Cùng tham gia ngay
+                        {t('Join Now')}
                       </button>
                     </div>
                   </div>
@@ -567,7 +569,7 @@ function HomePage() {
               <div style={{position: 'absolute', inset: 0, background: 'rgba(23, 22, 22, 0.25)', borderRadius: '1.5rem', zIndex: 1}}></div>
               <div className="container py-4" style={{position: 'relative', zIndex: 2}}>
                 <h2 className="display-6 fw-bold mb-4" style={{color: '#fff'}}>
-                  Lên kế hoạch nhanh với <span style={{color: '#fff'}}>AutoPlanner</span>
+                  {t('Plan Quickly with')} <span style={{color: '#fff'}}>{t('AutoPlanner')}</span>
                 </h2>
                 {/* Winding route line with random places */}
                 <div className="route-banner position-relative mb-4" style={{minHeight: 140, width: '100%', maxWidth: 900, margin: '0 auto'}}>
@@ -602,18 +604,18 @@ function HomePage() {
                   })()}
                 </div>
                 <p className="lead mb-3" style={{color: '#fff', fontWeight: 500}}>
-                  Hành trình của bạn sẽ được tối ưu chỉ với một cú nhấp chuột!
+                  {t('Your journey will be optimized with just one click!')}
                 </p>
-                <a href="#planner-section" className="btn btn-main btn-lg mt-2 px-4 py-2" style={{fontSize: '1.2rem'}}>Bắt đầu với AutoPlanner</a>
+                <a href="#planner-section" className="btn btn-main btn-lg mt-2 px-4 py-2" style={{fontSize: '1.2rem'}}>{t('Get Started with AutoPlanner')}</a>
               </div>
             </section>
             <section className="cards-section mb-6">
               <h2 className="h4 mb-4 fw-bold luxury-section-title">
-                Hãy tham khảo những chia sẻ thú vị từ các du khách
+                {t('Read interesting shares from travelers')}
               </h2>
               {/* Bootstrap Carousel for all articles, 3 per slide */}
                 {articles.length === 0 ? (
-                  <p className="text-muted">Không có bài viết nào để hiển thị.</p>
+                  <p className="text-muted">{t('No articles to display.')}</p>
                 ) : (
                 <div id="articlesCarousel" className="carousel slide" data-bs-ride="carousel">
                   <div className="carousel-inner">

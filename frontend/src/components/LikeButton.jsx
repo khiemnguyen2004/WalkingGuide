@@ -48,7 +48,7 @@ const LikeButton = ({ id, type = 'place' }) => {
 
   return (
     <button
-      className={`btn btn-sm d-flex align-items-center gap-1 shadow-sm px-3 py-2 ${liked ? 'btn-danger' : 'btn-outline-danger'}`}
+      className={`btn btn-sm d-flex align-items-center gap-1 shadow-sm px-3 py-2 ${liked ? 'btn-primary' : 'btn-outline-danger'}`}
       onClick={handleToggle}
       disabled={loading}
       style={{ borderRadius: 24, fontWeight: 600, fontSize: 16, transition: 'all 0.2s' }}
