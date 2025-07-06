@@ -41,6 +41,9 @@ const resources = {
       'Auto Planning': 'Tạo lộ trình tự',
       'Want us to create a suitable itinerary? Try auto mode for our suggestions!': 'Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ tự động để chúng tôi đề xuất tour cho bạn!',
       'No plans yet? Explore the travel map!': 'Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!',
+      'Trips & Itineraries': 'Chuyến đi & Lịch trình',
+      'Featured Destinations': 'Điểm đến nổi bật',
+      'Read interesting shares from travelers': 'Đọc những chia sẻ thú vị từ các du khách',
       // Add more translations as needed
     }
   }

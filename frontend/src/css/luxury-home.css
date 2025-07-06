@@ -1,4 +1,4 @@
-@import '../components/LanguageSwitcher.css';
+@import './LanguageSwitcher.css';
 
 body{
   font-family: Arial, Helvetica, sans-serif !important;

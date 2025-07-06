@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
@@ -82,6 +82,10 @@ const createCustomIcon = (place) => {
   }
 };
 
+// OpenTripMap API constants
+const OTM_API_KEY = '5ae2e3f221c38a28845f05b61952da66ed7231df6303c387c3d2a08c';
+const OTM_BASE_URL = 'https://api.opentripmap.com/0.1/en/places';
+
 const PlaceDetail = () => {
   const [place, setPlace] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,6 +97,15 @@ const PlaceDetail = () => {
   const [routePlaces, setRoutePlaces] = useState([]);
   const [routeTour, setRouteTour] = useState(null);
   const [allPlaces, setAllPlaces] = useState([]); // All places for map markers
+  const [otmDetails, setOtmDetails] = useState(null);
+  const [otmLoading, setOtmLoading] = useState(false);
+  const [otmError, setOtmError] = useState(null);
+  // Fetch nearby places (restaurants, hotels) from OpenTripMap
+  const [nearbyRestaurants, setNearbyRestaurants] = useState([]);
+  const [nearbyHotels, setNearbyHotels] = useState([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [nearbyError, setNearbyError] = useState(null);
+  const [nearbyDetails, setNearbyDetails] = useState({}); // xid -> details
 
   useEffect(() => {
     const fetchData = async () => {
@@ -189,6 +202,105 @@ const PlaceDetail = () => {
     tempDiv.innerHTML = html;
     return tempDiv.textContent || tempDiv.innerText || '';
   };
+
+  // Fetch OpenTripMap details for this place (prefer city/address search)
+  const fetchOtmDetails = useCallback(async (place) => {
+    if (!place) return;
+    setOtmLoading(true);
+    setOtmError(null);
+    setOtmDetails(null);
+    try {
+      let found = null;
+      // 1. Try search by address + city
+      if (place.address && place.city) {
+        const query = encodeURIComponent(`${place.address}, ${place.city}`);
+        const searchUrl = `${OTM_BASE_URL}/search?name=${query}&apikey=${OTM_API_KEY}`;
+        const searchRes = await fetch(searchUrl);
+        const searchData = await searchRes.json();
+        if (searchData && searchData.features && searchData.features.length > 0) {
+          found = searchData.features[0];
+        }
+      }
+      // 2. Fallback: search by coordinates and name (old logic)
+      if (!found && place.latitude && place.longitude) {
+        const radius = 200;
+        const searchUrl = `${OTM_BASE_URL}/radius?radius=${radius}&lon=${place.longitude}&lat=${place.latitude}&apikey=${OTM_API_KEY}`;
+        const searchRes = await fetch(searchUrl);
+        const searchData = await searchRes.json();
+        if (searchData.features && searchData.features.length > 0) {
+          const normalize = s => s?.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+          found = searchData.features.find(f => normalize(f.properties.name) === normalize(place.name));
+          if (!found) found = searchData.features[0];
+        }
+      }
+      // 3. Fetch details if found
+      if (found && found.properties && found.properties.xid) {
+        const detailsUrl = `${OTM_BASE_URL}/xid/${found.properties.xid}?apikey=${OTM_API_KEY}`;
+        const detailsRes = await fetch(detailsUrl);
+        const detailsData = await detailsRes.json();
+        setOtmDetails(detailsData);
+      } else {
+        setOtmDetails(null);
+      }
+    } catch (e) {
+      setOtmError('Không thể tải thông tin từ OpenTripMap');
+      setOtmDetails(null);
+    } finally {
+      setOtmLoading(false);
+    }
+  }, []);
+
+  // Fetch nearby places (restaurants, hotels) from OpenTripMap
+  const fetchNearbyPlaces = useCallback(async (place) => {
+    if (!place || !place.latitude || !place.longitude) return;
+    setNearbyLoading(true);
+    setNearbyError(null);
+    setNearbyDetails({});
+    try {
+      // Fetch restaurants
+      const restUrl = `${OTM_BASE_URL}/radius?radius=500&lon=${place.longitude}&lat=${place.latitude}&kinds=restaurants&limit=8&apikey=${OTM_API_KEY}`;
+      const restRes = await fetch(restUrl);
+      const restData = await restRes.json();
+      const restaurants = restData.features || [];
+      setNearbyRestaurants(restaurants);
+      // Fetch hotels
+      const hotelUrl = `${OTM_BASE_URL}/radius?radius=500&lon=${place.longitude}&lat=${place.latitude}&kinds=hotels&limit=8&apikey=${OTM_API_KEY}`;
+      const hotelRes = await fetch(hotelUrl);
+      const hotelData = await hotelRes.json();
+      const hotels = hotelData.features || [];
+      setNearbyHotels(hotels);
+      // Fetch details for all (restaurants + hotels)
+      const all = [...restaurants, ...hotels];
+      const details = {};
+      await Promise.all(
+        all.map(async (item) => {
+          if (item.properties && item.properties.xid) {
+            try {
+              const detailRes = await fetch(`${OTM_BASE_URL}/xid/${item.properties.xid}?apikey=${OTM_API_KEY}`);
+              const detailData = await detailRes.json();
+              details[item.properties.xid] = detailData;
+            } catch {}
+          }
+        })
+      );
+      setNearbyDetails(details);
+    } catch (e) {
+      setNearbyError('Không thể tải nhà hàng/khách sạn lân cận');
+      setNearbyRestaurants([]);
+      setNearbyHotels([]);
+      setNearbyDetails({});
+    } finally {
+      setNearbyLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (place) fetchOtmDetails(place);
+  }, [place, fetchOtmDetails]);
+
+  useEffect(() => {
+    if (place) fetchNearbyPlaces(place);
+  }, [place, fetchNearbyPlaces]);
 
   if (loading) {
     return (
@@ -403,6 +515,135 @@ const PlaceDetail = () => {
                             </div>
                             <CommentSection placeId={place.id} />
                           </div>
+                          {/* --- OpenTripMap Section --- */}
+                          {/* <div className="mb-4">
+                            <h5 className="text-info mb-3">
+                              <i className="bi bi-globe2 me-2"></i>
+                              Thông tin từ OpenTripMap
+                            </h5>
+                            {otmLoading && <div>Đang tải thông tin từ OpenTripMap...</div>}
+                            {otmError && <div className="text-danger">{otmError}</div>}
+                            {otmDetails && (
+                              <div className="p-3 bg-light rounded-3" style={{ fontSize: '0.95rem' }}>
+                                <div className="mb-2">
+                                  <strong>{otmDetails.name}</strong>
+                                </div>
+                                {otmDetails.address && (
+                                  <div className="mb-1"><b>Địa chỉ:</b> {Object.values(otmDetails.address).join(', ')}</div>
+                                )}
+                                {otmDetails.wikipedia_extracts && (
+                                  <div className="mb-1">{otmDetails.wikipedia_extracts.text}</div>
+                                )}
+                                {otmDetails.info && otmDetails.info.descr && (
+                                  <div className="mb-1">{otmDetails.info.descr}</div>
+                                )}
+                                {otmDetails.preview && otmDetails.preview.source && (
+                                  <img src={otmDetails.preview.source} alt={otmDetails.name} style={{ width: '100%', borderRadius: 8, marginTop: 8, marginBottom: 8 }} />
+                                )}
+                                {otmDetails.otm && (
+                                  <div className="mt-2">
+                                    <a href={otmDetails.otm} target="_blank" rel="noopener noreferrer" style={{ color: '#1a5bb8' }}>Xem trên OpenTripMap</a>
+                                    <div className="mt-2" style={{height: 350, border: '1px solid #e3e3e3', borderRadius: 8, overflow: 'hidden'}}>
+                                      <iframe
+                                        src={otmDetails.otm}
+                                        title="OpenTripMap Preview"
+                                        width="100%"
+                                        height="100%"
+                                        style={{border: 'none'}}
+                                        loading="lazy"
+                                      ></iframe>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {!otmLoading && !otmDetails && !otmError && (
+                              <div className="text-muted">Không tìm thấy thông tin trên OpenTripMap.</div>
+                            )}
+                          </div> */}
+                          {/* --- End OpenTripMap Section --- */}
+                          {/* --- Nearby Restaurants & Hotels Section --- */}
+                          <div className="mb-4">
+                            <h5 className="text-success mb-3">
+                              <i className="bi bi-geo-alt me-2"></i>
+                              Nhà hàng & Khách sạn lân cận
+                            </h5>
+                            {nearbyLoading && <div>Đang tải nhà hàng/khách sạn lân cận...</div>}
+                            {nearbyError && <div className="text-danger">{nearbyError}</div>}
+                            {!nearbyLoading && !nearbyError && (
+                              <>
+                                <div className="mb-2">
+                                  <strong>Nhà hàng gần đây:</strong>
+                                  {nearbyRestaurants.length === 0 ? (
+                                    <span className="text-muted ms-2">Không có dữ liệu</span>
+                                  ) : (
+                                    <ul className="list-unstyled ms-2">
+                                      {nearbyRestaurants.map(r => {
+                                        const d = nearbyDetails[r.properties.xid] || {};
+                                        return (
+                                          <li key={r.properties.xid} className="mb-3 d-flex align-items-start gap-3">
+                                            {d.preview && d.preview.source ? (
+                                              <img src={d.preview.source} alt={d.name} style={{width: 56, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0}} />
+                                            ) : (
+                                              <div style={{width: 56, height: 56, background: '#eee', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 24}}>
+                                                <i className="bi bi-image"></i>
+                                              </div>
+                                            )}
+                                            <div>
+                                              <a href={`https://opentripmap.com/en/place/${r.properties.xid}`} target="_blank" rel="noopener noreferrer" style={{fontWeight: 600}}>
+                                                {d.name || r.properties.name || 'Nhà hàng không tên'}
+                                              </a>
+                                              {d.address && (
+                                                <div className="small text-muted">{Object.values(d.address).join(', ')}</div>
+                                              )}
+                                              {d.wikipedia_extracts && (
+                                                <div className="small">{d.wikipedia_extracts.text}</div>
+                                              )}
+                                            </div>
+                                          </li>
+                                        );
+                                      })}
+                                    </ul>
+                                  )}
+                                </div>
+                                <div>
+                                  <strong>Khách sạn gần đây:</strong>
+                                  {nearbyHotels.length === 0 ? (
+                                    <span className="text-muted ms-2">Không có dữ liệu</span>
+                                  ) : (
+                                    <ul className="list-unstyled ms-2">
+                                      {nearbyHotels.map(h => {
+                                        const d = nearbyDetails[h.properties.xid] || {};
+                                        return (
+                                          <li key={h.properties.xid} className="mb-3 d-flex align-items-start gap-3">
+                                            {d.preview && d.preview.source ? (
+                                              <img src={d.preview.source} alt={d.name} style={{width: 56, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0}} />
+                                            ) : (
+                                              <div style={{width: 56, height: 56, background: '#eee', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 24}}>
+                                                <i className="bi bi-image"></i>
+                                              </div>
+                                            )}
+                                            <div>
+                                              <a href={`https://opentripmap.com/en/place/${h.properties.xid}`} target="_blank" rel="noopener noreferrer" style={{fontWeight: 600}}>
+                                                {d.name || h.properties.name || 'Khách sạn không tên'}
+                                              </a>
+                                              {d.address && (
+                                                <div className="small text-muted">{Object.values(d.address).join(', ')}</div>
+                                              )}
+                                              {d.wikipedia_extracts && (
+                                                <div className="small">{d.wikipedia_extracts.text}</div>
+                                              )}
+                                            </div>
+                                          </li>
+                                        );
+                                      })}
+                                    </ul>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          {/* --- End Nearby Section --- */}
                           {/* Action Buttons */}
                           <div className="d-flex gap-2 justify-content-center pt-3">
                             <button

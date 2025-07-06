@@ -9,6 +9,7 @@ import Map from "../components/Map.jsx";
 import ManualPlanner from "../components/ManualPlanner.jsx";
 import AutoPlanner from "../components/AutoPlanner.jsx";
 import PlaceDetailMap from "../components/PlaceDetailMap";
+import PlaceExplorer from '../components/PlaceExplorer';
 import "../css/HomePage.css";
 import "../css/luxury-home.css";
 import { Modal } from "react-bootstrap";
