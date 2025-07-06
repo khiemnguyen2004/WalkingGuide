@@ -120,6 +120,7 @@ const TourDetail = () => {
           throw new Error("Server trả về dữ liệu không hợp lệ");
         }
         const data = await response.json();
+        console.log('Fetched tour:', data); // Debug log
         setTour(data);
         setLoading(false);
       } catch (err) {
@@ -168,6 +169,7 @@ const TourDetail = () => {
         }
         return step;
       });
+      console.log('Steps with place:', stepsWithPlace); // Debug log
       setTour(prev => ({ ...prev, steps: stepsWithPlace }));
     };
     fetchPlacesAndAttach();
