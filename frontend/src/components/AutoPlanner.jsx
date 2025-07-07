@@ -301,6 +301,24 @@ const AutoPlanner = ({ noLayout }) => {
               />
             </div>
             <div className="col-md-6">
+              <label className="form-label fw-bold">Ngày bắt đầu</label>
+              <input
+                type="date"
+                className="form-control"
+                value={start_time}
+                onChange={e => setStart_time(e.target.value)}
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Ngày kết thúc</label>
+              <input
+                type="date"
+                className="form-control"
+                value={end_time}
+                onChange={e => setEnd_time(e.target.value)}
+              />
+            </div>
+                        <div className="col-md-6">
               <label className="form-label fw-bold">Bạn thích đi đâu?</label>
               <div>
                 <div className="d-flex align-items-center gap-2">
@@ -338,24 +356,6 @@ const AutoPlanner = ({ noLayout }) => {
                   })}
                 </div>
               </div>          
-            </div>
-            <div className="col-md-6">
-              <label className="form-label fw-bold">Ngày bắt đầu</label>
-              <input
-                type="date"
-                className="form-control"
-                value={start_time}
-                onChange={e => setStart_time(e.target.value)}
-              />
-            </div>
-            <div className="col-md-6">
-              <label className="form-label fw-bold">Ngày kết thúc</label>
-              <input
-                type="date"
-                className="form-control"
-                value={end_time}
-                onChange={e => setEnd_time(e.target.value)}
-              />
             </div>
             <div className="col-md-6">
               <label className="form-label fw-bold">Ngân sách (VNĐ)</label>
