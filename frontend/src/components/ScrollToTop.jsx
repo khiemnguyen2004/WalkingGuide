@@ -31,8 +31,8 @@ function ScrollToTop() {
           aria-label="Scroll to top"
           style={{
             position: 'fixed',
-            right: 28,
-            bottom: 32,
+            right: 22,
+            bottom: 80,
             zIndex: 9999,
             background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
             color: '#fff',
