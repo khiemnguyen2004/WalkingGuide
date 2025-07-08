@@ -41,5 +41,14 @@ module.exports = new EntitySchema({
       type: "timestamp",
       default: () => "CURRENT_TIMESTAMP",
     },
+    isEmailVerified: {
+      type: "boolean",
+      default: false,
+    },
+    emailVerificationToken: {
+      type: "varchar",
+      length: 255,
+      nullable: true,
+    },
   },
 });

@@ -9,6 +9,7 @@ const tourLikeRoutes = require("./tourLikeRoutes");
 const tourRatingRoutes = require("./tourRatingRoutes");
 const articleLikeRoutes = require("./articleLikeRoutes");
 const articleCommentRoutes = require("./articleCommentRoutes");
+const authRoutes = require("./authRoutes");
 
 router.use("/users", userRoutes);
 router.use("/place-likes", placeLikeRoutes);
@@ -18,5 +19,6 @@ router.use("/tour-likes", tourLikeRoutes);
 router.use("/tour-ratings", tourRatingRoutes);
 router.use("/article-likes", articleLikeRoutes);
 router.use("/article-comments", articleCommentRoutes);
+router.use("/auth", authRoutes);
 
 module.exports = router;

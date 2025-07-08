@@ -45,7 +45,7 @@ const AppDataSource = new DataSource({
     ArticleComment,
   ],
   migrations: [
-    "src/migrations/1757050000000-create-article-like-comment.js",
+    "src/migrations/1752050000000-add-email-verification-to-users.js",
   ],
   subscribers: [],
 });
