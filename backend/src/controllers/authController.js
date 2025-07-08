@@ -180,3 +180,56 @@ exports.resendVerificationEmail = async (req, res) => {
     res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || !isValidEmailFormat(email)) {
+      return res.status(400).json({ message: "Email không hợp lệ." });
+    }
+    const user = await userRepository.findOne({ where: { email } });
+    if (!user) {
+      // For security, always respond with success
+      return res.json({ message: "Kiểm tra email của bạn để đặt lại mật khẩu!" });
+    }
+    // Generate token and expiry (1 hour)
+    const token = crypto.randomBytes(32).toString("hex");
+    user.passwordResetToken = token;
+    user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
+    await userRepository.save(user);
+    // Send email
+    const resetLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${token}`;
+    await sendVerificationEmail(email, resetLink, true);
+    return res.json({ message: "Kiểm tra email của bạn để đặt lại mật khẩu!" });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ message: "Lỗi máy chủ." });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, password, confirmPassword } = req.body;
+    if (!token || !password || !confirmPassword) {
+      return res.status(400).json({ message: "Thiếu thông tin." });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Mật khẩu phải có ít nhất 6 ký tự." });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Mật khẩu xác nhận không khớp." });
+    }
+    const user = await userRepository.findOne({ where: { passwordResetToken: token } });
+    if (!user || !user.passwordResetExpires || user.passwordResetExpires < new Date()) {
+      return res.status(400).json({ message: "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn." });
+    }
+    user.password_hash = await bcrypt.hash(password, 10);
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+    await userRepository.save(user);
+    return res.json({ message: "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập với mật khẩu mới." });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ message: "Lỗi máy chủ." });
+  }
+};

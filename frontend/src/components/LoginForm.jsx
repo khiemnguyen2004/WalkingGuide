@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext";
 
-function LoginForm({ onSuccess, onSwitch }) {
+function LoginForm({ onSuccess, onSwitch, onForgotPassword }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,10 +15,8 @@ function LoginForm({ onSuccess, onSwitch }) {
         email,
         password,
       });
-      
       // Store the token in localStorage
       localStorage.setItem("token", res.data.token);
-      
       login(res.data.user);
       if (onSuccess) onSuccess();
     } catch (err) {
@@ -49,7 +47,10 @@ function LoginForm({ onSuccess, onSwitch }) {
           required
         />
       </div>
-      <button type="submit" className="btn btn-main w-100">Đăng nhập</button>
+      <div className="d-flex justify-content-between align-items-center mb-2">
+        <button type="submit" className="btn btn-main w-50">Đăng nhập</button>
+        <button type="button" className="btn btn-link p-0" style={{fontSize: '0.95rem'}} onClick={onForgotPassword}>Quên mật khẩu?</button>
+      </div>
       <p className="mt-3 text-center">
         Chưa có tài khoản? <button type="button" className="btn btn-link p-0" onClick={onSwitch}>Đăng ký</button>
       </p>

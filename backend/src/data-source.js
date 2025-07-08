@@ -45,7 +45,7 @@ const AppDataSource = new DataSource({
     ArticleComment,
   ],
   migrations: [
-    "src/migrations/1752050000000-add-email-verification-to-users.js",
+    "src/migrations/1752300000000-add-password-reset-fields.js",
   ],
   subscribers: [],
 });

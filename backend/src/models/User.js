@@ -50,5 +50,14 @@ module.exports = new EntitySchema({
       length: 255,
       nullable: true,
     },
+    passwordResetToken: {
+      type: "varchar",
+      length: 255,
+      nullable: true,
+    },
+    passwordResetExpires: {
+      type: "timestamp",
+      nullable: true,
+    },
   },
 });

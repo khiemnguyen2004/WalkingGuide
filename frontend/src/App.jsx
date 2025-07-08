@@ -27,6 +27,7 @@ import VerifyEmail from './pages/auth/VerifyEmail';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import OtpInput from './pages/auth/OtpInput';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function App() {
   return (
@@ -38,7 +39,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/otp" element={<OtpInput />} />
         <Route path="/users" element={<PrivateRoute><UserPage /></PrivateRoute>} />
         <Route path="/places" element={<PrivateRoute><PlacePage /></PrivateRoute>} />

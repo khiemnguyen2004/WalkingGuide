@@ -9,6 +9,7 @@ import ConfirmModal from "./ConfirmModal";
 import NotificationIcon from "./NotificationIcon";
 import LanguageSwitcher from './LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
+import ForgotPasswordModal from "./ForgotPasswordModal";
 
 function Header() {
   const { user, logout } = useContext(AuthContext);
@@ -17,6 +18,7 @@ function Header() {
   const [authMode, setAuthMode] = useState("login");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
   const avatarRef = useRef();
   const { t } = useTranslation();
 
@@ -181,11 +183,12 @@ function Header() {
       </div>
       <AuthModal open={authOpen} onClose={closeAuth}>
         {authMode === "login" ? (
-          <LoginForm onSuccess={closeAuth} onSwitch={() => setAuthMode("register")} />
+          <LoginForm onSuccess={closeAuth} onSwitch={() => setAuthMode("register")} onForgotPassword={() => setShowForgot(true)} />
         ) : (
           <RegisterForm onSuccess={closeAuth} onSwitch={() => setAuthMode("login")} />
         )}
       </AuthModal>
+      <ForgotPasswordModal show={showForgot} onClose={() => setShowForgot(false)} />
       <ConfirmModal
         open={showConfirm}
         title="Xác nhận đăng xuất"
