@@ -211,11 +211,26 @@ const PlaceDetail = () => {
     setOtmDetails(null);
     try {
       let found = null;
-      // 1. Try search by address + city
-      if (place.address && place.city) {
-        const query = encodeURIComponent(`${place.address}, ${place.city}`);
-        const searchUrl = `${OTM_BASE_URL}/search?name=${query}&apikey=${OTM_API_KEY}`;
+      // 1. Try search by name and city only (not full address)
+      if (place.name) {
+        // Use only place.name, and city if it's a simple city name
+        let query = place.name;
+        if (
+          place.city &&
+          !place.name.includes(place.city) &&
+          !/phường|quận|tỉnh|việt|nam|vn|,|huyện/i.test(place.city)
+        ) {
+          query += `, ${place.city}`;
+        }
+        query = encodeURIComponent(query);
+        const searchUrl = `${OTM_BASE_URL}/autosuggest?query=${query}&apikey=${OTM_API_KEY}`;
         const searchRes = await fetch(searchUrl);
+        if (searchRes.status === 429) {
+          setOtmError('Bạn đã gửi quá nhiều yêu cầu tới OpenTripMap. Vui lòng thử lại sau.');
+          setOtmDetails(null);
+          setOtmLoading(false);
+          return;
+        }
         const searchData = await searchRes.json();
         if (searchData && searchData.features && searchData.features.length > 0) {
           found = searchData.features[0];
@@ -264,8 +279,15 @@ const PlaceDetail = () => {
       const restaurants = restData.features || [];
       setNearbyRestaurants(restaurants);
       // Fetch hotels
-      const hotelUrl = `${OTM_BASE_URL}/radius?radius=500&lon=${place.longitude}&lat=${place.latitude}&kinds=hotels&limit=8&apikey=${OTM_API_KEY}`;
+      // FIX: Use kinds=accomodations instead of kinds=hotels
+      const hotelUrl = `${OTM_BASE_URL}/radius?radius=500&lon=${place.longitude}&lat=${place.latitude}&kinds=accomodations&limit=8&apikey=${OTM_API_KEY}`;
       const hotelRes = await fetch(hotelUrl);
+      if (hotelRes.status === 429) {
+        setNearbyError('Bạn đã gửi quá nhiều yêu cầu tới OpenTripMap. Vui lòng thử lại sau.');
+        setNearbyHotels([]);
+        setNearbyLoading(false);
+        return;
+      }
       const hotelData = await hotelRes.json();
       const hotels = hotelData.features || [];
       setNearbyHotels(hotels);

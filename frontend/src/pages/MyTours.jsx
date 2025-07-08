@@ -606,7 +606,7 @@ function MyTours() {
                           <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
                         </div>
                         {tour.total_cost && (
-                          <p className="card-text text-muted small mb-0 luxury-rating">
+                          <p className="card-text text-muted small mb-2 luxury-rating">
                             <span className="luxury-money"><i className="bi bi-currency-exchange"></i></span> {tour.total_cost} VND
                           </p>
                         )}
