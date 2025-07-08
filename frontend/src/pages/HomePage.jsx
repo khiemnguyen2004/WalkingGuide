@@ -14,6 +14,11 @@ import "../css/HomePage.css";
 import "../css/luxury-home.css";
 import { Modal } from "react-bootstrap";
 import RatingStars from '../components/RatingStars.jsx';
+import dayjs from "dayjs";
+import ReactDatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { useAuth } from '../contexts/AuthContext';
+import tourApi from '../api/tourApi';
 
 // Helper to chunk array into groups of 3
 function chunkArray(arr, size) {
@@ -44,6 +49,35 @@ function HomePage() {
   const mapRef = useRef();
   const [showManualModal, setShowManualModal] = useState(false);
   const [showAutoModal, setShowAutoModal] = useState(false);
+  const [showTourDateModal, setShowTourDateModal] = useState(false);
+  const [selectedTour, setSelectedTour] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [dateError, setDateError] = useState("");
+  const { user } = useAuth();
+
+  const handleBookTour = async () => {
+    setDateError("");
+    if (!startDate || !endDate) {
+      setDateError("Vui lòng chọn cả ngày bắt đầu và kết thúc.");
+      return;
+    }
+    if (endDate < startDate) {
+      setDateError("Ngày kết thúc phải sau ngày bắt đầu.");
+      return;
+    }
+    if (!user || !user.id) {
+      setDateError("Bạn cần đăng nhập để đặt tour.");
+      return;
+    }
+    try {
+      await tourApi.bookTour(selectedTour.id, user.id, startDate, endDate);
+      setShowTourDateModal(false);
+      alert("Đặt tour thành công!");
+    } catch (err) {
+      setDateError(err?.response?.data?.error || "Lỗi khi đặt tour. Vui lòng thử lại.");
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -463,9 +497,7 @@ function HomePage() {
                             </div>
                           </Link>
                           <div className="px-3 pb-3">
-                            <Link to={`/tours/${tour.id}`} className="btn btn-main w-100 mt-2">
-                              {t('Start Tour')}
-                            </Link>
+                            <button className="btn btn-main w-100 mt-2" onClick={() => { setSelectedTour(tour); setShowTourDateModal(true); }}>{t('Start Tour')}</button>
                           </div>
                         </div>
                       </div>
@@ -672,6 +704,52 @@ function HomePage() {
       {showPlaceDetailMap && (
         <div style={{position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 2000, background: 'rgba(0,0,0,0.15)'}}>
           <PlaceDetailMap place={placeForDetailMap} onClose={() => setShowPlaceDetailMap(false)} />
+        </div>
+      )}
+      {showTourDateModal && selectedTour && (
+        <div className="modal fade show" style={{display:'block'}} tabIndex="-1" role="dialog">
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Chọn ngày bắt đầu và kết thúc tour</h5>
+                <button type="button" className="btn-close" onClick={() => setShowTourDateModal(false)} aria-label="Close"></button>
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label"><strong>Ngày bắt đầu:</strong></label>
+                  <ReactDatePicker
+                    selected={startDate}
+                    onChange={date => setStartDate(date)}
+                    selectsStart
+                    startDate={startDate}
+                    endDate={endDate}
+                    minDate={new Date()}
+                    dateFormat="dd/MM/yyyy"
+                    className="form-control"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label"><strong>Ngày kết thúc:</strong></label>
+                  <ReactDatePicker
+                    selected={endDate}
+                    onChange={date => setEndDate(date)}
+                    selectsEnd
+                    startDate={startDate}
+                    endDate={endDate}
+                    minDate={startDate || new Date()}
+                    dateFormat="dd/MM/yyyy"
+                    className="form-control"
+                  />
+                </div>
+                {dateError && <div className="alert alert-danger py-2">{dateError}</div>}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowTourDateModal(false)}>Đóng</button>
+                <button type="button" className="btn btn-main" onClick={handleBookTour}>Xác nhận</button>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop fade show" style={{zIndex:1040}}></div>
         </div>
       )}
     </div>

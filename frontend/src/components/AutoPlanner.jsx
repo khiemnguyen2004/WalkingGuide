@@ -417,13 +417,13 @@ const AutoPlanner = ({ noLayout }) => {
                   <i className="bi bi-geo-alt me-2 text-primary"></i>
                   Địa điểm tại {selectedCity}
                 </h5>
-                <button
+                {/* <button
                   className="btn btn-outline-primary btn-sm"
                   onClick={() => setShowCreatePlaceModal(true)}
                 >
                   <i className="bi bi-plus-circle me-1"></i>
                   Thêm địa điểm mới
-                </button>
+                </button> */}
               </div>
               
               {isLoadingCityPlaces ? (

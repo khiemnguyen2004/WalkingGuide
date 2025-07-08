@@ -9,5 +9,7 @@ router.put("/:id", tourController.editTour);
 router.delete("/:id", tourController.deleteTour);
 router.post("/:id/clone", tourController.cloneTour);
 router.get("/:id", tourController.getById);
+router.post("/:id/book", tourController.bookTour);
+router.get("/bookings/user/:userId", tourController.getUserBookedTours);
 
 module.exports = router;

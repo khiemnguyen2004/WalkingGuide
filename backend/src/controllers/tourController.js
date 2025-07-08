@@ -4,6 +4,7 @@ const tourRatingService = require("../services/tourRatingService");
 
 const tourRepo = AppDataSource.getRepository("Tour");
 const tourStepRepo = AppDataSource.getRepository("TourStep");
+const bookingRepo = AppDataSource.getRepository("Booking");
 
 module.exports = {
   getAllTours: async (req, res) => {
@@ -202,6 +203,55 @@ module.exports = {
     } catch (err) {
       console.error("Lỗi khi lấy chi tiết tour:", err);
       res.status(500).json({ error: "Lỗi server khi lấy chi tiết tour" });
+    }
+  },
+
+  bookTour: async (req, res) => {
+    try {
+      const tourId = parseInt(req.params.id);
+      const userId = req.body.user_id; // Should be provided in request body or from auth
+      const { start_date, end_date } = req.body;
+      if (!userId || !start_date || !end_date) {
+        return res.status(400).json({ error: "Thiếu user_id, start_date hoặc end_date" });
+      }
+      if (new Date(end_date) < new Date(start_date)) {
+        return res.status(400).json({ error: "Ngày kết thúc phải sau ngày bắt đầu" });
+      }
+      // Optionally: check if tour exists
+      const tour = await tourRepo.findOneBy({ id: tourId });
+      if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
+      // Create booking
+      const booking = await bookingRepo.save({
+        user_id: userId,
+        tour_id: tourId,
+        start_date,
+        end_date,
+      });
+      res.status(201).json({ message: "Đặt tour thành công!", booking });
+    } catch (err) {
+      console.error("Lỗi khi đặt tour:", err);
+      res.status(500).json({ error: "Lỗi server khi đặt tour" });
+    }
+  },
+
+  getUserBookedTours: async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const bookings = await bookingRepo.find({ where: { user_id: userId } });
+      const tourIds = bookings.map(b => b.tour_id);
+      let tours = [];
+      if (tourIds.length > 0) {
+        tours = await tourRepo.findByIds(tourIds);
+      }
+      // Attach booking info to each tour
+      const toursWithBooking = tours.map(tour => {
+        const booking = bookings.find(b => b.tour_id === tour.id);
+        return { ...tour, booking };
+      });
+      res.json(toursWithBooking);
+    } catch (err) {
+      console.error("Lỗi khi lấy tour đã đặt:", err);
+      res.status(500).json({ error: "Lỗi server khi lấy tour đã đặt" });
     }
   },
 };

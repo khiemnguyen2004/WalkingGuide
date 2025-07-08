@@ -8,6 +8,10 @@ import { Link } from "react-router-dom";
 import "../css/luxury-home.css";
 import tourStepApi from "../api/tourStepApi";
 import placeApi from "../api/placeApi";
+import tourApi from '../api/tourApi';
+import { FaUser, FaCalendarAlt, FaPlusCircle } from 'react-icons/fa';
+import { Modal, Button } from 'react-bootstrap';
+import RatingStars from '../components/RatingStars.jsx';
 
 function MyTours() {
   const { user } = useContext(AuthContext);
@@ -35,6 +39,12 @@ function MyTours() {
   const [editStepForm, setEditStepForm] = useState({ stay_duration: '' });
   const [editStepError, setEditStepError] = useState("");
   const [removedStepIds, setRemovedStepIds] = useState([]);
+  const [bookedTours, setBookedTours] = useState([]);
+  const [showTourModal, setShowTourModal] = useState(false);
+  const [modalTour, setModalTour] = useState(null);
+  // Add state for modal steps and places
+  const [modalSteps, setModalSteps] = useState([]);
+  const [modalPlaces, setModalPlaces] = useState({});
 
   useEffect(() => {
     if (!user) return;
@@ -45,6 +55,10 @@ function MyTours() {
       })
       .catch(() => setError("Không thể tải danh sách tour."))
       .finally(() => setLoading(false));
+    // Fetch booked tours
+    tourApi.getUserBookedTours(user.id)
+      .then(res => setBookedTours(res.data))
+      .catch(() => setBookedTours([]));
   }, [user]);
 
   useEffect(() => {
@@ -195,26 +209,48 @@ function MyTours() {
     }
   };
 
+  const handleDeleteTour = async (tourId) => {
+    try {
+      await axios.delete(`http://localhost:3000/api/tours/${tourId}`);
+      setTours(prev => prev.filter(t => t.id !== tourId));
+      setShowTourModal(false);
+      alert('Đã xóa tour thành công!');
+    } catch {
+      alert('Không thể xóa tour.');
+    }
+  };
+
+  // Add handleDeleteBooking function:
+  const handleDeleteBooking = async (bookingId) => {
+    if (!bookingId) {
+      alert('Không tìm thấy booking để hủy.');
+      return;
+    }
+    try {
+      const res = await axios.delete(`http://localhost:3000/api/bookings/${bookingId}`);
+      if (res.status === 200 && res.data?.message) {
+        setBookedTours(prev => prev.filter(t => t.booking?.id !== bookingId));
+        setShowTourModal(false);
+        alert('Đã hủy đặt tour thành công!');
+      } else {
+        alert('Không thể hủy đặt tour.');
+      }
+    } catch {
+      alert('Không thể hủy đặt tour.');
+    }
+  };
+
   return (
     <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
       <Header />
       <main className="container px-4 py-4 flex-grow-1">
-        <section className="mb-5">
-          <div className="d-flex align-items-center mb-4" style={{background: 'linear-gradient(90deg, #b6e0fe 0%, #5b9df9 100%)', borderRadius: '1.5rem', padding: '1.5rem 2rem', boxShadow: '0 4px 24px 0 rgba(31, 38, 135, 0.10)'}}>
-            <i className="bi bi-person-walking text-primary" style={{fontSize: 38, marginRight: 18}}></i>
-            <div>
-              <h2 className="h3 fw-bold mb-1" style={{color: '#1a5bb8'}}>Tour của bạn</h2>
-              <div className="text-muted" style={{fontSize: '1.08rem'}}>Danh sách các tour bạn đã tạo hoặc tham gia</div>
-            </div>
-            <button
-              className="btn btn-main ms-auto"
-              style={{ borderRadius: 8, fontWeight: 600 }}
-              onClick={() => setShowAddModal(true)}
-            >
-              <i className="bi bi-plus-circle me-2"></i>Thêm tour
-            </button>
-          </div>
-        </section>
+        <div className="mb-5 d-flex align-items-center gap-3 border-bottom pb-3">
+          <FaUser size={32} className="text-primary" />
+          <h2 className="fw-bold mb-0" style={{color: '#1a5bb8'}}>Tour của tôi</h2>
+          <button className="btn btn-main ms-auto d-flex align-items-center gap-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={() => setShowAddModal(true)}>
+            <FaPlusCircle /> Tạo tour mới
+          </button>
+        </div>
         {/* Add Tour Modal */}
         {showAddModal && (
           <div className="modal fade show" style={{display:'block', background:'rgba(0,0,0,0.25)'}} tabIndex="-1">
@@ -494,247 +530,226 @@ function MyTours() {
             </div>
           </div>
         )}
-        <section className="cards-section mb-6">
-          <div className="row g-4">
-            <div className="col-12 col-lg-4">
-              <div className="list-group">
-                {loading ? (
-                  <div className="text-center py-4">
-                    <div className="spinner-border text-primary" role="status"></div>
-                    <div className="mt-2 text-muted">Đang tải dữ liệu tour của bạn...</div>
+        {/* Created/Cloned Tours Section */}
+        <section className="mb-5">
+          <div className="d-flex align-items-center mb-3 gap-2">
+            <h4 className="fw-bold mb-0 luxury-section-title">Tour của bạn</h4>
+          </div>
+          {loading ? (
+            <div className="d-flex justify-content-center align-items-center py-5">
+              <div className="spinner-border text-primary" role="status"></div>
+            </div>
+          ) : tours.length === 0 ? (
+            <div className="text-center text-muted py-5">
+              <i className="bi bi-inbox" style={{fontSize: '3rem'}}></i>
+              <div className="fw-bold mb-1">Bạn chưa tạo tour nào.</div>
+              <button className="btn btn-main mt-3" onClick={() => setShowAddModal(true)}><FaPlusCircle /> Tạo tour mới</button>
+            </div>
+          ) : (
+            <div className="row g-4">
+              {tours.map(tour => {
+                // Find first step and its place
+                const steps = tourSteps && tour.id === selected?.id ? tourSteps : [];
+                const firstStep = steps[0];
+                const firstPlace = firstStep ? places[firstStep.place_id] : null;
+                const cardImg = firstPlace?.image_url
+                  ? (firstPlace.image_url.startsWith('http') ? firstPlace.image_url : `http://localhost:3000${firstPlace.image_url}`)
+                  : (tour.image_url ? (tour.image_url.startsWith('http') ? tour.image_url : `http://localhost:3000${tour.image_url}`) : null);
+                return (
+                  <div className="col-12 col-md-6 col-lg-4" key={tour.id}>
+                    <div
+                      className="card h-100 shadow border-0 rounded-4 luxury-card"
+                      style={{ cursor: 'pointer' }}
+                      onClick={async () => {
+                        setModalTour(tour);
+                        setShowTourModal(true);
+                        // Fetch steps and places for this tour
+                        try {
+                          const res = await tourStepApi.getByTourId(tour.id);
+                          setModalSteps(res.data);
+                          // Fetch all places for steps
+                          const placeIds = res.data.map(s => s.place_id);
+                          const uniqueIds = [...new Set(placeIds)];
+                          const placeMap = {};
+                          for (const pid of uniqueIds) {
+                            const pres = await placeApi.getById(pid);
+                            placeMap[pid] = pres.data;
+                          }
+                          setModalPlaces(placeMap);
+                        } catch {
+                          setModalSteps([]);
+                          setModalPlaces({});
+                        }
+                      }}
+                    >
+                      {cardImg ? (
+                        <img
+                          src={cardImg}
+                          alt={tour.name}
+                          className="card-img-top luxury-img-top"
+                          style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                        />
+                      ) : (
+                        <div className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                          style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}>
+                          <i className="bi bi-map"></i>
+                        </div>
+                      )}
+                      <div className="card-body luxury-card-body">
+                        <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{tour.name}</h3>
+                        <p className="card-text text-muted mb-2 luxury-desc">
+                          {tour.description ? `${tour.description.replace(/<[^>]+>/g, '').substring(0, 100)}...` : ''}
+                        </p>
+                        <div className="mb-2">
+                          <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                          <span style={{ fontWeight: 600, marginLeft: 4 }}>{tour.rating ? tour.rating.toFixed(1) : '0.0'}</span>
+                          <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                        </div>
+                        {tour.total_cost && (
+                          <p className="card-text text-muted small mb-0 luxury-rating">
+                            <span className="luxury-money"><i className="bi bi-currency-exchange"></i></span> {tour.total_cost} VND
+                          </p>
+                        )}
+                        <button className="btn btn-main btn-sm flex-fill me-2" onClick={e => { e.stopPropagation(); setSelected(tour); setShowEditModal(true); }}>Sửa</button>
+                        <button className="btn btn-danger btn-sm flex-fill" onClick={e => { e.stopPropagation(); if(window.confirm('Bạn có chắc muốn xóa tour này?')) { handleDeleteTour(tour.id); } }}>Xóa</button>
+                      </div>
+                    </div>
                   </div>
-                ) : error ? (
-                  <div className="alert alert-danger d-flex align-items-center" role="alert">
-                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                    <div>{error}</div>
-                  </div>
-                ) : tours.length === 0 ? (
-                  <div className="text-center py-5" style={{color: '#6c757d'}}>
-                    <i className="bi bi-inbox" style={{fontSize: '3rem', marginBottom: '1rem'}}></i>
-                    <div className="fw-bold mb-1">Bạn chưa có tour nào</div>
-                    <div className="small">Hãy tạo tour đầu tiên để bắt đầu hành trình của bạn!</div>
-                  </div>
-                ) : (
-                  tours.map(t => (
-                    <div key={t.id} className="d-flex align-items-center mb-2">
+                );
+              })}
+            </div>
+          )}
+        </section>
+        {/* Booked Tours Section */}
+        <section className="mb-5">
+          <div className="d-flex align-items-center mb-3 gap-2">
+            <h4 className="fw-bold mb-0 luxury-section-title">Tour bạn đã đặt</h4>
+          </div>
+          {bookedTours.length === 0 ? (
+            <div className="text-center text-muted py-5">
+              <i className="bi bi-calendar-x" style={{fontSize: '3rem'}}></i>
+              <div className="fw-bold mb-1">Bạn chưa đặt tour nào.</div>
+            </div>
+          ) : (
+            <div className="row g-4">
+              {bookedTours.map(tour => (
+                <div className="col-12 col-md-6 col-lg-4" key={tour.id}>
+                  <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                    <Link to={`/tours/${tour.id}`} className="text-decoration-none" style={{display:'block'}}>
+                      {tour.image_url ? (
+                        <img
+                          src={tour.image_url.startsWith('http') ? tour.image_url : `http://localhost:3000${tour.image_url}`}
+                          alt={tour.name}
+                          className="card-img-top luxury-img-top"
+                          style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                        />
+                      ) : (
+                        <div className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                          style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}>
+                          <i className="bi bi-map"></i>
+                        </div>
+                      )}
+                      <div className="card-body luxury-card-body">
+                        <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{tour.name}</h3>
+                        <p className="card-text text-muted mb-2 luxury-desc">
+                          {tour.description ? `${tour.description.replace(/<[^>]+>/g, '').substring(0, 100)}...` : ''}
+                        </p>
+                        <div className="mb-2">
+                          <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                          <span style={{ fontWeight: 600, marginLeft: 4 }}>{tour.rating ? tour.rating.toFixed(1) : '0.0'}</span>
+                          <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                        </div>
+                        {tour.total_cost && (
+                          <p className="card-text text-muted small mb-0 luxury-rating">
+                            <span className="luxury-money">💰</span> {tour.total_cost} VND
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                    <div className="px-3 pb-3 d-flex gap-2">
                       <button
-                        className={`list-group-item list-group-item-action flex-grow-1${selected && selected.id === t.id ? ' active' : ''}`}
-                        style={{borderRadius: 12, fontWeight: 600, fontSize: '1.08rem'}}
-                        onClick={() => setSelected(t)}
-                      >
-                        {t.name}
-                      </button>
-                      <button
-                        className="btn btn-outline-danger btn-sm ms-2"
-                        style={{borderRadius: 8}}
-                        onClick={(e) => {
+                        className="btn btn-outline-danger btn-sm flex-fill"
+                        disabled={!tour.booking?.id}
+                        onClick={e => {
                           e.stopPropagation();
-                          setTourToDelete(t);
-                          setShowDeleteModal(true);
+                          if (tour.booking?.id && window.confirm('Bạn có chắc muốn hủy đặt tour này?')) {
+                            handleDeleteBooking(tour.booking.id);
+                          }
                         }}
-                        title="Xóa tour"
                       >
-                        <i className="bi bi-trash"></i>
+                        Hủy đặt
                       </button>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
-            <div className="col-12 col-lg-8">
-        {selected && (
-          <div className="card shadow-lg border-0 rounded-4 p-4 mb-4" style={{background: 'rgba(255,255,255,0.97)', color: '#1a1a1a'}}>
-            {/* Tour Image */}
-            {selected.image_url && (
-              <div className="d-flex justify-content-center mb-4">
-                <img
-                  src={selected.image_url.startsWith('http') ? selected.image_url : `http://localhost:3000${selected.image_url}`}
-                  alt={selected.name}
-                  style={{ maxWidth: '420px', maxHeight: '260px', width: '100%', objectFit: 'cover', borderRadius: '1rem', boxShadow: '0 2px 12px #b6e0fe55' }}
-                />
-              </div>
-            )}
-
-            {/* Card Header with Edit Button */}
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="card-title mb-2 fw-bold luxury-section-title">
-                {selected.name}
-                {selected.start_time && selected.end_time && (
-                  <span className="badge bg-info ms-2" style={{fontSize: '0.95em', fontWeight: 500}}>
-                    {new Date(selected.start_time).toLocaleDateString()} → {new Date(selected.end_time).toLocaleDateString()}
-                  </span>
-                )}
-              </h5>
-              <button
-                className="btn btn-outline-primary ms-2"
-                style={{ borderRadius: 8 }}
-                onClick={() => setShowEditModal(true)}
-                title="Chỉnh sửa tour"
-              >
-                <i className="bi bi-pencil-square"></i> Sửa
-              </button>
-            </div>
-
-            {/* Tour Info */}
-            <div className="mb-4 d-flex flex-wrap gap-4 justify-content-center" style={{ fontSize: '1.05rem', color: 'rgb(26, 91, 184)' }}>
-              <span>Chi phí: <b>{selected.total_cost.toLocaleString('vi-VN')} VND</b></span>
-              {selected.created_at && <span>Ngày tạo: {new Date(selected.created_at).toLocaleDateString()}</span>}
-
-                </div>
-                <div className="prose prose-lg mb-4" style={{ color: 'rgb(26, 91, 184)', fontSize: '1.15rem', lineHeight: 1.7 }}>
-                  <div dangerouslySetInnerHTML={{ __html: selected.description }} />
-                </div>
-
-                {/* Day summary */}
-                <div className="mb-4">
-                  <h6 className="fw-bold mb-3 luxury-section-title">Tổng quan theo ngày:</h6>
-                  <div className="row g-3">
-                    {(() => {
-                      // Group steps by day
-                      const stepsByDay = tourSteps.reduce((acc, step) => {
-                        const day = step.day || 1;
-                        if (!acc[day]) acc[day] = [];
-                        acc[day].push(step);
-                        return acc;
-                      }, {});
-                      const sortedDays = Object.keys(stepsByDay).sort((a, b) => parseInt(a) - parseInt(b));
-                      return sortedDays.map(dayNum => (
-                        <div key={dayNum} className="col-md-6 col-lg-4">
-                          <div className="card h-100" style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(26, 91, 184, 0.1)'}}>
-                            <div className="card-header text-center text-white fw-bold" style={{borderRadius: '12px 12px 0 0', background: 'linear-gradient(120deg, #b6e0fe 0%, #5b9df9 100%)'}}>
-                              Ngày {dayNum}
-                            </div>
-                            <div className="card-body p-3">
-                              <div className="small">
-                                {stepsByDay[dayNum]
-                                  .sort((a, b) => a.step_order - b.step_order)
-                                  .map((step, idx) => (
-                                    <div key={step.id} className="d-flex align-items-center mb-2">
-                                      <span className="badge bg-light text-dark me-2" style={{fontSize: '0.75em'}}>
-                                        {step.step_order}
-                                      </span>
-                                      <span className="text-truncate" style={{fontSize: '0.9em'}}>
-                                        {places[step.place_id]?.name || 'Địa điểm'}
-                                      </span>
-                                    </div>
-                                  ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ));
-                    })()}
                   </div>
                 </div>
-                {/* Place Images Row */}
-                <div className="mb-4">
-                  {(() => {
-                    // Group steps by day for journey list as well
-                    const stepsByDay = tourSteps.reduce((acc, step) => {
-                      const day = step.day || 1;
-                      if (!acc[day]) acc[day] = [];
-                      acc[day].push(step);
-                      return acc;
-                    }, {});
-                    const sortedDays = Object.keys(stepsByDay).sort((a, b) => parseInt(a) - parseInt(b));
-                    return sortedDays.map(dayNum => (
-                      <div key={dayNum} className="mb-4">
-                        <h6 className="fw-bold mb-3 text-secondary border-bottom pb-2">
-                          <i className="bi bi-calendar-day me-2"></i>Ngày {dayNum}
-                        </h6>
-                        <div className="d-flex gap-3 flex-wrap">
-                          {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step) => {
-                            const place = places[step.place_id];
-                            const imageUrl = place?.image_url 
-                              ? (place.image_url.startsWith('http') 
-                                  ? place.image_url 
-                                  : `http://localhost:3000${place.image_url}`)
-                              : "/default-place.jpg";
-                            
-                            return (
-                            <div key={step.id} className="text-center">
-                              <img
-                                  src={imageUrl}
-                                  alt={place?.name || `Địa điểm #${step.place_id}`}
-                                style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 12, boxShadow: "0 2px 8px #b6e0fe33" }}
-                                  onError={(e) => {
-                                    e.target.src = "/default-place.jpg";
-                                  }}
-                              />
-                              <div className="small mt-2" style={{maxWidth: 100, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color:'#1a1a1a', fontWeight: '500'}}>
-                                  {place?.name || `Địa điểm #${step.place_id}`}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ));
-                  })()}
-                </div>
-                {/* Journey List */}
-                <div className="mb-4">
-                  <h6 className="fw-bold mb-3 luxury-section-title">Chi tiết hành trình:</h6>
-                  <div className="list-group">
-                    {(() => {
-                      const stepsByDay = tourSteps.reduce((acc, step) => {
-                        const day = step.day || 1;
-                        if (!acc[day]) acc[day] = [];
-                        acc[day].push(step);
-                        return acc;
-                      }, {});
-                      const sortedDays = Object.keys(stepsByDay).sort((a, b) => parseInt(a) - parseInt(b));
-                      return sortedDays.map(dayNum => (
-                        <React.Fragment key={dayNum}>
-                          <div className="list-group-item text-white fw-bold text-center" style={{borderRadius: '8px 8px 0 0', fontSize: '1.1em', background: 'linear-gradient(120deg, #b6e0fe 0%, #5b9df9 100%)'}}>
-                            <i className="bi bi-calendar-day me-2"></i>Ngày {dayNum}
-                          </div>
-                          {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step, idx) => (
-                            <div key={step.id || idx} className="list-group-item d-flex align-items-center justify-content-between border-start border-end" style={{borderLeft: '4px solid #1a5bb8'}}>
-                              <div className="d-flex align-items-center">
-                                <span className="badge bg-primary me-3" style={{fontSize: '1em', minWidth: '2rem'}}>
-                                  {step.step_order}
-                                </span>
-                                <div>
-                                  <div className="fw-bold" style={{color: '#1a5bb8'}}>
-                                    {places[step.place_id]?.name || 'Địa điểm'}
-                                  </div>
-                                  <div className="small text-muted">
-                                    {step.stay_duration} phút
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="d-flex gap-2">
-                                {step.start_time && (
-                                  <span className="badge bg-success" style={{fontSize: '0.85em'}}>
-                                    <i className="bi bi-play me-1"></i>{step.start_time}
-                                  </span>
-                                )}
-                                {step.end_time && (
-                                  <span className="badge bg-info" style={{fontSize: '0.85em'}}>
-                                    <i className="bi bi-stop me-1"></i>{step.end_time}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                          {dayNum < sortedDays[sortedDays.length - 1] && (
-                            <div className="text-center py-2" style={{background: '#f8f9fa', borderLeft: '4px solid #dee2e6', marginLeft: '1.75rem', marginRight: '1rem'}}>
-                              <i className="bi bi-arrow-down text-muted"></i>
-                            </div>
-                          )}
-                        </React.Fragment>
-                      ));
-                    })()}
-                  </div>
-                </div>
-              </div>
-            )}
+              ))}
             </div>
-          </div>
+          )}
         </section>
       </main>
       <Footer />
+      <Modal show={showTourModal} onHide={() => setShowTourModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{modalTour?.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {modalTour?.image_url && (
+            <img
+              src={modalTour.image_url.startsWith('http') ? modalTour.image_url : `http://localhost:3000${modalTour.image_url}`}
+              alt={modalTour.name}
+              className="img-fluid rounded mb-3"
+              style={{ maxHeight: 200, objectFit: 'cover', width: '100%' }}
+            />
+          )}
+          <p>{modalTour?.description}</p>
+          <div className="mb-2">
+            <span className="badge bg-info text-dark me-2">
+              {modalTour?.start_time ? new Date(modalTour.start_time).toLocaleDateString() : '--'} → {modalTour?.end_time ? new Date(modalTour.end_time).toLocaleDateString() : '--'}
+            </span>
+            <span className="badge bg-light text-dark"><i className="bi bi-currency-exchange"></i> {modalTour?.total_cost?.toLocaleString('vi-VN')} VND</span>
+          </div>
+          {modalSteps.length > 0 && (
+            <div className="mt-4">
+              <h6 className="fw-bold mb-3">Hành trình chi tiết</h6>
+              <div className="list-group">
+                {modalSteps.map((step, idx) => {
+                  const place = modalPlaces[step.place_id];
+                  return (
+                    <div key={step.id || idx} className="list-group-item d-flex align-items-center gap-3 py-3" style={{borderLeft: '4px solid #1a5bb8', background: '#f8f9fa', borderRadius: 12, marginBottom: 8, boxShadow: '0 2px 8px #b6e0fe22'}}>
+                      {place?.image_url && (
+                        <img
+                          src={place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`}
+                          alt={place.name}
+                          style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 12, boxShadow: '0 2px 8px #b6e0fe33', flexShrink: 0 }}
+                        />
+                      )}
+                      <div className="flex-grow-1">
+                        <div className="fw-bold mb-1" style={{color: '#1a5bb8', fontSize: '1.1em'}}>
+                          <Link to={`/places/${place?.id}`} className="text-decoration-none" style={{color: '#1a5bb8'}} target="_blank" rel="noopener noreferrer">
+                            {place?.name || `Địa điểm #${step.place_id}`}
+                          </Link>
+                        </div>
+                        <div className="small text-muted mb-1" style={{fontStyle: 'italic'}}>
+                          {place?.description ? `${place.description.replace(/<[^>]+>/g, '').slice(0, 100)}${place.description.length > 100 ? '...' : ''}` : 'Chưa có mô tả'}
+                        </div>
+                        <div className="d-flex gap-2 flex-wrap align-items-center mt-1">
+                          {step.start_time && <span className="badge bg-success"><i className="bi bi-play me-1"></i>Bắt đầu: {step.start_time}</span>}
+                          {step.end_time && <span className="badge bg-info"><i className="bi bi-stop me-1"></i>Kết thúc: {step.end_time}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button className="btn btn-main" onClick={() => setShowTourModal(false)}>Đóng</Button>
+          <Button className="btn btn-danger" onClick={() => { setShowEditModal(true); setSelected(modalTour); setShowTourModal(false); }}>Sửa</Button>
+          {/* Add more actions as needed */}
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

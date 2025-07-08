@@ -12,6 +12,9 @@ import { AuthContext } from '../../contexts/AuthContext.jsx';
 import AuthModal from '../../components/AuthModal.jsx';
 import LikeButton from '../../components/LikeButton.jsx';
 import RatingStars from '../../components/RatingStars.jsx';
+import ReactDatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Modal, Button } from 'react-bootstrap';
 
 // Component to handle map centering
 const MapCenterHandler = ({ places }) => {
@@ -107,6 +110,10 @@ const TourDetail = () => {
   const [addSuccess, setAddSuccess] = useState(null);
   const [addError, setAddError] = useState(null);
   const { user } = React.useContext(AuthContext);
+  const [showBookModal, setShowBookModal] = useState(false);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [dateError, setDateError] = useState("");
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -199,6 +206,29 @@ const TourDetail = () => {
       setAddError('Không thể thêm vào chuyến đi của tôi.');
     } finally {
       setAddLoading(false);
+    }
+  };
+
+  const handleBookTour = async () => {
+    setDateError("");
+    if (!startDate || !endDate) {
+      setDateError("Vui lòng chọn cả ngày bắt đầu và kết thúc.");
+      return;
+    }
+    if (endDate < startDate) {
+      setDateError("Ngày kết thúc phải sau ngày bắt đầu.");
+      return;
+    }
+    if (!user || !user.id) {
+      setDateError("Bạn cần đăng nhập để đặt tour.");
+      return;
+    }
+    try {
+      await tourApi.bookTour(tour.id, user.id, startDate, endDate);
+      setShowBookModal(false);
+      setAddSuccess("Đặt tour thành công!");
+    } catch (err) {
+      setDateError(err?.response?.data?.error || "Lỗi khi đặt tour. Vui lòng thử lại.");
     }
   };
 
@@ -356,12 +386,7 @@ const TourDetail = () => {
               </div>
             )}
             <div className="d-flex justify-content-center">
-              <button
-                onClick={handleAddToMyTours}
-                className="mt-6 btn btn-main"
-                style={{ minWidth: 200 }}
-                disabled={addLoading}
-              >
+              <button className="btn btn-main" onClick={() => setShowBookModal(true)} disabled={addLoading}>
                 {addLoading ? 'Đang thêm...' : 'Thêm vào chuyến đi của tôi'}
               </button>
             </div>
@@ -437,6 +462,46 @@ const TourDetail = () => {
           </div>
         )}
       </div>
+      {showBookModal && (
+        <Modal show={showBookModal} onHide={() => setShowBookModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Chọn ngày bắt đầu và kết thúc tour</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="mb-3">
+              <label className="form-label"><strong>Ngày bắt đầu:</strong></label>
+              <ReactDatePicker
+                selected={startDate}
+                onChange={date => setStartDate(date)}
+                selectsStart
+                startDate={startDate}
+                endDate={endDate}
+                minDate={new Date()}
+                dateFormat="dd/MM/yyyy"
+                className="form-control"
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label"><strong>Ngày kết thúc:</strong></label>
+              <ReactDatePicker
+                selected={endDate}
+                onChange={date => setEndDate(date)}
+                selectsEnd
+                startDate={startDate}
+                endDate={endDate}
+                minDate={startDate || new Date()}
+                dateFormat="dd/MM/yyyy"
+                className="form-control"
+              />
+            </div>
+            {dateError && <div className="alert alert-danger py-2">{dateError}</div>}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowBookModal(false)}>Đóng</Button>
+            <Button variant="primary" onClick={handleBookTour}>Xác nhận</Button>
+          </Modal.Footer>
+        </Modal>
+      )}
       <Footer />
     </div>
   );

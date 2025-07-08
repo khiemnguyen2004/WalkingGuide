@@ -16,6 +16,7 @@ const TourLike = require("./models/TourLike");
 const TourRating = require("./models/TourRating");
 const ArticleLike = require("./models/ArticleLike");
 const ArticleComment = require("./models/ArticleComment");
+const Booking = require("./models/Booking");
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -43,9 +44,10 @@ const AppDataSource = new DataSource({
     TourRating,
     ArticleLike,
     ArticleComment,
+    Booking,
   ],
   migrations: [
-    "src/migrations/1752300000000-add-password-reset-fields.js",
+    "src/migrations/1751962052407-BookingInit.js",
   ],
   subscribers: [],
 });
