@@ -704,6 +704,12 @@ function HomePage() {
                     <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
                     <span className="visually-hidden">Next</span>
                   </button>
+                  <div className="d-flex justify-content-center mt-4">
+                    <Link to="/create-article" className="btn btn-main btn-lg px-5">
+                      <i className="bi bi-pencil-square me-2"></i>
+                      {t('Write Blog')}
+                    </Link>
+                  </div>
                 </div>
               )}
             </section>

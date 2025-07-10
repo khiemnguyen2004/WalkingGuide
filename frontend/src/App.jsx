@@ -21,6 +21,7 @@ import ArticleDetail from './pages/details/ArticleDetail';
 import PlaceDetail from './pages/details/PlaceDetail';
 import TourDetail from './pages/details/TourDetail';
 import MyTours from "./pages/MyTours";
+import CreateArticle from "./pages/CreateArticle";
 import NotificationPage from "./pages/NotificationPage";
 import ScrollToTop from "./components/ScrollToTop";
 import VerifyEmail from './pages/auth/VerifyEmail';
@@ -45,6 +46,7 @@ function App() {
         <Route path="/places" element={<PrivateRoute><PlacePage /></PrivateRoute>} />
         <Route path="/tours" element={<PrivateRoute><TourPage /></PrivateRoute>} />
         <Route path="/articles" element={<PrivateRoute><ArticlePage /></PrivateRoute>} />
+        <Route path="/create-article" element={<PrivateRoute><CreateArticle /></PrivateRoute>} />
         <Route path="/notifications" element={<PrivateRoute><NotificationPage /></PrivateRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="/admin/users" element={<AdminRoute><UsersAdmin /></AdminRoute>} />

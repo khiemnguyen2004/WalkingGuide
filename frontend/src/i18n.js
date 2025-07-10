@@ -57,6 +57,7 @@ const resources = {
       'Places': 'Địa điểm',
       'Tours': 'Tour',
       'Articles': 'Bài viết',
+      'Write Blog': 'Viết bài viết',
       // Add more translations as needed
     }
   }
