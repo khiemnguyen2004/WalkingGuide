@@ -20,6 +20,7 @@ const resources = {
       'Tạo lộ trình tự': 'Auto Planning',
       'Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ tự động để chúng tôi đề xuất tour cho bạn!': 'Want us to create a suitable itinerary? Try auto mode for our suggestions!',
       'Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!': 'No plans yet? Explore the travel map!',
+      'Viết bài viết': 'Write Blog',
       // Add more translations as needed
     }
   },
