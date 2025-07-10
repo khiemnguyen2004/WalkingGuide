@@ -185,3 +185,17 @@ body {
 .location-control:hover {
   animation: none;
 }
+
+/* Fit All Markers Control */
+.fit-markers-control {
+  top: 15px !important;
+  right: 100px !important;
+}
+
+.fit-markers-control button {
+  background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%) !important;
+}
+
+.fit-markers-control button:hover {
+  background: linear-gradient(135deg, #229954 0%, #27ae60 100%) !important;
+}

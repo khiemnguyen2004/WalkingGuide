@@ -2,9 +2,20 @@ import React, { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import "../css/index.css";
 
 const defaultIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  shadowSize: [41, 41],
+});
+
+// Current location icon (blue marker)
+const currentLocationIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -79,7 +90,7 @@ const createCustomIcon = (place) => {
 };
 
 // Component for current location button
-function CurrentLocationButton() {
+function CurrentLocationButton({ onLocationUpdate }) {
   const map = useMap();
   
   const handleClick = () => {
@@ -89,6 +100,10 @@ function CurrentLocationButton() {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           map.setView([lat, lng], 15);
+          // Notify parent component about location update
+          if (onLocationUpdate) {
+            onLocationUpdate({ lat, lng });
+          }
         },
         (error) => {
           console.error('Error getting current location:', error);
@@ -144,18 +159,65 @@ function ZoomControls() {
   );
 }
 
-function MapAutoCenter({ locations, selectedCity }) {
+// Component for auto-centering map to show all markers
+function MapAutoCenter({ locations, selectedCity, currentLocation }) {
   const map = useMap();
+  
   useEffect(() => {
     if (locations.length > 0) {
-      const avgLat = locations.reduce((sum, loc) => sum + loc.lat, 0) / locations.length;
-      const avgLng = locations.reduce((sum, loc) => sum + loc.lng, 0) / locations.length;
-      const center = [avgLat, avgLng];
-      const zoom = locations.length === 1 ? 15 : 11;
-      map.setView(center, zoom, { animate: true });
+      // Create bounds that include all place markers
+      const bounds = L.latLngBounds(locations.map(loc => [loc.lat, loc.lng]));
+      
+      // If we have current location, include it in the bounds
+      if (currentLocation) {
+        bounds.extend([currentLocation.lat, currentLocation.lng]);
+      }
+      
+      // Fit the map to show all markers with some padding
+      map.fitBounds(bounds, { 
+        padding: [20, 20], // Add padding around the bounds
+        maxZoom: 15, // Don't zoom in too much
+        animate: true 
+      });
     }
-  }, [selectedCity, locations, map]);
+  }, [selectedCity, locations, currentLocation, map]);
+  
   return null;
+}
+
+// Component for fit all markers button
+function FitAllMarkersButton({ locations, currentLocation }) {
+  const map = useMap();
+  
+  const handleClick = () => {
+    if (locations.length > 0) {
+      // Create bounds that include all place markers
+      const bounds = L.latLngBounds(locations.map(loc => [loc.lat, loc.lng]));
+      
+      // If we have current location, include it in the bounds
+      if (currentLocation) {
+        bounds.extend([currentLocation.lat, currentLocation.lng]);
+      }
+      
+      // Fit the map to show all markers with some padding
+      map.fitBounds(bounds, { 
+        padding: [20, 20], // Add padding around the bounds
+        maxZoom: 15, // Don't zoom in too much
+        animate: true 
+      });
+    }
+  };
+
+  return (
+    <div className="leaflet-control leaflet-bar fit-markers-control">
+      <button
+        onClick={handleClick}
+        title="Hiển thị tất cả địa điểm"
+      >
+        <i className="bi bi-grid-3x3-gap"></i>
+      </button>
+    </div>
+  );
 }
 
 function Map({ locations = [], className, selectedCity }) {
@@ -167,13 +229,17 @@ function Map({ locations = [], className, selectedCity }) {
   const [showLocationAlert, setShowLocationAlert] = useState(false);
   const [locationAlertMessage, setLocationAlertMessage] = useState('');
 
+  // Get current location on component mount
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setCurrentLocation([latitude, longitude]);
-          setMapCenter([latitude, longitude]);
+          setCurrentLocation({ lat: latitude, lng: longitude });
         },
         (error) => {
           console.error('Error getting location:', error);
@@ -187,15 +253,27 @@ function Map({ locations = [], className, selectedCity }) {
     }
   };
 
+  const handleLocationUpdate = (location) => {
+    setCurrentLocation(location);
+  };
+
   const validLocations = locations.filter(
     (loc) => typeof loc.lat === "number" && typeof loc.lng === "number" && !isNaN(loc.lat) && !isNaN(loc.lng)
   );
 
+  // Calculate initial center and zoom based on all markers
   if (validLocations.length > 0) {
-    const avgLat = validLocations.reduce((sum, loc) => sum + loc.lat, 0) / validLocations.length;
-    const avgLng = validLocations.reduce((sum, loc) => sum + loc.lng, 0) / validLocations.length;
-    center = [avgLat, avgLng];
-    zoom = validLocations.length === 1 ? 15 : 10;
+    if (validLocations.length === 1) {
+      // Single location - center on it
+      center = [validLocations[0].lat, validLocations[0].lng];
+      zoom = 15;
+    } else {
+      // Multiple locations - calculate bounds
+      const bounds = L.latLngBounds(validLocations.map(loc => [loc.lat, loc.lng]));
+      center = bounds.getCenter();
+      // Let the MapAutoCenter component handle the zoom and bounds fitting
+      zoom = 10; // Default zoom, will be overridden by fitBounds
+    }
   }
 
   return (
@@ -219,14 +297,29 @@ function Map({ locations = [], className, selectedCity }) {
             attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <MapAutoCenter locations={validLocations} selectedCity={selectedCity} />
-          <CurrentLocationButton />
+          <MapAutoCenter locations={validLocations} selectedCity={selectedCity} currentLocation={currentLocation} />
+          <FitAllMarkersButton locations={validLocations} currentLocation={currentLocation} />
+          <CurrentLocationButton onLocationUpdate={handleLocationUpdate} />
           <ZoomControls />
+          
+          {/* Current location marker */}
           {currentLocation && (
-            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={defaultIcon}>
-              <Popup>Vị trí của bạn</Popup>
+            <Marker 
+              position={[currentLocation.lat, currentLocation.lng]} 
+              icon={currentLocationIcon}
+            >
+              <Popup>
+                <div className="text-center">
+                  <h6 className="text-primary mb-1">Vị trí hiện tại</h6>
+                  <small className="text-muted">
+                    {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                  </small>
+                </div>
+              </Popup>
             </Marker>
           )}
+          
+          {/* Place markers */}
           {validLocations.map((location) => (
             <Marker key={location.id} position={[location.lat, location.lng]} icon={createCustomIcon(location)}>
               <Popup>{location.name}</Popup>

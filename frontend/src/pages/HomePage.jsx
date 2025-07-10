@@ -107,6 +107,16 @@ function HomePage() {
     ? [...places].sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))
     : [];
 
+  // Sort tours by updated_at descending to show recently updated tours first
+  const sortedTours = Array.isArray(tours)
+    ? [...tours].sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))
+    : [];
+
+  // Sort articles by updated_at descending to show recently updated articles first
+  const sortedArticles = Array.isArray(articles)
+    ? [...articles].sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))
+    : [];
+
   // Extract unique cities from places
   const cities = Array.from(new Set(places.map(p => p.city).filter(Boolean)));
 
@@ -452,12 +462,12 @@ function HomePage() {
               <h2 className="h4 mb-4 fw-bold luxury-section-title">
                 {t('Trips & Itineraries')}
               </h2>
-              {tours.length === 0 ? (
+              {sortedTours.length === 0 ? (
                 <p className="text-muted">{t('No tours to display.')}</p>
               ) : showAllTours ? (
                 <>
                   <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                    {tours.map((tour) => (
+                    {sortedTours.map((tour) => (
                       <div className="col" key={tour.id}>
                         <div className="card h-100 shadow border-0 rounded-4 luxury-card">
                           <Link to={`/tours/${tour.id}`} className="text-decoration-none">
@@ -516,7 +526,7 @@ function HomePage() {
                 <>
                   <div id="toursCarousel" className="carousel slide" data-bs-ride="carousel">
                     <div className="carousel-inner">
-                      {chunkArray(tours, 3).map((group, idx) => (
+                      {chunkArray(sortedTours, 3).map((group, idx) => (
                         <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(tour => tour.id).join('-')}>
                           <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
                             {group.map((tour) => (
@@ -647,12 +657,12 @@ function HomePage() {
                 {t('Read interesting shares from travelers')}
               </h2>
               {/* Bootstrap Carousel for all articles, 3 per slide */}
-                {articles.length === 0 ? (
+                {sortedArticles.length === 0 ? (
                   <p className="text-muted">{t('No articles to display.')}</p>
                 ) : (
                 <div id="articlesCarousel" className="carousel slide" data-bs-ride="carousel">
                   <div className="carousel-inner">
-                    {chunkArray(articles, 3).map((group, idx) => (
+                    {chunkArray(sortedArticles, 3).map((group, idx) => (
                       <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(a => a.article_id).join('-')}>
                         <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
                           {group.map((a) => (

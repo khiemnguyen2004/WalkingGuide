@@ -134,7 +134,7 @@ function ToursAdmin() {
         description,
         image_url: imageUrl,
         user_id: user.id,
-        total_cost: totalCost,
+        total_cost: parseFloat(totalCost) || 0,
         steps,
       });
       fetchTours();
@@ -163,7 +163,7 @@ function ToursAdmin() {
     setDescription(tour.description);
     setImageFile(null);
     setImagePreview(tour.image_url || "");
-    setTotalCost(tour.total_cost || 0);
+    setTotalCost(tour.total_cost ? tour.total_cost.toString() : "0");
     // Load current stops for editing
     const steps = tourStepsMap[tour.id] || [];
     setSelectedPlaces(steps.sort((a, b) => a.step_order - b.step_order).map(s => s.place_id));
@@ -197,7 +197,7 @@ function ToursAdmin() {
         name,
         description,
         image_url: imageUrl,
-        total_cost: totalCost,
+        total_cost: parseFloat(totalCost) || 0,
         steps,
       });
       fetchTours();
@@ -253,6 +253,7 @@ function ToursAdmin() {
     setDescription("");
     setImageFile(null);
     setImagePreview("");
+    setTotalCost("0");
   };
 
   return (
@@ -328,6 +329,57 @@ function ToursAdmin() {
                   onChange={setDescription}
                   placeholder="Mô tả"
                 />
+                
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Tổng chi phí (VND):</label>
+                  <input
+                    type="text"
+                    value={totalCost ? parseInt(totalCost).toLocaleString('vi-VN') : ''}
+                    onChange={(e) => {
+                      const rawValue = e.target.value.replace(/\D/g, '');
+                      setTotalCost(rawValue);
+                    }}
+                    className="form-control"
+                    placeholder="Nhập tổng chi phí tour"
+                  />
+                  {totalCost && (
+                    <div className="form-text">
+                      <i className="bi bi-info-circle me-1"></i>
+                      Chi phí: {parseInt(totalCost).toLocaleString('vi-VN')} VNĐ
+                    </div>
+                  )}
+                  
+                  {/* Price Suggestions - only show when input is short and not a complete price */}
+                  {totalCost && totalCost.length > 0 && totalCost.length <= 3 && !totalCost.endsWith('000') && (
+                    <div className="mt-2">
+                      <small className="text-muted">Gợi ý:</small>
+                      <div className="d-flex flex-wrap gap-1 mt-1">
+                        {(() => {
+                          const inputNum = totalCost.replace(/\D/g, '');
+                          const suggestions = [
+                            { value: inputNum + '000', label: inputNum + '.000 VNĐ' },
+                            { value: inputNum + '0000', label: inputNum + '0.000 VNĐ' },
+                            { value: inputNum + '00000', label: inputNum + '00.000 VNĐ' },
+                            { value: inputNum + '000000', label: inputNum + '.000.000 VNĐ' },
+                            { value: inputNum + '0000000', label: inputNum + '0.000.000 VNĐ' },
+                          ].filter(s => s.value !== totalCost);
+                          
+                          return suggestions.map((suggestion, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              className="btn btn-outline-primary btn-sm"
+                              style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
+                              onClick={() => setTotalCost(suggestion.value)}
+                            >
+                              {suggestion.label}
+                            </button>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 
                 <div className="mb-3">
                   <label className="form-label fw-semibold">Chọn các địa điểm cho tour (kéo để sắp xếp):</label>
@@ -420,7 +472,8 @@ function ToursAdmin() {
                     <th style={{ width: 150 }}>Tên tour</th>
                     <th style={{ width: 120 }}>Hình ảnh</th>
                     <th style={{ width: 200 }}>Mô tả</th>
-                    <th style={{ width: 180 }}>Địa điểm (stops)</th>
+                    <th style={{ width: 180 }}>Địa điểm (thứ tự)</th>
+                    <th style={{ width: 120 }}>Tổng chi phí</th>
                     <th style={{ width: 70, textAlign: "center" }}>Hành động</th>
                   </tr>
                 </thead>
@@ -463,7 +516,35 @@ function ToursAdmin() {
                           dangerouslySetInnerHTML={{ __html: t.description }}
                         />
                       </td>
-                      <td>{t.stops || 0}</td>
+                      <td>
+                        {tourStepsMap[t.id] && tourStepsMap[t.id].length > 0 ? (
+                          <div style={{ maxHeight: '60px', overflow: 'hidden', fontSize: '0.8rem' }}>
+                            {tourStepsMap[t.id]
+                              .sort((a, b) => a.step_order - b.step_order)
+                              .map((step, index) => {
+                                const place = allPlaces.find(p => p.id === step.place_id);
+                                return (
+                                  <div key={step.id} style={{ marginBottom: '2px' }}>
+                                    <span className="badge bg-primary me-1">Ngày {step.day}</span>
+                                    <span>{place ? place.name : `Place ${step.place_id}`}</span>
+                                    {index < tourStepsMap[t.id].length - 1 && <i className="bi bi-arrow-right ms-1" style={{ fontSize: '0.7rem' }}></i>}
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        ) : (
+                          <span className="text-muted">Chưa có địa điểm</span>
+                        )}
+                      </td>
+                      <td>
+                        {t.total_cost ? (
+                          <span className="fw-semibold text-success">
+                            {t.total_cost.toLocaleString('vi-VN')} VND
+                          </span>
+                        ) : (
+                          <span className="text-muted">Chưa có</span>
+                        )}
+                      </td>
                       <td style={{textAlign: 'center'}}>
                         <button
                           className="btn admin-main-btn btn-sm me-2"

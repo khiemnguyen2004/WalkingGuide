@@ -245,7 +245,6 @@ function MyTours() {
       <Header />
       <main className="container px-4 py-4 flex-grow-1">
         <div className="mb-5 d-flex align-items-center gap-3 border-bottom pb-3">
-          <FaUser size={32} className="text-primary" />
           <h2 className="fw-bold mb-0" style={{color: '#1a5bb8'}}>Tour của tôi</h2>
           <button className="btn btn-main ms-auto d-flex align-items-center gap-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={() => setShowAddModal(true)}>
             <FaPlusCircle /> Tạo tour mới
@@ -532,9 +531,6 @@ function MyTours() {
         )}
         {/* Created/Cloned Tours Section */}
         <section className="mb-5">
-          <div className="d-flex align-items-center mb-3 gap-2">
-            <h4 className="fw-bold mb-0 luxury-section-title">Tour của bạn</h4>
-          </div>
           {loading ? (
             <div className="d-flex justify-content-center align-items-center py-5">
               <div className="spinner-border text-primary" role="status"></div>

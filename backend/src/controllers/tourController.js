@@ -148,12 +148,13 @@ module.exports = {
   editTour: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, image_url, steps } = req.body;
+      const { name, description, image_url, total_cost, steps } = req.body;
       const tour = await tourRepo.findOneBy({ id: parseInt(id) });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
       if (name !== undefined) tour.name = name;
       if (description !== undefined) tour.description = description;
       if (image_url !== undefined) tour.image_url = image_url;
+      if (total_cost !== undefined) tour.total_cost = parseFloat(total_cost) || 0;
       await tourRepo.save(tour);
       // Update steps if provided
       if (Array.isArray(steps)) {
