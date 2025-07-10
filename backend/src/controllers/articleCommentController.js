@@ -1,4 +1,5 @@
 const { AppDataSource } = require('../data-source');
+const notificationService = require('../services/notificationService');
 
 module.exports = {
   addComment: async (req, res) => {
@@ -9,6 +10,20 @@ module.exports = {
       const repo = AppDataSource.getRepository('ArticleComment');
       const comment = repo.create({ user_id, article_id, content });
       await repo.save(comment);
+      // Send notification to article author
+      const articleRepo = AppDataSource.getRepository('Article');
+      const article = await articleRepo.findOneBy({ article_id: parseInt(article_id) });
+      if (article && article.admin_id !== user_id) {
+        const noti = await notificationService.create({
+          user_id: article.admin_id,
+          type: 'article_comment',
+          content: `Bài viết "${article.title}" của bạn vừa nhận được một bình luận mới!`,
+          is_read: false,
+          article_id: article.article_id,
+          comment_id: comment.id // <-- Use the correct primary key for the comment
+        });
+        console.log('Comment notification created:', noti);
+      }
       res.json(comment);
     } catch (err) {
       res.status(500).json({ message: 'Lỗi server khi thêm bình luận' });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { getUserNotifications, markAllAsRead, updateNotification, deleteNotification } from '../api/notificationApi';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import '../css/UserPage.css';
@@ -120,6 +121,18 @@ const NotificationPage = () => {
     }
   };
 
+  const handleNotificationClick = (notification) => {
+    if (notification.article_id && notification.comment_id) {
+      navigate(`/articles/${notification.article_id}#comment-${notification.comment_id}`);
+    } else if (notification.article_id) {
+      navigate(`/articles/${notification.article_id}`);
+    } else if (notification.tour_id) {
+      navigate(`/tours/${notification.tour_id}`);
+    } else if (notification.place_id) {
+      navigate(`/places/${notification.place_id}`);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
@@ -182,6 +195,8 @@ const NotificationPage = () => {
                     <div 
                       key={notification.notification_id}
                       className={`notification-item ${!notification.is_read ? 'unread' : ''}`}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="notification-content">
                         <div className="notification-header">

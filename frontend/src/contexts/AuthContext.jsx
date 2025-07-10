@@ -49,8 +49,17 @@ export function AuthProvider({ children }) {
   };
 
   const refreshNotifications = () => {
-    setNotificationRefreshTrigger(prev => prev + 1);
+    console.log('[AuthContext] refreshNotifications function called');
+    setNotificationRefreshTrigger(prev => {
+      const next = prev + 1;
+      console.log('[AuthContext] refreshNotifications called, new trigger:', next);
+      return next;
+    });
   };
+
+  useEffect(() => {
+    console.log('[AuthContext] notificationRefreshTrigger changed:', notificationRefreshTrigger);
+  }, [notificationRefreshTrigger]);
 
   return (
     <AuthContext.Provider value={{ 

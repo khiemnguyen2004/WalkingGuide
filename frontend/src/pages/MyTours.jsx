@@ -248,8 +248,8 @@ function MyTours() {
           <h2 className="fw-bold mb-0" style={{color: '#1a5bb8'}}>Tour của tôi</h2>
           <button className="btn btn-main ms-auto d-flex align-items-center gap-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={() => setShowAddModal(true)}>
             <FaPlusCircle /> Tạo tour mới
-          </button>
-        </div>
+            </button>
+          </div>
         {/* Add Tour Modal */}
         {showAddModal && (
           <div className="modal fade show" style={{display:'block', background:'rgba(0,0,0,0.25)'}} tabIndex="-1">
@@ -531,11 +531,11 @@ function MyTours() {
         )}
         {/* Created/Cloned Tours Section */}
         <section className="mb-5">
-          {loading ? (
+                {loading ? (
             <div className="d-flex justify-content-center align-items-center py-5">
-              <div className="spinner-border text-primary" role="status"></div>
-            </div>
-          ) : tours.length === 0 ? (
+                    <div className="spinner-border text-primary" role="status"></div>
+                  </div>
+                ) : tours.length === 0 ? (
             <div className="text-center text-muted py-5">
               <i className="bi bi-inbox" style={{fontSize: '3rem'}}></i>
               <div className="fw-bold mb-1">Bạn chưa tạo tour nào.</div>
@@ -677,7 +677,7 @@ function MyTours() {
                       </button>
                     </div>
                   </div>
-                </div>
+              </div>
               ))}
             </div>
           )}
@@ -701,16 +701,16 @@ function MyTours() {
           <div className="mb-2">
             <span className="badge bg-info text-dark me-2">
               {modalTour?.start_time ? new Date(modalTour.start_time).toLocaleDateString() : '--'} → {modalTour?.end_time ? new Date(modalTour.end_time).toLocaleDateString() : '--'}
-            </span>
+                  </span>
             <span className="badge bg-light text-dark"><i className="bi bi-currency-exchange"></i> {modalTour?.total_cost?.toLocaleString('vi-VN')} VND</span>
-          </div>
+            </div>
           {modalSteps.length > 0 && (
             <div className="mt-4">
               <h6 className="fw-bold mb-3">Hành trình chi tiết</h6>
               <div className="list-group">
                 {modalSteps.map((step, idx) => {
                   const place = modalPlaces[step.place_id];
-                  return (
+                            return (
                     <div key={step.id || idx} className="list-group-item d-flex align-items-center gap-3 py-3" style={{borderLeft: '4px solid #1a5bb8', background: '#f8f9fa', borderRadius: 12, marginBottom: 8, boxShadow: '0 2px 8px #b6e0fe22'}}>
                       {place?.image_url && (
                         <img
@@ -722,18 +722,18 @@ function MyTours() {
                       <div className="flex-grow-1">
                         <div className="fw-bold mb-1" style={{color: '#1a5bb8', fontSize: '1.1em'}}>
                           <Link to={`/places/${place?.id}`} className="text-decoration-none" style={{color: '#1a5bb8'}} target="_blank" rel="noopener noreferrer">
-                            {place?.name || `Địa điểm #${step.place_id}`}
+                                  {place?.name || `Địa điểm #${step.place_id}`}
                           </Link>
-                        </div>
+                                </div>
                         <div className="small text-muted mb-1" style={{fontStyle: 'italic'}}>
                           {place?.description ? `${place.description.replace(/<[^>]+>/g, '').slice(0, 100)}${place.description.length > 100 ? '...' : ''}` : 'Chưa có mô tả'}
-                        </div>
+                              </div>
                         <div className="d-flex gap-2 flex-wrap align-items-center mt-1">
                           {step.start_time && <span className="badge bg-success"><i className="bi bi-play me-1"></i>Bắt đầu: {step.start_time}</span>}
                           {step.end_time && <span className="badge bg-info"><i className="bi bi-stop me-1"></i>Kết thúc: {step.end_time}</span>}
                         </div>
                       </div>
-                    </div>
+                </div>
                   );
                 })}
               </div>

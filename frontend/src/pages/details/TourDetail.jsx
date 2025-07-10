@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import Header from '../../components/Header.jsx';
 import Footer from '../../components/Footer.jsx';
 import tourApi from '../../api/tourApi';
@@ -419,7 +419,7 @@ const TourDetail = () => {
                     {group.map((t) => (
                       <div className="col" key={t.id}>
                         <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                          <a href={`/tours/${t.id}`} className="text-decoration-none">
+                          <Link to={`/tours/${t.id}`} className="text-decoration-none">
                             {t.image_url && (
                               <img
                                 src={t.image_url.startsWith('http') ? t.image_url : `http://localhost:3000${t.image_url}`}
@@ -437,7 +437,7 @@ const TourDetail = () => {
                                 <span className="luxury-money">💰</span> {t.total_cost} VND
                               </p>
                             </div>
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     ))}

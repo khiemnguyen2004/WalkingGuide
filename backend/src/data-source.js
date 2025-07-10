@@ -47,7 +47,7 @@ const AppDataSource = new DataSource({
     Booking,
   ],
   migrations: [
-    "src/migrations/1751962052407-BookingInit.js",
+    "src/migrations/1752135212273-addCommentIdToNotification.js",
   ],
   subscribers: [],
 });

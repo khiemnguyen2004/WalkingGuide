@@ -211,9 +211,10 @@ const PlaceDetail = () => {
     setOtmDetails(null);
     try {
       let found = null;
-      // 1. Try search by name and city only (not full address)
-      if (place.name) {
-        // Use only place.name, and city if it's a simple city name
+      // Helper to check if string is ASCII
+      const isAscii = (str) => /^[\x00-\x7F]*$/.test(str);
+      // 1. Try search by name and city only (not full address) if ASCII
+      if (place.name && isAscii(place.name)) {
         let query = place.name;
         if (
           place.city &&
@@ -231,9 +232,13 @@ const PlaceDetail = () => {
           setOtmLoading(false);
           return;
         }
-        const searchData = await searchRes.json();
-        if (searchData && searchData.features && searchData.features.length > 0) {
-          found = searchData.features[0];
+        if (searchRes.status === 400) {
+          // Fallback to /radius below
+        } else {
+          const searchData = await searchRes.json();
+          if (searchData && searchData.features && searchData.features.length > 0) {
+            found = searchData.features[0];
+          }
         }
       }
       // 2. Fallback: search by coordinates and name (old logic)
@@ -272,15 +277,14 @@ const PlaceDetail = () => {
     setNearbyError(null);
     setNearbyDetails({});
     try {
-      // Fetch restaurants
-      const restUrl = `${OTM_BASE_URL}/radius?radius=500&lon=${place.longitude}&lat=${place.latitude}&kinds=restaurants&limit=8&apikey=${OTM_API_KEY}`;
+      // Fetch restaurants (limit 2)
+      const restUrl = `${OTM_BASE_URL}/radius?radius=500&lon=${place.longitude}&lat=${place.latitude}&kinds=restaurants&limit=2&apikey=${OTM_API_KEY}`;
       const restRes = await fetch(restUrl);
       const restData = await restRes.json();
       const restaurants = restData.features || [];
       setNearbyRestaurants(restaurants);
-      // Fetch hotels
-      // FIX: Use kinds=accomodations instead of kinds=hotels
-      const hotelUrl = `${OTM_BASE_URL}/radius?radius=500&lon=${place.longitude}&lat=${place.latitude}&kinds=accomodations&limit=8&apikey=${OTM_API_KEY}`;
+      // Fetch hotels (limit 2)
+      const hotelUrl = `${OTM_BASE_URL}/radius?radius=500&lon=${place.longitude}&lat=${place.latitude}&kinds=accomodations&limit=2&apikey=${OTM_API_KEY}`;
       const hotelRes = await fetch(hotelUrl);
       if (hotelRes.status === 429) {
         setNearbyError('Bạn đã gửi quá nhiều yêu cầu tới OpenTripMap. Vui lòng thử lại sau.');
@@ -291,20 +295,27 @@ const PlaceDetail = () => {
       const hotelData = await hotelRes.json();
       const hotels = hotelData.features || [];
       setNearbyHotels(hotels);
-      // Fetch details for all (restaurants + hotels)
+      // Fetch details for all (restaurants + hotels) with throttling and caching
       const all = [...restaurants, ...hotels];
       const details = {};
-      await Promise.all(
-        all.map(async (item) => {
-          if (item.properties && item.properties.xid) {
+      for (const item of all) {
+        if (item.properties && item.properties.xid) {
+          const cacheKey = `otm_detail_${item.properties.xid}`;
+          let detailData = null;
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            detailData = JSON.parse(cached);
+          } else {
             try {
               const detailRes = await fetch(`${OTM_BASE_URL}/xid/${item.properties.xid}?apikey=${OTM_API_KEY}`);
-              const detailData = await detailRes.json();
-              details[item.properties.xid] = detailData;
+              detailData = await detailRes.json();
+              localStorage.setItem(cacheKey, JSON.stringify(detailData));
             } catch {}
+            await new Promise(res => setTimeout(res, 2000)); // 2 second delay
           }
-        })
-      );
+          details[item.properties.xid] = detailData;
+        }
+      }
       setNearbyDetails(details);
     } catch (e) {
       setNearbyError('Không thể tải nhà hàng/khách sạn lân cận');
@@ -533,7 +544,7 @@ const PlaceDetail = () => {
                               </h5>
                             <div className="d-flex align-items-center gap-4 mb-3 flex-wrap">
                               <LikeButton placeId={place.id} />
-                              <RatingStars placeId={place.id} />
+                              <RatingStars id={place.id} />
                             </div>
                             <CommentSection placeId={place.id} />
                           </div>

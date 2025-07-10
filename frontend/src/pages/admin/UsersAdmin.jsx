@@ -296,7 +296,7 @@ function UsersAdmin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((u) => (
+                  {users.filter(u => u.isEmailVerified).map((u) => (
                     <tr key={u.id}>
                       <td>{u.id}</td>
                       <td>

@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Footer from '../../components/Footer.jsx';
 import userApi from '../../api/userApi';
 import articleApi from '../../api/articleApi';
 import { AuthContext } from '../../contexts/AuthContext.jsx';
+
+const highlightStyle = `
+  .highlight-comment {
+    background:rgb(117, 189, 249) !important;
+    animation: highlight-comment 0.5s ease-in-out;
+  }
+`;
 
 const ArticleDetail = () => {
   const [article, setArticle] = useState(null);
@@ -25,6 +32,7 @@ const ArticleDetail = () => {
   const [userMap, setUserMap] = useState({});
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  const location = useLocation();
 
   useEffect(() => {
     if (!id || isNaN(id)) {
@@ -115,6 +123,18 @@ const ArticleDetail = () => {
       setUserMap(map);
     });
   }, [id, user]);
+
+  useEffect(() => {
+    if (location.hash.startsWith('#comment-') && comments.length > 0) {
+      const commentId = location.hash.replace('#comment-', '');
+      const el = document.getElementById(`comment-${commentId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('highlight-comment');
+        setTimeout(() => el.classList.remove('highlight-comment'), 2000);
+      }
+    }
+  }, [location, comments]); // depend on comments
 
   // Like/unlike handlers
   const handleLike = async () => {
@@ -302,7 +322,7 @@ const ArticleDetail = () => {
                   <div className="text-muted">Chưa có bình luận nào.</div>
                 ) : (
                   comments.map((c, idx) => (
-                    <div key={c.id || idx} className="mb-3 p-2 bg-light rounded">
+                    <div key={c.id || idx} id={`comment-${c.id}`} className="mb-3 p-2 bg-light rounded">
                       <b>{c.user_id && userMap[c.user_id] ? userMap[c.user_id] : 'Ẩn danh'}:</b>{' '}
                       {editingCommentId === c.id ? (
                         <>
@@ -368,7 +388,7 @@ const ArticleDetail = () => {
                     {group.map((a) => (
                       <div className="col" key={a.article_id}>
                         <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                          <a href={`/articles/${a.article_id}`} className="text-decoration-none">
+                          <Link to={`/articles/${a.article_id}`} className="text-decoration-none">
                             {a.image_url && (
                               <img
                                 src={a.image_url.startsWith('http') ? a.image_url : `http://localhost:3000${a.image_url}`}
@@ -383,7 +403,7 @@ const ArticleDetail = () => {
                                 {a.content ? `${a.content.replace(/<[^>]+>/g, '').substring(0, 100)}...` : 'Chưa có nội dung'}
                               </p>
                             </div>
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     ))}
@@ -409,6 +429,7 @@ const ArticleDetail = () => {
         )}
       </div>
       <Footer />
+      <style>{highlightStyle}</style>
     </div>
   );
 };

@@ -1,4 +1,5 @@
 const { AppDataSource } = require('../data-source');
+const notificationService = require('../services/notificationService');
 
 module.exports = {
   getAllArticles: async (req, res) => {
@@ -34,6 +35,14 @@ module.exports = {
       }
       const newArticle = articleRepo.create({ admin_id, title, content, image_url });
       const saved = await articleRepo.save(newArticle);
+      // Send notification to the author
+      const noti = await notificationService.create({
+        user_id: admin_id,
+        type: 'article_published',
+        content: `Bài viết "${title}" của bạn đã được xuất bản!`,
+        is_read: false
+      });
+      console.log('Notification created:', noti);
       res.status(201).json(saved);
     } catch (err) {
       console.error('Lỗi khi tạo bài viết:', err);

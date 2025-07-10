@@ -19,6 +19,7 @@ function AdminDashboard() {
     recentPlaces: 0
   });
   const [loading, setLoading] = useState(true);
+  const [recentUsers, setRecentUsers] = useState([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -40,6 +41,12 @@ function AdminDashboard() {
           recentArticles: Math.floor(articlesRes.data.length * 0.20),
           recentPlaces: Math.floor(placesRes.data.length * 0.10),
         });
+
+        const sortedUsers = usersRes.data
+          .filter(u => u.full_name)
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        setRecentUsers(sortedUsers.slice(0, 4));
+
       } catch (error) {
         console.error("Error fetching stats:", error);
         setStats({
@@ -59,6 +66,18 @@ function AdminDashboard() {
 
     fetchStats();
   }, []);
+
+  /** Helper function for time ago */
+  function timeAgo(dateString) {
+    if (!dateString) return 'Vừa đăng ký';
+    const now = new Date();
+    const date = new Date(dateString);
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return 'Vừa đăng ký';
+    if (diff < 3600) return `${Math.floor(diff/60)} phút trước`;
+    if (diff < 86400) return `${Math.floor(diff/3600)} giờ trước`;
+    return `${Math.floor(diff/86400)} ngày trước`;
+  }
 
   const StatCard = ({ title, value, icon, color, trend, subtitle }) => (
     <div className="stat-card shadow-lg border-0 rounded-4 p-4 mb-4" style={{background: 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)', border: `2px solid ${color}20`}}>
@@ -227,12 +246,10 @@ function AdminDashboard() {
               <h4 className="fw-bold mb-4" style={{color: '#1a5bb8'}}>Hoạt Động Gần Đây</h4>
               <RecentActivityCard 
                 title="Người Dùng Mới"
-                items={[
-                  { title: "Nguyễn Văn A đã đăng ký", time: "2 giờ trước" },
-                  { title: "Trần Thị B đã đăng ký", time: "4 giờ trước" },
-                  { title: "Lê Văn C đã đăng ký", time: "6 giờ trước" },
-                  { title: "Phạm Thị D đã đăng ký", time: "8 giờ trước" }
-                ]}
+                items={recentUsers.map(u => ({
+                  title: `${u.full_name} đã đăng ký`,
+                  time: timeAgo(u.created_at)
+                }))}
                 icon="bi-person-plus"
                 color="#3498db"
               />

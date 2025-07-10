@@ -228,6 +228,15 @@ module.exports = {
         start_date,
         end_date,
       });
+      // Send booking notification
+      const noti = await notiService.create({
+        user_id: userId,
+        type: 'booking_success',
+        content: `Bạn đã đặt tour "${tour.name}" thành công!`,
+        is_read: false,
+        tour_id: tourId // <-- Fix: include the tour ID
+      });
+      console.log('Booking notification created:', noti);
       res.status(201).json({ message: "Đặt tour thành công!", booking });
     } catch (err) {
       console.error("Lỗi khi đặt tour:", err);

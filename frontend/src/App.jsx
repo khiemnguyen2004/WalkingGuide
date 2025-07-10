@@ -29,6 +29,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import OtpInput from './pages/auth/OtpInput';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import RatingStars from "./components/RatingStars";
 
 function App() {
   return (
@@ -61,7 +62,7 @@ function App() {
         <Route path="/articles/:id" element={<ArticleDetail />} />
         <Route path="/places/:id" element={<PlaceDetail />} />
         <Route path="/tours/:id" element={<TourDetail />} />
-        <Route path="/place-ratings/rate/:id" element={<PlaceDetail />} />
+        <Route path="/place-ratings/rate/:id" element={<RatingStars />} />
       </Routes>
     </Router>
   );

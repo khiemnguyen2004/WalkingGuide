@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { getUserNotifications, getUnreadCount, markAllAsRead, updateNotification, deleteNotification } from '../api/notificationApi';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+
+console.log('[NotificationIcon] File loaded');
 
 const NotificationIcon = () => {
   const { user, notificationRefreshTrigger } = useContext(AuthContext);
@@ -10,13 +13,26 @@ const NotificationIcon = () => {
   const [loading, setLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('[NotificationIcon] notificationRefreshTrigger:', notificationRefreshTrigger);
     if (user) {
       fetchNotifications();
       fetchUnreadCount();
     }
   }, [user, notificationRefreshTrigger]);
+
+  useEffect(() => {
+    if (showDropdown && unreadCount > 0 && user) {
+      // Mark all as read in backend
+      markAllAsRead(user.id).then(() => {
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        setUnreadCount(0);
+      });
+    }
+    // eslint-disable-next-line
+  }, [showDropdown]);
 
   const fetchNotifications = async () => {
     try {
@@ -122,6 +138,18 @@ const NotificationIcon = () => {
     }
   };
 
+  const handleNotificationClick = (notification) => {
+    if (notification.article_id && notification.comment_id) {
+      navigate(`/articles/${notification.article_id}#comment-${notification.comment_id}`);
+    } else if (notification.article_id) {
+      navigate(`/articles/${notification.article_id}`);
+    } else if (notification.tour_id) {
+      navigate(`/tours/${notification.tour_id}`);
+    } else if (notification.place_id) {
+      navigate(`/places/${notification.place_id}`);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -133,7 +161,7 @@ const NotificationIcon = () => {
         aria-label="Notifications"
       >
         <i className="bi bi-bell" style={{ fontSize: 24, color: '#1a5bb8' }}></i>
-        {unreadCount > 0 && (
+        {unreadCount > 0 && !showDropdown && (
           <span 
             className="position-absolute badge rounded-pill bg-danger"
             style={{ 
@@ -155,7 +183,7 @@ const NotificationIcon = () => {
 
       {showDropdown && (
         <div 
-          className="dropdown-menu show position-absolute"
+          className="dropdown-menu show position-absolute d-flex flex-column"
           style={{ 
             minWidth: 350, 
             maxWidth: 400, 
@@ -166,7 +194,8 @@ const NotificationIcon = () => {
             zIndex: 1000,
             boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
             border: 'none',
-            borderRadius: '12px'
+            borderRadius: '12px',
+            padding: 0
           }}
         >
           <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
@@ -181,7 +210,7 @@ const NotificationIcon = () => {
             )}
           </div>
 
-          <div className="p-0">
+          <div className="flex-grow-1 p-0" style={{overflowY: 'auto'}}>
             {loading ? (
               <div className="text-center p-3">
                 <div className="spinner-border spinner-border-sm text-primary" role="status">
@@ -202,6 +231,7 @@ const NotificationIcon = () => {
                   onClick={(event) => {
                     event.stopPropagation();
                     handleMarkAsRead(notification.notification_id);
+                    handleNotificationClick(notification);
                   }}
                 >
                   <div className="d-flex align-items-start">
@@ -222,6 +252,19 @@ const NotificationIcon = () => {
                       <small className="text-muted">
                         {formatDate(notification.created_at)}
                       </small>
+                      {!notification.is_read && (
+                        <button
+                          className="btn btn-sm btn-outline-primary mt-2"
+                          style={{fontSize: '0.8rem', padding: '2px 8px'}}
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleMarkAsRead(notification.notification_id);
+                          }}
+                        >
+                          <i className="bi bi-check me-1"></i>
+                          Đánh dấu đã đọc
+                        </button>
+                      )}
                     </div>
                     <div className="ms-2">
                       <i 
@@ -237,8 +280,6 @@ const NotificationIcon = () => {
                 </div>
               ))
             )}
-          </div>
-
           {notifications.length > 0 && (
             <div className="p-2 text-center">
               <small className="text-muted">
@@ -246,6 +287,13 @@ const NotificationIcon = () => {
               </small>
             </div>
           )}
+          </div>
+          <div className="border-top bg-white text-center" style={{position: 'sticky', bottom: 0, zIndex: 3, padding: '16px 0'}}>
+            <RouterLink to="/notifications" className="btn btn-link fw-bold text-decoration-none" style={{color: '#1a5bb8'}}>
+              <i className="bi bi-arrow-right-circle me-2"></i>
+              Xem tất cả thông báo
+            </RouterLink>
+          </div>
         </div>
       )}
 

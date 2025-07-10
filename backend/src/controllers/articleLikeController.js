@@ -1,4 +1,5 @@
 const { AppDataSource } = require('../data-source');
+const notificationService = require('../services/notificationService');
 
 module.exports = {
   likeArticle: async (req, res) => {
@@ -11,6 +12,19 @@ module.exports = {
       if (existing) return res.status(400).json({ message: 'Đã thích bài viết này' });
       const like = repo.create({ user_id, article_id });
       await repo.save(like);
+      // Send notification to article author
+      const articleRepo = AppDataSource.getRepository('Article');
+      const article = await articleRepo.findOneBy({ article_id: parseInt(article_id) });
+      if (article && article.admin_id !== user_id) {
+        const noti = await notificationService.create({
+          user_id: article.admin_id,
+          type: 'article_interaction',
+          content: `Bài viết "${article.title}" của bạn vừa nhận được một lượt thích mới!`,
+          is_read: false,
+          article_id: article.article_id // <-- Add article_id for frontend navigation
+        });
+        console.log('Like notification created:', noti);
+      }
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ message: 'Lỗi server khi thích bài viết' });
