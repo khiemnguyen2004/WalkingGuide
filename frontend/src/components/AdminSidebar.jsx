@@ -33,6 +33,15 @@ function AdminSidebar() {
           </li>
           <li className="nav-item">
             <Link
+              to="/admin/places"
+              className={`nav-link ${isActive("/admin/places") ? "active" : ""}`}
+            >
+              <i className="bi bi-geo-alt me-2"></i>
+              Quản lý Địa điểm
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
               to="/admin/hotels"
               className={`nav-link ${isActive("/admin/hotels") ? "active" : ""}`}
             >

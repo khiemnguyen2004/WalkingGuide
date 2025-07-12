@@ -27,7 +27,7 @@ function AdminHeader() {
               </button>
               <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
                 <li>
-                  <Link className="dropdown-item" to="/admin/profile">
+                  <Link className="dropdown-item" to="/users">
                     <i className="bi bi-person me-2"></i>
                     Hồ sơ
                   </Link>

@@ -14,8 +14,6 @@ function PlacesAdmin() {
   const [places, setPlaces] = useState([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [city, setCity] = useState("");
@@ -33,6 +31,7 @@ function PlacesAdmin() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [placeToDelete, setPlaceToDelete] = useState(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   useEffect(() => {
     fetchPlaces();
@@ -55,58 +54,122 @@ function PlacesAdmin() {
     setPlaceTags(res.data);
   };
 
-  const handleCreate = async () => {
-    let uploadedImageUrl = imageUrl;
-    if (imageFile) {
-      const formData = new FormData();
-      formData.append("file", imageFile);
-      const uploadRes = await axios.post("http://localhost:3000/api/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      uploadedImageUrl = uploadRes.data.url;
+  // Helper function to get proper image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http')) {
+      return imageUrl; // Already absolute URL
     }
-    
-    // Create the place
-    const placeRes = await axios.post("http://localhost:3000/api/places", {
-      name,
-      description,
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
-      image_url: uploadedImageUrl,
-      city,
-      address,
-      opening_hours: openingHours,
-      service,
-    });
-    
-    // Create place tags if any are selected
-    if (selectedTags.length > 0) {
-      for (const tagId of selectedTags) {
-        await createPlaceTag({ place_id: placeRes.data.id, tag_id: tagId });
+    // Prepend backend URL for relative paths
+    return `http://localhost:3000${imageUrl}`;
+  };
+
+  // Address autocomplete with debouncing
+  const searchAddress = async (query) => {
+    if (query.length < 3) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`
+      );
+      setAddressSuggestions(response.data);
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error("Error fetching address suggestions:", error);
+    }
+  };
+
+  const handleAddressChange = (value) => {
+    setAddress(value);
+    searchAddress(value);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setAddress(suggestion.display_name);
+    setCity(suggestion.address?.city || suggestion.address?.town || suggestion.address?.state || "");
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+  };
+
+  const getCoordinatesFromAddress = async (address) => {
+    setIsLoadingLocation(true);
+    try {
+      const response = await axios.get(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+      );
+      
+      if (response.data && response.data.length > 0) {
+        const location = response.data[0];
+        return {
+          latitude: parseFloat(location.lat),
+          longitude: parseFloat(location.lon)
+        };
       }
+      return null;
+    } catch (error) {
+      console.error("Error getting coordinates:", error);
+      return null;
+    } finally {
+      setIsLoadingLocation(false);
     }
-    
-    fetchPlaces();
-    fetchPlaceTags();
-    setName("");
-    setDescription("");
-    setLatitude("");
-    setLongitude("");
-    setImageUrl("");
-    setImageFile(null);
-    setCity("");
-    setAddress("");
-    setOpeningHours("");
-    setService("");
-    setSelectedTags([]);
+  };
+
+  const handleCreate = async () => {
+    try {
+      // Get coordinates from address
+      const coordinates = await getCoordinatesFromAddress(address);
+      if (!coordinates) {
+        alert("Không thể tìm thấy tọa độ cho địa chỉ này. Vui lòng kiểm tra lại địa chỉ.");
+        return;
+      }
+
+      let uploadedImageUrl = imageUrl;
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append("file", imageFile);
+        const uploadRes = await axios.post("http://localhost:3000/api/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        uploadedImageUrl = uploadRes.data.url;
+      }
+      
+      // Create the place
+      const placeRes = await axios.post("http://localhost:3000/api/places", {
+        name,
+        description,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        image_url: uploadedImageUrl,
+        city,
+        address,
+        opening_hours: openingHours,
+        service,
+      });
+      
+      // Create place tags if any are selected
+      if (selectedTags.length > 0) {
+        for (const tagId of selectedTags) {
+          await createPlaceTag({ place_id: placeRes.data.id, tag_id: tagId });
+        }
+      }
+      
+      fetchPlaces();
+      fetchPlaceTags();
+      resetForm();
+    } catch (error) {
+      console.error("Error creating place:", error);
+      alert("Lỗi khi tạo địa điểm. Vui lòng thử lại.");
+    }
   };
 
   const handleEdit = (place) => {
     setEditId(place.id);
     setName(place.name);
     setDescription(place.description);
-    setLatitude(place.latitude);
-    setLongitude(place.longitude);
     setImageUrl(place.image_url);
     setCity(place.city || "");
     setAddress(place.address || "");
@@ -122,56 +185,58 @@ function PlacesAdmin() {
   };
 
   const handleUpdate = async () => {
-    let uploadedImageUrl = imageUrl;
-    if (imageFile) {
-      const formData = new FormData();
-      formData.append("file", imageFile);
-      const uploadRes = await axios.post("http://localhost:3000/api/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+    try {
+      // Get coordinates from address
+      const coordinates = await getCoordinatesFromAddress(address);
+      if (!coordinates) {
+        alert("Không thể tìm thấy tọa độ cho địa chỉ này. Vui lòng kiểm tra lại địa chỉ.");
+        return;
+      }
+
+      let uploadedImageUrl = imageUrl;
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append("file", imageFile);
+        const uploadRes = await axios.post("http://localhost:3000/api/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        uploadedImageUrl = uploadRes.data.url;
+      }
+      
+      // Update the place
+      await axios.put(`http://localhost:3000/api/places/${editId}`, {
+        name,
+        description,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        image_url: uploadedImageUrl,
+        city,
+        address,
+        opening_hours: openingHours,
+        service,
       });
-      uploadedImageUrl = uploadRes.data.url;
+      
+      // Update place tags
+      const currentTagIds = getTagsForPlace(editId).map(t => t.id);
+      const toAdd = selectedTags.filter(id => !currentTagIds.includes(id));
+      const toRemove = currentTagIds.filter(id => !selectedTags.includes(id));
+      
+      for (const tagId of toAdd) {
+        await createPlaceTag({ place_id: editId, tag_id: tagId });
+      }
+      for (const tagId of toRemove) {
+        const pt = placeTags.find(pt => pt.place_id === editId && pt.tag_id === tagId);
+        if (pt) await deletePlaceTag(pt.id);
+      }
+      
+      fetchPlaces();
+      fetchPlaceTags();
+      setEditId(null);
+      resetForm();
+    } catch (error) {
+      console.error("Error updating place:", error);
+      alert("Lỗi khi cập nhật địa điểm. Vui lòng thử lại.");
     }
-    
-    // Update the place
-    await axios.put(`http://localhost:3000/api/places/${editId}`, {
-      name,
-      description,
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
-      image_url: uploadedImageUrl,
-      city,
-      address,
-      opening_hours: openingHours,
-      service,
-    });
-    
-    // Update place tags
-    const currentTagIds = getTagsForPlace(editId).map(t => t.id);
-    const toAdd = selectedTags.filter(id => !currentTagIds.includes(id));
-    const toRemove = currentTagIds.filter(id => !selectedTags.includes(id));
-    
-    for (const tagId of toAdd) {
-      await createPlaceTag({ place_id: editId, tag_id: tagId });
-    }
-    for (const tagId of toRemove) {
-      const pt = placeTags.find(pt => pt.place_id === editId && pt.tag_id === tagId);
-      if (pt) await deletePlaceTag(pt.id);
-    }
-    
-    fetchPlaces();
-    fetchPlaceTags();
-    setEditId(null);
-    setName("");
-    setDescription("");
-    setLatitude("");
-    setLongitude("");
-    setImageUrl("");
-    setImageFile(null);
-    setCity("");
-    setAddress("");
-    setOpeningHours("");
-    setService("");
-    setSelectedTags([]);
   };
 
   const handleDelete = async (id) => {
@@ -195,6 +260,20 @@ function PlacesAdmin() {
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setPlaceToDelete(null);
+  };
+
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setImageUrl("");
+    setImageFile(null);
+    setCity("");
+    setAddress("");
+    setOpeningHours("");
+    setService("");
+    setSelectedTags([]);
+    setAddressSuggestions([]);
+    setShowSuggestions(false);
   };
 
   // Helper to get tags for a place
@@ -231,159 +310,143 @@ function PlacesAdmin() {
     closeTagModal();
   };
 
-  // Debounced geocode function (for lat/lng update only)
-  const geocodeAddress = debounce(async (address) => {
-    if (!address || address.length < 5) return;
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
-      const data = await res.json();
-      if (data && data.length > 0) {
-        setLatitude(data[0].lat);
-        setLongitude(data[0].lon);
-      }
-    } catch (err) {}
-  }, 800);
-
-  // Debounced address suggestion fetch
-  const fetchAddressSuggestions = debounce(async (query) => {
-    if (!query || query.length < 3) {
-      setAddressSuggestions([]);
-      return;
-    }
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setAddressSuggestions(data);
-    } catch (err) {
-      setAddressSuggestions([]);
-    }
-  }, 400);
-
-  // Watch address changes for suggestions
-  useEffect(() => {
-    fetchAddressSuggestions(address);
-    geocodeAddress(address);
-    return () => {
-      fetchAddressSuggestions.cancel();
-      geocodeAddress.cancel();
-    };
-  }, [address]);
-
-  // Handle suggestion click
-  const handleSuggestionClick = (suggestion) => {
-    setAddress(suggestion.display_name);
-    setLatitude(suggestion.lat);
-    setLongitude(suggestion.lon);
-    setShowSuggestions(false);
-    setAddressSuggestions([]);
-  };
-
   return (
-    <div className="min-vh-100 d-flex flex-row" style={{ background: "#f6f8fa" }}>
-      <AdminSidebar alwaysExpanded />
-      <div
-        className="flex-grow-1 d-flex flex-column admin-dashboard"
-        style={{
-          marginLeft: 220,
-          minHeight: "100vh",
-          padding: 0,
-          background: "#f6f8fa",
-        }}
-      >
-        <AdminHeader />
-        <main
-          className="flex-grow-1"
-          style={{
-            padding: 0,
-            maxWidth: "100%",
-            width: "100%",
-            margin: 0,
-          }}
-        >
-          <div className="admin-dashboard-cards-row">
-            <div className="container py-4">
-              <div className="mb-3">
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Tên địa điểm"
-                />
-                <CKEditorField
-                  value={description}
-                  onChange={setDescription}
-                  placeholder="Mô tả"
-                />
-                <input
-                  value={latitude}
-                  onChange={(e) => setLatitude(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Vĩ độ (latitude)"
-                  type="number"
-                />
-                <input
-                  value={longitude}
-                  onChange={(e) => setLongitude(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Kinh độ (longitude)"
-                  type="number"
-                />
+    <div className="admin-layout">
+      <AdminHeader />
+      <div className="admin-container">
+        <AdminSidebar />
+        <div className="admin-content">
+          <div className="container-fluid">            
+            {/* Create/Edit Form */}
+            <div className="card mb-4">
+              <div className="card-header">
+                <h5>{editId ? "Chỉnh sửa Địa điểm" : "Tạo Địa điểm Mới"}</h5>
+              </div>
+              <div className="card-body">
                 <div className="row">
                   <div className="col-md-6">
-                    <CityAutocomplete
-                      value={city}
-                      onChange={setCity}
-                      placeholder="Thành phố"
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <div style={{position: 'relative'}}>
-                    <input
-                      value={address}
-                        onChange={(e) => { setAddress(e.target.value); setShowSuggestions(true); }}
-                      className="form-control mb-2"
-                      placeholder="Địa chỉ"
-                        autoComplete="off"
-                    />
-                      {showSuggestions && addressSuggestions.length > 0 && (
-                        <ul className="list-group position-absolute w-100 shadow" style={{zIndex: 10, top: '100%'}}>
-                          {addressSuggestions.map((s, idx) => (
-                            <li key={idx} className="list-group-item list-group-item-action" style={{cursor: 'pointer'}} onClick={() => handleSuggestionClick(s)}>
-                              {s.display_name}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                    <div className="mb-3">
+                      <label className="form-label">Tên địa điểm *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Nhập tên địa điểm"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Mô tả</label>
+                      <CKEditorField
+                        value={description}
+                        onChange={setDescription}
+                        placeholder="Mô tả địa điểm"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Thành phố</label>
+                      <CityAutocomplete
+                        value={city}
+                        onChange={setCity}
+                        placeholder="Chọn thành phố"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Địa chỉ *</label>
+                      <div className="position-relative">
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={address}
+                          onChange={(e) => handleAddressChange(e.target.value)}
+                          placeholder="Nhập địa chỉ để tìm kiếm..."
+                          autoComplete="off"
+                        />
+                        {isLoadingLocation && (
+                          <div className="position-absolute top-50 end-0 translate-middle-y me-2">
+                            <div className="spinner-border spinner-border-sm text-primary" role="status">
+                              <span className="visually-hidden">Loading...</span>
+                            </div>
+                          </div>
+                        )}
+                        {showSuggestions && addressSuggestions.length > 0 && (
+                          <div className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, top: '100%' }}>
+                            {addressSuggestions.map((suggestion, index) => (
+                              <div
+                                key={index}
+                                className="p-2 border-bottom suggestion-item"
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => handleSuggestionClick(suggestion)}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                              >
+                                <div className="fw-semibold">{suggestion.display_name.split(',')[0]}</div>
+                                <div className="small text-muted">{suggestion.display_name}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <div className="col-md-6">
+                    <div className="mb-3">
+                      <label className="form-label">Giờ mở cửa</label>
+                      <textarea
+                        className="form-control"
+                        rows="3"
+                        value={openingHours}
+                        onChange={(e) => setOpeningHours(e.target.value)}
+                        placeholder="VD: Thứ 2 - Thứ 6: 8:00 - 18:00"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Dịch vụ</label>
+                      <textarea
+                        className="form-control"
+                        rows="3"
+                        value={service}
+                        onChange={(e) => setService(e.target.value)}
+                        placeholder="Mô tả các dịch vụ có sẵn"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Link ảnh</label>
+                      <input
+                        type="url"
+                        className="form-control"
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        placeholder="https://example.com/image.jpg"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Hoặc tải ảnh lên</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setImageFile(e.target.files[0])}
+                        className="form-control"
+                      />
+                    </div>
+                    
+                    {/* Current Image Preview (when editing) */}
+                    {editId && imageUrl && (
+                      <div className="mb-3">
+                        <label className="form-label">Ảnh hiện tại:</label>
+                        <div className="border rounded p-2">
+                          <img
+                            src={getImageUrl(imageUrl)}
+                            alt="Current image"
+                            style={{ maxWidth: "200px", maxHeight: "150px", objectFit: "cover" }}
+                            className="img-thumbnail"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <textarea
-                  value={openingHours}
-                  onChange={(e) => setOpeningHours(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Giờ mở cửa"
-                  rows="3"
-                />
-                <textarea
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Dịch vụ"
-                  rows="3"
-                />
-                <input
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Link ảnh (image_url)"
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files[0])}
-                  className="form-control mb-2"
-                />
-                
+
                 {/* Tag Selection */}
                 <div className="mb-3">
                   <label className="form-label fw-bold">Thẻ địa điểm:</label>
@@ -411,202 +474,168 @@ function PlacesAdmin() {
                       </div>
                     ))}
                   </div>
-                  {selectedTags.length > 0 && (
-                    <div className="mt-2">
-                      <small className="text-muted">Đã chọn: </small>
-                      {selectedTags.map(tagId => {
-                        const tag = tags.find(t => t.id === tagId);
-                        return tag ? (
-                          <span key={tagId} className="badge bg-primary me-1">
-                            {tag.name}
-                          </span>
-                        ) : null;
-                      })}
-                    </div>
+                </div>
+
+                <div className="d-flex gap-2">
+                  {editId ? (
+                    <>
+                      <Button variant="primary" className="admin-main-btn" onClick={handleUpdate}>
+                        Cập nhật Địa điểm
+                      </Button>
+                      <Button variant="secondary" onClick={() => { setEditId(null); resetForm(); }}>
+                        Hủy
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="primary" className="admin-main-btn" onClick={handleCreate}>
+                      Tạo Địa điểm
+                    </Button>
                   )}
                 </div>
-                
-                {editId ? (
-                  <>
-                    <button onClick={handleUpdate} className="btn admin-main-btn me-2">
-                      Cập nhật
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditId(null);
-                        setName("");
-                        setDescription("");
-                        setLatitude("");
-                        setLongitude("");
-                        setImageUrl("");
-                        setImageFile(null);
-                        setCity("");
-                        setAddress("");
-                        setOpeningHours("");
-                        setService("");
-                        setSelectedTags([]);
-                      }}
-                      className="btn admin-btn-secondary"
-                    >
-                      Hủy
-                    </button>
-                  </>
-                ) : (
-                  <button onClick={handleCreate} className="btn admin-main-btn">
-                    Thêm
-                  </button>
-                )}
               </div>
+            </div>
 
-              <div className="table-responsive">
-                <table className="table table-bordered">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Tên địa điểm</th>
-                      <th>Thành phố</th>
-                      <th>Địa chỉ</th>
-                      <th>Giờ mở cửa</th>
-                      <th>Dịch vụ</th>
-                      <th>Vĩ độ</th>
-                      <th>Kinh độ</th>
-                      <th>Ảnh</th>
-                      <th>Thẻ</th>
-                      <th>Hành động</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {places.map((p) => (
-                      <tr key={p.id}>
-                        <td>{p.id}</td>
-                        <td>{p.name}</td>
-                        <td>{p.city || "N/A"}</td>
-                        <td>
-                          <div style={{maxWidth: 150, maxHeight: 80, overflow: 'auto'}}>
-                            {p.address || "N/A"}
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{maxWidth: 150, maxHeight: 80, overflow: 'auto'}}>
-                            {p.opening_hours || "N/A"}
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{maxWidth: 150, maxHeight: 80, overflow: 'auto'}}>
-                            {p.service || "N/A"}
-                          </div>
-                        </td>
-                        <td>{p.latitude}</td>
-                        <td>{p.longitude}</td>
-                        <td>
-                          {p.image_url ? (
-                            <img
-                              src={
-                                p.image_url.startsWith("http")
-                                  ? p.image_url
-                                  : `http://localhost:3000${p.image_url}`
-                              }
-                              alt="Ảnh"
-                              style={{ maxWidth: 80, maxHeight: 60 }}
-                            />
-                          ) : (
-                            ""
-                          )}
-                        </td>
-                        <td>
-                          {getTagsForPlace(p.id).map(tag => (
-                            <span key={tag.id} className="badge bg-primary me-1">
-                              {tag.name}
-                            </span>
-                          ))}
-                          <button className="btn btn-sm btn-outline-secondary ms-2" onClick={() => openTagModal(p)}>
-                            Quản lý thẻ
-                          </button>
-                        </td>
-                        <td>
-                          <button
-                            className="btn admin-main-btn btn-sm me-2"
-                            onClick={() => handleEdit(p)}
-                          >
-                            Sửa
-                          </button>
-                          <button
-                            className="btn admin-btn-danger btn-sm"
-                            onClick={() => handleDelete(p.id)}
-                          >
-                            Xóa
-                          </button>
-                        </td>
+            {/* Places List */}
+            <div className="card">
+              <div className="card-header">
+                <h5>Tất cả Địa điểm</h5>
+              </div>
+              <div className="card-body">
+                <div className="table-responsive">
+                  <table className="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Hình ảnh</th>
+                        <th>Tên</th>
+                        <th>Thành phố</th>
+                        <th>Địa chỉ</th>
+                        <th>Thẻ</th>
+                        <th>Thao tác</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {places.map((place) => (
+                        <tr key={place.id}>
+                          <td>{place.id}</td>
+                          <td>
+                            {place.image_url ? (
+                              <img
+                                src={getImageUrl(place.image_url)}
+                                alt={place.name}
+                                style={{ width: "50px", height: "50px", objectFit: "cover" }}
+                              />
+                            ) : (
+                              <div style={{ width: "50px", height: "50px", backgroundColor: "#f8f9fa", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <i className="bi bi-geo-alt"></i>
+                              </div>
+                            )}
+                          </td>
+                          <td>{place.name}</td>
+                          <td>{place.city}</td>
+                          <td>
+                            <div style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {place.address}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex flex-wrap gap-1">
+                              {getTagsForPlace(place.id).map(tag => (
+                                <span key={tag.id} className="badge bg-primary">{tag.name}</span>
+                              ))}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="btn-group" role="group">
+                              <button
+                                className="btn btn-sm btn-outline-primary"
+                                onClick={() => handleEdit(place)}
+                              >
+                                Sửa
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline-info"
+                                onClick={() => openTagModal(place)}
+                              >
+                                Thẻ
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => handleDelete(place.id)}
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </div>
-        </main>
-      </div>
-      {/* Tag Modal */}
-      <Modal show={showTagModal} onHide={closeTagModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Quản lý thẻ cho địa điểm: {tagModalPlace?.name}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {tags.map(tag => (
-            <div key={tag.id} className="form-check">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id={`tag-checkbox-${tag.id}`}
-                checked={tagModalSelected.includes(tag.id)}
-                onChange={e => {
-                  if (e.target.checked) {
-                    setTagModalSelected([...tagModalSelected, tag.id]);
-                  } else {
-                    setTagModalSelected(tagModalSelected.filter(id => id !== tag.id));
-                  }
-                }}
-              />
-              <label className="form-check-label" htmlFor={`tag-checkbox-${tag.id}`}>{tag.name}</label>
-            </div>
-          ))}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={closeTagModal}>Hủy</Button>
-          <Button variant="primary" onClick={handleTagModalSave}>Lưu</Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <div className={`modal fade ${showDeleteModal ? 'show' : ''}`} 
-           style={{ display: showDeleteModal ? 'block' : 'none' }} 
-           tabIndex="-1">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content border-0 shadow-lg">
-            <div className="modal-header bg-danger text-white">
-              <h5 className="modal-title">
-                <i className="bi bi-exclamation-triangle me-2"></i>
-                Xác nhận xóa
-              </h5>
-              <button type="button" className="btn-close btn-close-white" onClick={cancelDelete}></button>
-            </div>
-            <div className="modal-body">
-              <p className="mb-0">Bạn có chắc muốn xóa địa điểm này? Hành động này không thể hoàn tác.</p>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={cancelDelete}>
-                <i className="bi bi-x-circle me-1"></i>
-                Hủy
-              </button>
-              <button type="button" className="btn btn-danger" onClick={confirmDelete}>
-                <i className="bi bi-trash me-1"></i>
-                Xóa
-              </button>
             </div>
           </div>
         </div>
       </div>
-      {showDeleteModal && <div className="modal-backdrop fade show"></div>}
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={cancelDelete}>
+        <Modal.Header closeButton>
+          <Modal.Title>Xác nhận xóa</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Bạn có chắc chắn muốn xóa địa điểm này? Hành động này không thể hoàn tác.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={cancelDelete}>
+            Hủy
+          </Button>
+          <Button variant="danger" className="admin-btn-danger" onClick={confirmDelete}>
+            Xóa
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Tag Management Modal */}
+      <Modal show={showTagModal} onHide={closeTagModal} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Quản lý thẻ cho: {tagModalPlace?.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="row">
+            {tags.map(tag => (
+              <div key={tag.id} className="col-md-4 mb-2">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id={`modal-tag-${tag.id}`}
+                    checked={tagModalSelected.includes(tag.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setTagModalSelected([...tagModalSelected, tag.id]);
+                      } else {
+                        setTagModalSelected(tagModalSelected.filter(id => id !== tag.id));
+                      }
+                    }}
+                  />
+                  <label className="form-check-label" htmlFor={`modal-tag-${tag.id}`}>
+                    {tag.name}
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={closeTagModal}>
+            Hủy
+          </Button>
+          <Button variant="primary" onClick={handleTagModalSave}>
+            Lưu thay đổi
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

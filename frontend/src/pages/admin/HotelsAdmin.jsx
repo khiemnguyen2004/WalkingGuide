@@ -9,8 +9,6 @@ function HotelsAdmin() {
   const [hotels, setHotels] = useState([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
@@ -29,6 +27,9 @@ function HotelsAdmin() {
   const [editId, setEditId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [hotelToDelete, setHotelToDelete] = useState(null);
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   useEffect(() => {
     fetchHotels();
@@ -41,6 +42,47 @@ function HotelsAdmin() {
     } catch (error) {
       console.error("Error fetching hotels:", error);
     }
+  };
+
+  // Helper function to get proper image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http')) {
+      return imageUrl; // Already absolute URL
+    }
+    // Prepend backend URL for relative paths
+    return `http://localhost:3000${imageUrl}`;
+  };
+
+  // Address autocomplete with debouncing
+  const searchAddress = async (query) => {
+    if (query.length < 3) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`
+      );
+      setAddressSuggestions(response.data);
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error("Error fetching address suggestions:", error);
+    }
+  };
+
+  const handleAddressChange = (value) => {
+    setAddress(value);
+    searchAddress(value);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setAddress(suggestion.display_name);
+    setCity(suggestion.address?.city || suggestion.address?.town || suggestion.address?.state || "");
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
   };
 
   const handleImageChange = (e) => {
@@ -78,8 +120,38 @@ function HotelsAdmin() {
     setImages(updatedImages);
   };
 
+  const getCoordinatesFromAddress = async (address) => {
+    setIsLoadingLocation(true);
+    try {
+      const response = await axios.get(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+      );
+      
+      if (response.data && response.data.length > 0) {
+        const location = response.data[0];
+        return {
+          latitude: parseFloat(location.lat),
+          longitude: parseFloat(location.lon)
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting coordinates:", error);
+      return null;
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
+
   const handleCreate = async () => {
     try {
+      // Get coordinates from address
+      const coordinates = await getCoordinatesFromAddress(address);
+      if (!coordinates) {
+        alert("Không thể tìm thấy tọa độ cho địa chỉ này. Vui lòng kiểm tra lại địa chỉ.");
+        return;
+      }
+
       // Upload images first
       const uploadedImages = [];
       for (let i = 0; i < imageFiles.length; i++) {
@@ -100,8 +172,8 @@ function HotelsAdmin() {
       const hotelRes = await axios.post("http://localhost:3000/api/hotels", {
         name,
         description,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
         city,
         address,
         phone,
@@ -130,8 +202,6 @@ function HotelsAdmin() {
     setEditId(hotel.id);
     setName(hotel.name);
     setDescription(hotel.description || "");
-    setLatitude(hotel.latitude);
-    setLongitude(hotel.longitude);
     setCity(hotel.city || "");
     setAddress(hotel.address || "");
     setPhone(hotel.phone || "");
@@ -153,6 +223,13 @@ function HotelsAdmin() {
 
   const handleUpdate = async () => {
     try {
+      // Get coordinates from address
+      const coordinates = await getCoordinatesFromAddress(address);
+      if (!coordinates) {
+        alert("Không thể tìm thấy tọa độ cho địa chỉ này. Vui lòng kiểm tra lại địa chỉ.");
+        return;
+      }
+
       // Upload new images first
       const uploadedImages = [];
       for (let i = 0; i < imageFiles.length; i++) {
@@ -177,8 +254,8 @@ function HotelsAdmin() {
       await axios.put(`http://localhost:3000/api/hotels/${editId}`, {
         name,
         description,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
         city,
         address,
         phone,
@@ -230,8 +307,6 @@ function HotelsAdmin() {
   const resetForm = () => {
     setName("");
     setDescription("");
-    setLatitude("");
-    setLongitude("");
     setCity("");
     setAddress("");
     setPhone("");
@@ -247,6 +322,8 @@ function HotelsAdmin() {
     setStars(0);
     setImages([]);
     setImageFiles([]);
+    setAddressSuggestions([]);
+    setShowSuggestions(false);
   };
 
   return (
@@ -282,32 +359,6 @@ function HotelsAdmin() {
                         onChange={(e) => setDescription(e.target.value)}
                       />
                     </div>
-                    <div className="row">
-                      <div className="col-md-6">
-                        <div className="mb-3">
-                          <label className="form-label">Vĩ độ *</label>
-                          <input
-                            type="number"
-                            step="any"
-                            className="form-control"
-                            value={latitude}
-                            onChange={(e) => setLatitude(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <div className="col-md-6">
-                        <div className="mb-3">
-                          <label className="form-label">Kinh độ *</label>
-                          <input
-                            type="number"
-                            step="any"
-                            className="form-control"
-                            value={longitude}
-                            onChange={(e) => setLongitude(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
                     <div className="mb-3">
                       <label className="form-label">Thành phố</label>
                       <input
@@ -318,13 +369,40 @@ function HotelsAdmin() {
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Địa chỉ</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                      />
+                      <label className="form-label">Địa chỉ *</label>
+                      <div className="position-relative">
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={address}
+                          onChange={(e) => handleAddressChange(e.target.value)}
+                          placeholder="Nhập địa chỉ để tìm kiếm..."
+                        />
+                        {isLoadingLocation && (
+                          <div className="position-absolute top-50 end-0 translate-middle-y me-2">
+                            <div className="spinner-border spinner-border-sm text-primary" role="status">
+                              <span className="visually-hidden">Loading...</span>
+                            </div>
+                          </div>
+                        )}
+                        {showSuggestions && addressSuggestions.length > 0 && (
+                          <div className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, top: '100%' }}>
+                            {addressSuggestions.map((suggestion, index) => (
+                              <div
+                                key={index}
+                                className="p-2 border-bottom suggestion-item"
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => handleSuggestionClick(suggestion)}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                              >
+                                <div className="fw-semibold">{suggestion.display_name.split(',')[0]}</div>
+                                <div className="small text-muted">{suggestion.display_name}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="col-md-6">
@@ -487,7 +565,7 @@ function HotelsAdmin() {
                           <div key={index} className="col-md-3 mb-3">
                             <div className="card">
                               <img
-                                src={image.image_url}
+                                src={getImageUrl(image.image_url)}
                                 className="card-img-top"
                                 alt={`Khách sạn ${index + 1}`}
                                 style={{ height: "150px", objectFit: "cover" }}
@@ -556,6 +634,7 @@ function HotelsAdmin() {
                         <th>Hình ảnh</th>
                         <th>Tên</th>
                         <th>Thành phố</th>
+                        <th>Địa chỉ</th>
                         <th>Sao</th>
                         <th>Mức giá</th>
                         <th>Đánh giá</th>
@@ -569,7 +648,7 @@ function HotelsAdmin() {
                           <td>
                             {hotel.images && hotel.images.length > 0 ? (
                               <img
-                                src={hotel.images[0].image_url}
+                                src={getImageUrl(hotel.images[0].image_url)}
                                 alt={hotel.name}
                                 style={{ width: "50px", height: "50px", objectFit: "cover" }}
                               />
@@ -581,6 +660,11 @@ function HotelsAdmin() {
                           </td>
                           <td>{hotel.name}</td>
                           <td>{hotel.city}</td>
+                          <td>
+                            <div style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {hotel.address}
+                            </div>
+                          </td>
                           <td>
                             {hotel.stars > 0 && (
                               <span className="badge bg-warning text-dark">
