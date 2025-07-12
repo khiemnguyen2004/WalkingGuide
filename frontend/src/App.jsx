@@ -10,6 +10,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ArticlesAdmin from "./pages/admin/ArticlesAdmin";
 import UsersAdmin from "./pages/admin/UsersAdmin";
 import PlacesAdmin from "./pages/admin/PlacesAdmin";
+import HotelsAdmin from "./pages/admin/HotelsAdmin";
+import RestaurantsAdmin from "./pages/admin/RestaurantsAdmin";
 import ToursAdmin from "./pages/admin/ToursAdmin";
 import TagsAdmin from "./pages/admin/TagsAdmin";
 import SettingsAdmin from "./pages/admin/SettingsAdmin";
@@ -52,6 +54,8 @@ function App() {
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="/admin/users" element={<AdminRoute><UsersAdmin /></AdminRoute>} />
         <Route path="/admin/places" element={<AdminRoute><PlacesAdmin /></AdminRoute>} />
+        <Route path="/admin/hotels" element={<AdminRoute><HotelsAdmin /></AdminRoute>} />
+        <Route path="/admin/restaurants" element={<AdminRoute><RestaurantsAdmin /></AdminRoute>} />
         <Route path="/admin/articles" element={<AdminRoute><ArticlesAdmin /></AdminRoute>} />
         <Route path="/admin/tours" element={<AdminRoute><ToursAdmin /></AdminRoute>} />
         <Route path="/admin/tags" element={<AdminRoute><TagsAdmin /></AdminRoute>} />

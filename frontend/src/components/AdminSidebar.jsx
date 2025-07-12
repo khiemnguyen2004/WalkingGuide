@@ -2,44 +2,93 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../css/AdminLayout.css";
 
-const adminNavLinks = [
-  { to: "/admin/", icon: "bi-house", label: "Trang chủ" },
-  { to: "/admin/users", icon: "bi-person", label: "Người dùng" },
-  { to: "/admin/places", icon: "bi-geo-alt", label: "Địa điểm" },
-  { to: "/admin/articles", icon: "bi-newspaper", label: "Bài viết" },
-  { to: "/admin/tours", icon: "bi-map", label: "Lộ trình" },
-  { to: "/admin/tags", icon: "bi-tag", label: "Thẻ địa điểm" },
-  { to: "/admin/settings", icon: "bi-gear", label: "Cài đặt" },
-];
-
-const isActive = (pathname, linkTo) => {
-  if (linkTo === "/admin/") {
-    return pathname === "/admin" || pathname === "/admin/";
-  }
-  return pathname.startsWith(linkTo);
-};
-
-const AdminSidebar = ({ alwaysExpanded }) => {
+function AdminSidebar() {
   const location = useLocation();
+
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
   return (
-    <aside className="admin-sidebar">
-      <nav>
-        <ul className="list-unstyled mb-0">
-          {adminNavLinks.map(link => (
-            <li key={link.to}>
-              <Link
-                to={link.to}
-                className={`admin-sidebar-link${isActive(location.pathname, link.to) ? ' active' : ''}`}
-              >
-                <i className={`bi ${link.icon}`} />
-                <span>{link.label}</span>
-              </Link>
-            </li>
-          ))}
+    <div className="admin-sidebar">
+      <nav className="sidebar-nav">
+        <ul className="nav flex-column">
+          <li className="nav-item">
+            <Link
+              to="/admin"
+              className={`nav-link ${isActive("/admin") ? "active" : ""}`}
+            >
+              <i className="bi bi-house-door me-2"></i>
+              Trang chủ
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
+              to="/admin/tours"
+              className={`nav-link ${isActive("/admin/tours") ? "active" : ""}`}
+            >
+              <i className="bi bi-map me-2"></i>
+              Quản lý Tour
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
+              to="/admin/hotels"
+              className={`nav-link ${isActive("/admin/hotels") ? "active" : ""}`}
+            >
+              <i className="bi bi-building me-2"></i>
+              Quản lý Khách sạn
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
+              to="/admin/restaurants"
+              className={`nav-link ${isActive("/admin/restaurants") ? "active" : ""}`}
+            >
+              <i className="bi bi-cup-hot me-2"></i>
+              Quản lý Nhà hàng
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
+              to="/admin/bookings"
+              className={`nav-link ${isActive("/admin/bookings") ? "active" : ""}`}
+            >
+              <i className="bi bi-calendar-check me-2"></i>
+              Quản lý Đặt chỗ
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
+              to="/admin/users"
+              className={`nav-link ${isActive("/admin/users") ? "active" : ""}`}
+            >
+              <i className="bi bi-people me-2"></i>
+              Quản lý Người dùng
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
+              to="/admin/articles"
+              className={`nav-link ${isActive("/admin/articles") ? "active" : ""}`}
+            >
+              <i className="bi bi-file-text me-2"></i>
+              Quản lý Bài viết
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
+              to="/admin/settings"
+              className={`nav-link ${isActive("/admin/settings") ? "active" : ""}`}
+            >
+              <i className="bi bi-gear me-2"></i>
+              Cài đặt
+            </Link>
+          </li>
         </ul>
       </nav>
-    </aside>
+    </div>
   );
-};
+}
 
 export default AdminSidebar;

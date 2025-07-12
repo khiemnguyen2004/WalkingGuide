@@ -6,6 +6,8 @@ import { AuthContext } from "../../contexts/AuthContext.jsx";
 import CKEditorField from "../../components/CKEditorField";
 import placeApi from "../../api/placeApi";
 import tourStepApi from "../../api/tourStepApi";
+import { Modal, Button } from "react-bootstrap";
+import "../../css/AdminLayout.css";
 
 function ToursAdmin() {
   const { user } = useContext(AuthContext);
@@ -138,15 +140,7 @@ function ToursAdmin() {
         steps,
       });
       fetchTours();
-      setName("");
-      setDescription("");
-      setImageFile(null);
-      setImagePreview("");
-      setSelectedPlaces([]);
-      setSelectedSteps({});
-      setTotalCost(0);
-      setStartTime("");
-      setEndTime("");
+      resetForm();
     } catch (error) {
       console.error("Error creating tour:", error);
       setAlertMessage('Có lỗi xảy ra khi tạo tour');
@@ -202,15 +196,7 @@ function ToursAdmin() {
       });
       fetchTours();
       setEditId(null);
-      setName("");
-      setDescription("");
-      setImageFile(null);
-      setImagePreview("");
-      setSelectedPlaces([]);
-      setSelectedSteps({});
-      setTotalCost(0);
-      setStartTime("");
-      setEndTime("");
+      resetForm();
     } catch (error) {
       console.error("Error updating tour:", error);
       setAlertMessage('Có lỗi xảy ra khi cập nhật tour');
@@ -247,142 +233,143 @@ function ToursAdmin() {
     setTourToDelete(null);
   };
 
-  const clearForm = () => {
+  const resetForm = () => {
     setEditId(null);
     setName("");
     setDescription("");
     setImageFile(null);
     setImagePreview("");
-    setTotalCost("0");
+    setSelectedPlaces([]);
+    setSelectedSteps({});
+    setTotalCost(0);
+    setStartTime("");
+    setEndTime("");
   };
 
   return (
-    <div className="min-vh-100 d-flex flex-row" style={{ background: "#f6f8fa" }}>
-      <AdminSidebar alwaysExpanded />
-      <div
-        className="flex-grow-1 d-flex flex-column admin-dashboard"
-        style={{
-          marginLeft: 220,
-          minHeight: "100vh",
-          padding: 0,
-          background: "#f6f8fa",
-        }}
-      >
-        <AdminHeader />
-        <main
-          className="flex-grow-1"
-          style={{
-            padding: 0,
-            maxWidth: "100%",
-            width: "100%",
-            margin: 0,
-          }}
-        >
-          <div className="admin-dashboard-cards-row">
-            <div className="container py-4">
-              <h2>Quản lý tour</h2>
+    <div className="admin-layout">
+      <AdminHeader />
+      <div className="admin-container">
+        <AdminSidebar />
+        <div className="admin-content">
+          <div className="container-fluid">
+            {/* Alert Component */}
+            {showAlert && (
+              <div className={`alert alert-${alertType} alert-dismissible fade show`} role="alert">
+                <i className={`bi ${alertType === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-exclamation-circle-fill'} me-2`}></i>
+                {alertMessage}
+                <button type="button" className="btn-close" onClick={() => setShowAlert(false)}></button>
+              </div>
+            )}
 
-              {/* Alert Component */}
-              {showAlert && (
-                <div className={`alert alert-${alertType} alert-dismissible fade show`} role="alert">
-                  <i className={`bi ${alertType === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-exclamation-circle-fill'} me-2`}></i>
-                  {alertMessage}
-                  <button type="button" className="btn-close" onClick={() => setShowAlert(false)}></button>
-                </div>
-              )}
-
-              <div className="mb-3">
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Tên tour"
-                />
-                
-                <div className="mb-2">
-                  <label className="form-label">Hình ảnh tour</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="form-control"
-                  />
-                  {imagePreview && (
-                    <div className="mt-2">
-                      <img 
-                        src={imagePreview.startsWith('data:') ? imagePreview : `http://localhost:3000${imagePreview}`} 
-                        alt="Preview" 
-                        style={{ 
-                          maxWidth: '200px', 
-                          maxHeight: '150px', 
-                         objectFit: 'cover',
-                          borderRadius: '8px',
-                          border: '1px solid #ddd'
-                        }} 
+            {/* Create/Edit Form */}
+            <div className="card mb-4">
+              <div className="card-header">
+                <h5>{editId ? "Chỉnh sửa Tour" : "Tạo Tour Mới"}</h5>
+              </div>
+              <div className="card-body">
+                <div className="row">
+                  <div className="col-md-6">
+                    <div className="mb-3">
+                      <label className="form-label">Tên tour *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Nhập tên tour"
                       />
                     </div>
-                  )}
+                    <div className="mb-3">
+                      <label className="form-label">Hình ảnh tour</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="form-control"
+                      />
+                      {imagePreview && (
+                        <div className="mt-2">
+                          <img 
+                            src={imagePreview.startsWith('data:') ? imagePreview : `http://localhost:3000${imagePreview}`} 
+                            alt="Xem trước" 
+                            style={{ 
+                              maxWidth: '200px', 
+                              maxHeight: '150px', 
+                              objectFit: 'cover',
+                              borderRadius: '8px',
+                              border: '1px solid #ddd'
+                            }} 
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-3">
+                      <label className="form-label">Tổng chi phí (VND)</label>
+                      <input
+                        type="text"
+                        value={totalCost ? parseInt(totalCost).toLocaleString('vi-VN') : ''}
+                        onChange={(e) => {
+                          const rawValue = e.target.value.replace(/\D/g, '');
+                          setTotalCost(rawValue);
+                        }}
+                        className="form-control"
+                        placeholder="Nhập tổng chi phí tour"
+                      />
+                      {totalCost && (
+                        <div className="form-text">
+                          <i className="bi bi-info-circle me-1"></i>
+                          Chi phí: {parseInt(totalCost).toLocaleString('vi-VN')} VNĐ
+                        </div>
+                      )}
+                      
+                      {/* Price Suggestions */}
+                      {totalCost && totalCost.length > 0 && totalCost.length <= 3 && !totalCost.endsWith('000') && (
+                        <div className="mt-2">
+                          <small className="text-muted">Gợi ý:</small>
+                          <div className="d-flex flex-wrap gap-1 mt-1">
+                            {(() => {
+                              const inputNum = totalCost.replace(/\D/g, '');
+                              const suggestions = [
+                                { value: inputNum + '000', label: inputNum + '.000 VNĐ' },
+                                { value: inputNum + '0000', label: inputNum + '0.000 VNĐ' },
+                                { value: inputNum + '00000', label: inputNum + '00.000 VNĐ' },
+                                { value: inputNum + '000000', label: inputNum + '.000.000 VNĐ' },
+                                { value: inputNum + '0000000', label: inputNum + '0.000.000 VNĐ' },
+                              ].filter(s => s.value !== totalCost);
+                              
+                              return suggestions.map((suggestion, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  className="btn btn-outline-primary btn-sm"
+                                  style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
+                                  onClick={() => setTotalCost(suggestion.value)}
+                                >
+                                  {suggestion.label}
+                                </button>
+                              ));
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <CKEditorField
-                  value={description}
-                  onChange={setDescription}
-                  placeholder="Mô tả"
-                />
-                
                 <div className="mb-3">
-                  <label className="form-label fw-semibold">Tổng chi phí (VND):</label>
-                  <input
-                    type="text"
-                    value={totalCost ? parseInt(totalCost).toLocaleString('vi-VN') : ''}
-                    onChange={(e) => {
-                      const rawValue = e.target.value.replace(/\D/g, '');
-                      setTotalCost(rawValue);
-                    }}
-                    className="form-control"
-                    placeholder="Nhập tổng chi phí tour"
+                  <label className="form-label">Mô tả</label>
+                  <CKEditorField
+                    value={description}
+                    onChange={setDescription}
+                    placeholder="Mô tả tour"
                   />
-                  {totalCost && (
-                    <div className="form-text">
-                      <i className="bi bi-info-circle me-1"></i>
-                      Chi phí: {parseInt(totalCost).toLocaleString('vi-VN')} VNĐ
-                    </div>
-                  )}
-                  
-                  {/* Price Suggestions - only show when input is short and not a complete price */}
-                  {totalCost && totalCost.length > 0 && totalCost.length <= 3 && !totalCost.endsWith('000') && (
-                    <div className="mt-2">
-                      <small className="text-muted">Gợi ý:</small>
-                      <div className="d-flex flex-wrap gap-1 mt-1">
-                        {(() => {
-                          const inputNum = totalCost.replace(/\D/g, '');
-                          const suggestions = [
-                            { value: inputNum + '000', label: inputNum + '.000 VNĐ' },
-                            { value: inputNum + '0000', label: inputNum + '0.000 VNĐ' },
-                            { value: inputNum + '00000', label: inputNum + '00.000 VNĐ' },
-                            { value: inputNum + '000000', label: inputNum + '.000.000 VNĐ' },
-                            { value: inputNum + '0000000', label: inputNum + '0.000.000 VNĐ' },
-                          ].filter(s => s.value !== totalCost);
-                          
-                          return suggestions.map((suggestion, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              className="btn btn-outline-primary btn-sm"
-                              style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
-                              onClick={() => setTotalCost(suggestion.value)}
-                            >
-                              {suggestion.label}
-                            </button>
-                          ));
-                        })()}
-                      </div>
-                    </div>
-                  )}
                 </div>
                 
                 <div className="mb-3">
-                  <label className="form-label fw-semibold">Chọn các địa điểm cho tour (kéo để sắp xếp):</label>
+                  <label className="form-label">Chọn các địa điểm cho tour (kéo để sắp xếp):</label>
                   <div className="d-flex flex-wrap gap-2 mb-2">
                     {allPlaces.map(place => (
                       <button
@@ -404,10 +391,9 @@ function ToursAdmin() {
                         return (
                           <li key={placeId} className="list-group-item d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <span>{place ? place.name : placeId}</span>
-                            {/* Day select dropdown, dynamic days */}
                             <select
-                              className="form-select form-select-sm ms-2"
-                              style={{ width: 90, marginLeft: 8, marginRight: 8 }}
+                              className="form-select form-select-sm"
+                              style={{ width: 90 }}
                               value={step.day || 1}
                               onChange={e => handleStepChange(placeId, 'day', Number(e.target.value))}
                             >
@@ -417,7 +403,7 @@ function ToursAdmin() {
                             </select>
                             <input
                               type="number"
-                              className="form-control form-control-sm ms-2"
+                              className="form-control form-control-sm"
                               style={{ width: 70 }}
                               min={1}
                               value={step.stay_duration || 60}
@@ -437,167 +423,156 @@ function ToursAdmin() {
                   )}
                 </div>
                 
-                {editId ? (
-                  <>
-                    <button 
-                      onClick={handleUpdate} 
-                      className="btn admin-main-btn me-2"
-                      disabled={isUploading}
-                    >
-                      {isUploading ? "Đang cập nhật..." : "Cập nhật"}
-                    </button>
-                    <button
-                      onClick={clearForm}
-                      className="btn admin-btn-secondary"
-                      disabled={isUploading}
-                    >
-                      Hủy
-                    </button>
-                  </>
-                ) : (
-                  <button 
-                    onClick={handleCreate} 
-                    className="btn admin-main-btn"
-                    disabled={isUploading}
-                  >
-                    {isUploading ? "Đang tạo..." : "Thêm"}
-                  </button>
-                )}
+                <div className="d-flex gap-2">
+                  {editId ? (
+                    <>
+                      <Button variant="primary" className="admin-main-btn" onClick={handleUpdate} disabled={isUploading}>
+                        {isUploading ? "Đang cập nhật..." : "Cập nhật Tour"}
+                      </Button>
+                      <Button variant="secondary" onClick={resetForm} disabled={isUploading}>
+                        Hủy
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="primary" className="admin-main-btn" onClick={handleCreate} disabled={isUploading}>
+                      {isUploading ? "Đang tạo..." : "Tạo Tour"}
+                    </Button>
+                  )}
+                </div>
               </div>
+            </div>
 
-              <table className="table table-bordered">
-                <thead>
-                  <tr>
-                    <th style={{ width: 60 }}>ID</th>
-                    <th style={{ width: 150 }}>Tên tour</th>
-                    <th style={{ width: 120 }}>Hình ảnh</th>
-                    <th style={{ width: 200 }}>Mô tả</th>
-                    <th style={{ width: 180 }}>Địa điểm (thứ tự)</th>
-                    <th style={{ width: 120 }}>Tổng chi phí</th>
-                    <th style={{ width: 70, textAlign: "center" }}>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tours.map((t) => (
-                    <tr key={t.id}>
-                      <td>{t.id}</td>
-                      <td>{t.name}</td>
-                      <td>
-                        {t.image_url ? (
-                          <img 
-                            src={`http://localhost:3000${t.image_url}`} 
-                            alt={t.name}
-                            style={{ width: '80px', height: '60px', objectFit: 'cover', borderRadius: '4px' }}
-                          />
-                        ) : (
-                          <div 
-                            style={{ 
-                              width: '80px', 
-                              height: '60px', 
-                              backgroundColor: '#e9ecef',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: '#6c757d',
-                              borderRadius: '4px'
-                            }}
-                          >
-                            <i className="bi bi-image"></i>
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        <div 
-                          style={{ 
-                            maxHeight: '60px', 
-                            overflow: 'hidden',
-                            fontSize: '0.9rem'
-                          }}
-                          dangerouslySetInnerHTML={{ __html: t.description }}
-                        />
-                      </td>
-                      <td>
-                        {tourStepsMap[t.id] && tourStepsMap[t.id].length > 0 ? (
-                          <div style={{ maxHeight: '60px', overflow: 'hidden', fontSize: '0.8rem' }}>
-                            {tourStepsMap[t.id]
-                              .sort((a, b) => a.step_order - b.step_order)
-                              .map((step, index) => {
-                                const place = allPlaces.find(p => p.id === step.place_id);
-                                return (
-                                  <div key={step.id} style={{ marginBottom: '2px' }}>
-                                    <span className="badge bg-primary me-1">Ngày {step.day}</span>
-                                    <span>{place ? place.name : `Place ${step.place_id}`}</span>
-                                    {index < tourStepsMap[t.id].length - 1 && <i className="bi bi-arrow-right ms-1" style={{ fontSize: '0.7rem' }}></i>}
-                                  </div>
-                                );
-                              })}
-                          </div>
-                        ) : (
-                          <span className="text-muted">Chưa có địa điểm</span>
-                        )}
-                      </td>
-                      <td>
-                        {t.total_cost ? (
-                          <span className="fw-semibold text-success">
-                            {t.total_cost.toLocaleString('vi-VN')} VND
-                          </span>
-                        ) : (
-                          <span className="text-muted">Chưa có</span>
-                        )}
-                      </td>
-                      <td style={{textAlign: 'center'}}>
-                        <button
-                          className="btn admin-main-btn btn-sm me-2"
-                          onClick={() => handleEdit(t)}
-                        >
-                          Sửa
-                        </button>
-                        <button
-                          className="btn admin-btn-danger btn-sm"
-                          onClick={() => handleDelete(t.id)}
-                        >
-                          Xóa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </main>
-      </div>
-
-      {/* Delete Confirmation Modal */}
-      <div className={`modal fade ${showDeleteModal ? 'show' : ''}`} 
-           style={{ display: showDeleteModal ? 'block' : 'none' }} 
-           tabIndex="-1">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content border-0 shadow-lg">
-            <div className="modal-header bg-danger text-white">
-              <h5 className="modal-title">
-                <i className="bi bi-exclamation-triangle me-2"></i>
-                Xác nhận xóa
-              </h5>
-              <button type="button" className="btn-close btn-close-white" onClick={cancelDelete}></button>
-            </div>
-            <div className="modal-body">
-              <p className="mb-0">Bạn có chắc muốn xóa tour này? Hành động này không thể hoàn tác.</p>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={cancelDelete}>
-                <i className="bi bi-x-circle me-1"></i>
-                Hủy
-              </button>
-              <button type="button" className="btn btn-danger" onClick={confirmDelete}>
-                <i className="bi bi-trash me-1"></i>
-                Xóa
-              </button>
+            {/* Tours List */}
+            <div className="card">
+              <div className="card-header">
+                <h5>Tất cả Tour</h5>
+              </div>
+              <div className="card-body">
+                <div className="table-responsive">
+                  <table className="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Hình ảnh</th>
+                        <th>Tên tour</th>
+                        <th>Mô tả</th>
+                        <th>Địa điểm (thứ tự)</th>
+                        <th>Tổng chi phí</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tours.map((t) => (
+                        <tr key={t.id}>
+                          <td>{t.id}</td>
+                          <td>
+                            {t.image_url ? (
+                              <img 
+                                src={`http://localhost:3000${t.image_url}`} 
+                                alt={t.name}
+                                style={{ width: '80px', height: '60px', objectFit: 'cover', borderRadius: '4px' }}
+                              />
+                            ) : (
+                              <div 
+                                style={{ 
+                                  width: '80px', 
+                                  height: '60px', 
+                                  backgroundColor: '#e9ecef',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#6c757d',
+                                  borderRadius: '4px'
+                                }}
+                              >
+                                <i className="bi bi-image"></i>
+                              </div>
+                            )}
+                          </td>
+                          <td>{t.name}</td>
+                          <td>
+                            <div 
+                              style={{ 
+                                maxHeight: '60px', 
+                                overflow: 'hidden',
+                                fontSize: '0.9rem'
+                              }}
+                              dangerouslySetInnerHTML={{ __html: t.description }}
+                            />
+                          </td>
+                          <td>
+                            {tourStepsMap[t.id] && tourStepsMap[t.id].length > 0 ? (
+                              <div style={{ maxHeight: '60px', overflow: 'hidden', fontSize: '0.8rem' }}>
+                                {tourStepsMap[t.id]
+                                  .sort((a, b) => a.step_order - b.step_order)
+                                  .map((step, index) => {
+                                    const place = allPlaces.find(p => p.id === step.place_id);
+                                    return (
+                                      <div key={step.id} style={{ marginBottom: '2px' }}>
+                                        <span className="badge bg-primary me-1">Ngày {step.day}</span>
+                                        <span>{place ? place.name : `Place ${step.place_id}`}</span>
+                                        {index < tourStepsMap[t.id].length - 1 && <i className="bi bi-arrow-right ms-1" style={{ fontSize: '0.7rem' }}></i>}
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            ) : (
+                              <span className="text-muted">Chưa có địa điểm</span>
+                            )}
+                          </td>
+                          <td>
+                            {t.total_cost ? (
+                              <span className="fw-semibold text-success">
+                                {t.total_cost.toLocaleString('vi-VN')} VND
+                              </span>
+                            ) : (
+                              <span className="text-muted">Chưa có</span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="btn-group" role="group">
+                              <button
+                                className="btn btn-sm btn-outline-primary"
+                                onClick={() => handleEdit(t)}
+                              >
+                                Sửa
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => handleDelete(t.id)}
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      {showDeleteModal && <div className="modal-backdrop fade show"></div>}
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={cancelDelete}>
+        <Modal.Header closeButton>
+          <Modal.Title>Xác nhận xóa</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Bạn có chắc chắn muốn xóa tour này? Hành động này không thể hoàn tác.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={cancelDelete}>
+            Hủy
+          </Button>
+          <Button variant="danger" className="admin-btn-danger" onClick={confirmDelete}>
+            Xóa
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

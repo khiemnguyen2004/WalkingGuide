@@ -73,7 +73,6 @@ function TagsAdmin() {
         <main className="flex-grow-1" style={{ padding: 0, maxWidth: "100%", width: "100%", margin: 0 }}>
           <div className="admin-dashboard-cards-row">
             <div className="container py-4">
-              <h2>Quản lý thẻ địa điểm</h2>
               <div className="mb-3">
                 <input
                   value={name}

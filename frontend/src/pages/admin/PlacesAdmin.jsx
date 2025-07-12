@@ -302,8 +302,6 @@ function PlacesAdmin() {
         >
           <div className="admin-dashboard-cards-row">
             <div className="container py-4">
-              <h2>Quản lý địa điểm</h2>
-
               <div className="mb-3">
                 <input
                   value={name}

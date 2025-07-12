@@ -1,30 +1,63 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import "../css/luxury-home.css";
-import { AuthContext } from "../contexts/AuthContext.jsx";
+import "../css/AdminLayout.css";
 
-const AdminHeader = () => {
-  const { user, logout } = useContext(AuthContext);
+function AdminHeader() {
   return (
-    <header className="luxury-header fixed-top" style={{zIndex: 1060, background: 'linear-gradient(90deg, #b6e0fe 0%, #5b9df9 100%)', minHeight: 50, left: 220, width: 'calc(100% - 220px)', padding: 0}}>
-      <div className="container d-flex flex-row align-items-center justify-content-between py-1" style={{minHeight: 56}}>
-        <div className="d-flex align-items-center gap-2">
-          <i className="bi bi-speedometer2 text-primary" style={{fontSize: '1.3rem', marginRight: 8}} />
-          <span className="fw-bold" style={{fontSize: '1.08rem', letterSpacing: '1px'}}>Quản trị trang</span>
-        </div>
-        <div className="d-flex align-items-center gap-2">
-          <Link to="/" className="btn btn-sm btn-outline-primary me-2" style={{fontSize: '0.97rem', padding: '2px 12px'}}>
-            <i className="bi bi-house-door me-1" /> Trang chủ
-          </Link>
-          <i className="bi bi-person-circle" style={{fontSize: '1.15rem'}} title="Admin" />
-          <span className="d-none d-md-inline small" style={{fontSize: '0.97rem'}}>{user?.full_name || 'Admin'}</span>
-          <button className="btn btn-sm btn-outline-light ms-2" style={{fontSize: '0.97rem', padding: '2px 12px'}} onClick={logout}>
-            <i className="bi bi-box-arrow-right me-1" /> Đăng xuất
-          </button>
+    <div className="admin-header">
+      <div className="container-fluid">
+        <div className="d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center">
+            <Link to ="/">
+              <img src="/src/images/banner.png" alt="Walking Guide Banner" style={{ height: 180, marginRight: 28, borderRadius: 12 }} />
+            </Link>
+          </div>
+          
+          <div className="admin-header-actions">
+            <div className="dropdown">
+              <button
+                className="btn btn-link text-white dropdown-toggle"
+                type="button"
+                id="adminDropdown"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i className="bi bi-person-circle me-2"></i>
+                Quản trị viên
+              </button>
+              <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                <li>
+                  <Link className="dropdown-item" to="/admin/profile">
+                    <i className="bi bi-person me-2"></i>
+                    Hồ sơ
+                  </Link>
+                </li>
+                <li>
+                  <Link className="dropdown-item" to="/admin/settings">
+                    <i className="bi bi-gear me-2"></i>
+                    Cài đặt
+                  </Link>
+                </li>
+                <li><hr className="dropdown-divider" /></li>
+                <li>
+                  <Link className="dropdown-item" to="/">
+                    <i className="bi bi-house me-2"></i>
+                    Về trang chủ
+                  </Link>
+                </li>
+                <li>
+                  <button className="dropdown-item text-danger">
+                    <i className="bi bi-box-arrow-right me-2"></i>
+                    Đăng xuất
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
-    </header>
+    </div>
   );
-};
+}
 
 export default AdminHeader;

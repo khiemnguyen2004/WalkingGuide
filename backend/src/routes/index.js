@@ -10,6 +10,8 @@ const tourRatingRoutes = require("./tourRatingRoutes");
 const articleLikeRoutes = require("./articleLikeRoutes");
 const articleCommentRoutes = require("./articleCommentRoutes");
 const authRoutes = require("./authRoutes");
+const hotelRoutes = require("./hotelRoutes");
+const restaurantRoutes = require("./restaurantRoutes");
 
 router.use("/users", userRoutes);
 router.use("/place-likes", placeLikeRoutes);
@@ -20,5 +22,7 @@ router.use("/tour-ratings", tourRatingRoutes);
 router.use("/article-likes", articleLikeRoutes);
 router.use("/article-comments", articleCommentRoutes);
 router.use("/auth", authRoutes);
+router.use("/hotels", hotelRoutes);
+router.use("/restaurants", restaurantRoutes);
 
 module.exports = router;

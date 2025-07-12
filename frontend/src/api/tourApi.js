@@ -16,11 +16,12 @@ const tourApi = {
   rate: (tourId, rating) => axiosClient.post(`${API_RATING}/rate`, { tour_id: tourId, rating }),
   getAverageRating: (tourId) => axiosClient.get(`${API_RATING}/average`, { params: { tour_id: tourId } }),
   getUserRating: (tourId) => axiosClient.get(`${API_RATING}/user`, { params: { tour_id: tourId } }),
-  bookTour: (tourId, userId, startDate, endDate) =>
+  bookTour: (tourId, userId, startDate, endDate, spots) =>
     axiosClient.post(`${API_BASE}/${tourId}/book`, {
       user_id: userId,
       start_date: startDate,
       end_date: endDate,
+      spots,
     }),
   getUserBookedTours: (userId) => axiosClient.get(`/bookings/user/${userId}`),
 };

@@ -211,7 +211,7 @@ module.exports = {
     try {
       const tourId = parseInt(req.params.id);
       const userId = req.body.user_id; // Should be provided in request body or from auth
-      const { start_date, end_date } = req.body;
+      const { start_date, end_date, spots = 1 } = req.body;
       if (!userId || !start_date || !end_date) {
         return res.status(400).json({ error: "Thiếu user_id, start_date hoặc end_date" });
       }
@@ -221,12 +221,16 @@ module.exports = {
       // Optionally: check if tour exists
       const tour = await tourRepo.findOneBy({ id: tourId });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
+      const safeSpots = spots > 0 ? spots : 1;
+      const total_price = safeSpots * (tour.total_cost || 0);
       // Create booking
       const booking = await bookingRepo.save({
         user_id: userId,
         tour_id: tourId,
         start_date,
         end_date,
+        spots: safeSpots,
+        total_price,
       });
       // Send booking notification
       const noti = await notiService.create({

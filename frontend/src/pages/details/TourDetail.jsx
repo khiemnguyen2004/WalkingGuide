@@ -114,6 +114,8 @@ const TourDetail = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [dateError, setDateError] = useState("");
+  const [spots, setSpots] = useState(1);
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -223,12 +225,19 @@ const TourDetail = () => {
       setDateError("Bạn cần đăng nhập để đặt tour.");
       return;
     }
+    if (spots < 1 || spots > 20) {
+      setDateError("Số lượng chỗ phải từ 1 đến 20.");
+      return;
+    }
+    setBookingLoading(true);
     try {
-      await tourApi.bookTour(tour.id, user.id, startDate, endDate);
+      await tourApi.bookTour(tour.id, user.id, startDate, endDate, spots); // Pass spots
       setShowBookModal(false);
-      setAddSuccess("Đặt tour thành công!");
+      setAddSuccess(`Đặt tour thành công!\nSố lượng khách: ${spots}\nTổng giá: ${(spots * (tour.total_cost || 0)).toLocaleString('vi-VN')} VND`);
     } catch (err) {
       setDateError(err?.response?.data?.error || "Lỗi khi đặt tour. Vui lòng thử lại.");
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -397,7 +406,7 @@ const TourDetail = () => {
                   <i className="bi bi-check-circle-fill"></i>
                 </div>
                 <h4 className="mb-3" style={{ color: '#28a745' }}>Thành công!</h4>
-                <div className="mb-4">{addSuccess}</div>
+                <div className="mb-4" style={{ whiteSpace: 'pre-line' }}>{addSuccess}</div>
                 <button className="btn btn-main px-4" onClick={() => setAddSuccess(null)}>Đóng</button>
               </div>
             </AuthModal>
@@ -465,7 +474,7 @@ const TourDetail = () => {
       {showBookModal && (
         <Modal show={showBookModal} onHide={() => setShowBookModal(false)} centered>
           <Modal.Header closeButton>
-            <Modal.Title>Chọn ngày bắt đầu và kết thúc tour</Modal.Title>
+            <Modal.Title>Chọn ngày bắt đầu, kết thúc và số lượng chỗ</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <div className="mb-3">
@@ -494,11 +503,30 @@ const TourDetail = () => {
                 className="form-control"
               />
             </div>
+            <div className="mb-3">
+              <label className="form-label"><strong>Số lượng chỗ:</strong></label>
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={spots}
+                onChange={e => setSpots(Math.max(1, Math.min(20, Number(e.target.value))))}
+                className="form-control"
+                style={{ maxWidth: 120 }}
+              />
+            </div>
+            <div className="mb-3">
+              <strong>Giá mỗi chỗ:</strong> {tour.total_cost?.toLocaleString('vi-VN')} VND<br />
+              <strong>Tổng cộng:</strong> {(spots * (tour.total_cost || 0)).toLocaleString('vi-VN')} VND
+            </div>
             {dateError && <div className="alert alert-danger py-2">{dateError}</div>}
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowBookModal(false)}>Đóng</Button>
-            <Button variant="primary" onClick={handleBookTour}>Xác nhận</Button>
+            <Button variant="secondary" onClick={() => setShowBookModal(false)} disabled={bookingLoading}>Đóng</Button>
+            <Button variant="primary" onClick={handleBookTour} disabled={bookingLoading || !startDate || !endDate || spots < 1 || spots > 20}>
+              {bookingLoading ? <span className="spinner-border spinner-border-sm me-2" role="status" /> : null}
+              Xác nhận
+            </Button>
           </Modal.Footer>
         </Modal>
       )}

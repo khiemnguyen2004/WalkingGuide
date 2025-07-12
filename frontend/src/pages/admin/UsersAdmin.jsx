@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import AdminHeader from "../../components/AdminHeader.jsx";
 import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
+import { Modal, Button } from "react-bootstrap";
+import "../../css/AdminLayout.css";
 
 function UsersAdmin() {
   const [users, setUsers] = useState([]);
@@ -60,20 +62,15 @@ function UsersAdmin() {
         imageUrl = await uploadImage(imageFile);
       }
 
-    await axios.post("http://localhost:3000/api/users", {
-      full_name: fullName,
-      email,
+      await axios.post("http://localhost:3000/api/users", {
+        full_name: fullName,
+        email,
         image_url: imageUrl,
-      password, // required
-      role,
-    });
-    fetchUsers();
-    setFullName("");
-    setEmail("");
-      setImageFile(null);
-      setImagePreview("");
-    setPassword("");
-    setRole("USER");
+        password, // required
+        role,
+      });
+      fetchUsers();
+      resetForm();
     } catch (error) {
       console.error('Error creating user:', error);
       setAlertMessage('Có lỗi xảy ra khi tạo người dùng');
@@ -105,21 +102,16 @@ function UsersAdmin() {
         imageUrl = await uploadImage(imageFile);
       }
 
-    await axios.put(`http://localhost:3000/api/users/${editId}`, {
-      full_name: fullName,
-      email,
+      await axios.put(`http://localhost:3000/api/users/${editId}`, {
+        full_name: fullName,
+        email,
         image_url: imageUrl,
-      password_hash: password || undefined,
-      role,
-    });
-    fetchUsers();
-    setEditId(null);
-    setFullName("");
-    setEmail("");
-      setImageFile(null);
-      setImagePreview("");
-    setPassword("");
-    setRole("USER");
+        password_hash: password || undefined,
+        role,
+      });
+      fetchUsers();
+      setEditId(null);
+      resetForm();
     } catch (error) {
       console.error('Error updating user:', error);
       setAlertMessage('Có lỗi xảy ra khi cập nhật người dùng');
@@ -156,7 +148,7 @@ function UsersAdmin() {
     setUserToDelete(null);
   };
 
-  const clearForm = () => {
+  const resetForm = () => {
     setEditId(null);
     setFullName("");
     setEmail("");
@@ -167,224 +159,218 @@ function UsersAdmin() {
   };
 
   return (
-    <div className="min-vh-100 d-flex flex-row" style={{ background: "#f6f8fa" }}>
-      <AdminSidebar alwaysExpanded />
-      <div
-        className="flex-grow-1 d-flex flex-column admin-dashboard"
-        style={{
-          marginLeft: 220,
-          minHeight: "100vh",
-          padding: 0,
-          background: "#f6f8fa",
-        }}
-      >
-        <AdminHeader />
-        <main
-          className="flex-grow-1"
-          style={{
-            padding: 0,
-            maxWidth: "100%",
-            width: "100%",
-            margin: 0,
-          }}
-        >
-          <div className="admin-dashboard-cards-row">
-            <div className="container py-4">
-              <h2>Quản lý người dùng</h2>
+    <div className="admin-layout">
+      <AdminHeader />
+      <div className="admin-container">
+        <AdminSidebar />
+        <div className="admin-content">
+          <div className="container-fluid">
+            {/* Alert Component */}
+            {showAlert && (
+              <div className={`alert alert-${alertType} alert-dismissible fade show`} role="alert">
+                <i className={`bi ${alertType === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-exclamation-circle-fill'} me-2`}></i>
+                {alertMessage}
+                <button type="button" className="btn-close" onClick={() => setShowAlert(false)}></button>
+              </div>
+            )}
 
-              {/* Alert Component */}
-              {showAlert && (
-                <div className={`alert alert-${alertType} alert-dismissible fade show`} role="alert">
-                  <i className={`bi ${alertType === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-exclamation-circle-fill'} me-2`}></i>
-                  {alertMessage}
-                  <button type="button" className="btn-close" onClick={() => setShowAlert(false)}></button>
-                </div>
-              )}
-
-              <div className="mb-3">
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Họ tên"
-                />
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Email"
-                />
-                
-                <div className="mb-2">
-                  <label className="form-label">Hình ảnh đại diện</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="form-control"
-                  />
-                  {imagePreview && (
-                    <div className="mt-2">
-                      <img 
-                        src={imagePreview.startsWith('data:') ? imagePreview : `http://localhost:3000${imagePreview}`} 
-                        alt="Preview" 
-                        style={{ 
-                          width: '80px', 
-                          height: '80px', 
-                          objectFit: 'cover',
-                          borderRadius: '50%',
-                          border: '2px solid #ddd'
-                        }} 
+            {/* Create/Edit Form */}
+            <div className="card mb-4">
+              <div className="card-header">
+                <h5>{editId ? "Chỉnh sửa Người dùng" : "Tạo Người dùng Mới"}</h5>
+              </div>
+              <div className="card-body">
+                <div className="row">
+                  <div className="col-md-6">
+                    <div className="mb-3">
+                      <label className="form-label">Họ và tên *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Nhập họ và tên"
                       />
                     </div>
-                  )}
+                    <div className="mb-3">
+                      <label className="form-label">Email *</label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Nhập email"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Mật khẩu {!editId && '*'}</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder={editId ? "Để trống nếu không thay đổi" : "Nhập mật khẩu"}
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-3">
+                      <label className="form-label">Vai trò</label>
+                      <select
+                        className="form-control"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                      >
+                        <option value="USER">Người dùng</option>
+                        <option value="ADMIN">Quản trị viên</option>
+                        <option value="MODERATOR">Điều hành viên</option>
+                      </select>
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Hình ảnh</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="form-control"
+                      />
+                      {imagePreview && (
+                        <div className="mt-2">
+                          <img 
+                            src={imagePreview.startsWith('data:') ? imagePreview : `http://localhost:3000${imagePreview}`} 
+                            alt="Xem trước" 
+                            style={{ 
+                              maxWidth: '200px', 
+                              maxHeight: '150px', 
+                              objectFit: 'cover',
+                              borderRadius: '8px',
+                              border: '1px solid #ddd'
+                            }} 
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <input
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Mật khẩu"
-                  type="password"
-                />
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="form-select mb-2"
-                >
-                  <option value="USER">USER</option>
-                  <option value="ADMIN">ADMIN</option>
-                </select>
-                
-                {editId ? (
-                  <>
-                    <button 
-                      onClick={handleUpdate} 
-                      className="btn admin-main-btn me-2"
-                      disabled={isUploading}
-                    >
-                      {isUploading ? "Đang cập nhật..." : "Cập nhật"}
-                    </button>
-                    <button
-                      onClick={clearForm}
-                      className="btn admin-btn-secondary"
-                      disabled={isUploading}
-                    >
-                      Hủy
-                    </button>
-                  </>
-                ) : (
-                  <button 
-                    onClick={handleCreate} 
-                    className="btn admin-main-btn"
-                    disabled={isUploading}
-                  >
-                    {isUploading ? "Đang tạo..." : "Thêm"}
-                  </button>
-                )}
+                <div className="d-flex gap-2">
+                  {editId ? (
+                    <>
+                      <Button variant="primary" className="admin-main-btn" onClick={handleUpdate} disabled={isUploading}>
+                        {isUploading ? "Đang cập nhật..." : "Cập nhật Người dùng"}
+                      </Button>
+                      <Button variant="secondary" onClick={resetForm} disabled={isUploading}>
+                        Hủy
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="primary" className="admin-main-btn" onClick={handleCreate} disabled={isUploading}>
+                      {isUploading ? "Đang tạo..." : "Tạo Người dùng"}
+                    </Button>
+                  )}
+                </div>
               </div>
+            </div>
 
-              <table className="table table-bordered">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Hình ảnh</th>
-                    <th>Họ tên</th>
-                    <th>Email</th>
-                    <th>Vai trò</th>
-                    <th style={{textAlign: 'center'}}>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.filter(u => u.isEmailVerified).map((u) => (
-                    <tr key={u.id}>
-                      <td>{u.id}</td>
-                      <td>
-                        {u.image_url ? (
-                          <img 
-                            src={`http://localhost:3000${u.image_url}`} 
-                            alt={u.full_name}
-                            style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '50%' }}
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        ) : (
-                          <div 
-                            style={{ 
-                              width: '50px', 
-                              height: '50px', 
-                              borderRadius: '50%', 
-                              backgroundColor: '#e9ecef',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: '#6c757d',
-                              fontSize: '18px',
-                              fontWeight: 'bold'
-                            }}
-                          >
-                            {u.full_name ? u.full_name.charAt(0).toUpperCase() : 'U'}
-                          </div>
-                        )}
-                      </td>
-                      <td>{u.full_name}</td>
-                      <td>{u.email}</td>
-                      <td>{u.role}</td>
-                      <td style={{textAlign: 'center'}}>
-                        <button
-                          className="btn admin-main-btn btn-sm me-2"
-                          onClick={() => handleEdit(u)}
-                        >
-                          Sửa
-                        </button>
-                        <button
-                          className="btn admin-btn-danger btn-sm"
-                          onClick={() => handleDelete(u.id)}
-                        >
-                          Xóa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </main>
-      </div>
-
-      {/* Delete Confirmation Modal */}
-      <div className={`modal fade ${showDeleteModal ? 'show' : ''}`} 
-           style={{ display: showDeleteModal ? 'block' : 'none' }} 
-           tabIndex="-1">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content border-0 shadow-lg">
-            <div className="modal-header bg-danger text-white">
-              <h5 className="modal-title">
-                <i className="bi bi-exclamation-triangle me-2"></i>
-                Xác nhận xóa
-              </h5>
-              <button type="button" className="btn-close btn-close-white" onClick={cancelDelete}></button>
-            </div>
-            <div className="modal-body">
-              <p className="mb-0">Bạn có chắc muốn xóa người dùng này? Hành động này không thể hoàn tác.</p>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={cancelDelete}>
-                <i className="bi bi-x-circle me-1"></i>
-                Hủy
-              </button>
-              <button type="button" className="btn btn-danger" onClick={confirmDelete}>
-                <i className="bi bi-trash me-1"></i>
-                Xóa
-              </button>
+            {/* Users List */}
+            <div className="card">
+              <div className="card-header">
+                <h5>Tất cả Người dùng</h5>
+              </div>
+              <div className="card-body">
+                <div className="table-responsive">
+                  <table className="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Hình ảnh</th>
+                        <th>Họ và tên</th>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th>Ngày tạo</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((user) => (
+                        <tr key={user.id}>
+                          <td>{user.id}</td>
+                          <td>
+                            {user.image_url ? (
+                              <img
+                                src={`http://localhost:3000${user.image_url}`}
+                                alt={user.full_name}
+                                style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "50%" }}
+                              />
+                            ) : (
+                              <div 
+                                style={{ 
+                                  width: "50px", 
+                                  height: "50px", 
+                                  backgroundColor: "#e9ecef",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "#6c757d",
+                                  borderRadius: "50%"
+                                }}
+                              >
+                                <i className="bi bi-person"></i>
+                              </div>
+                            )}
+                          </td>
+                          <td>{user.full_name}</td>
+                          <td>{user.email}</td>
+                          <td>
+                            <span className={`badge ${user.role === 'ADMIN' ? 'bg-danger' : user.role === 'MODERATOR' ? 'bg-warning' : 'bg-primary'}`}>
+                              {user.role === 'ADMIN' ? 'Quản trị viên' : user.role === 'MODERATOR' ? 'Điều hành viên' : 'Người dùng'}
+                            </span>
+                          </td>
+                          <td>{user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : 'N/A'}</td>
+                          <td>
+                            <div className="btn-group" role="group">
+                              <button
+                                className="btn btn-sm btn-outline-primary"
+                                onClick={() => handleEdit(user)}
+                              >
+                                Sửa
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => handleDelete(user.id)}
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      {showDeleteModal && <div className="modal-backdrop fade show"></div>}
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={cancelDelete}>
+        <Modal.Header closeButton>
+          <Modal.Title>Xác nhận xóa</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={cancelDelete}>
+            Hủy
+          </Button>
+          <Button variant="danger" className="admin-btn-danger" onClick={confirmDelete}>
+            Xóa
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

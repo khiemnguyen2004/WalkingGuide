@@ -4,6 +4,8 @@ import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
 import { AuthContext } from "../../contexts/AuthContext.jsx";
 import CKEditorField from "../../components/CKEditorField";
+import { Modal, Button } from "react-bootstrap";
+import "../../css/AdminLayout.css";
 
 function ArticlesAdmin() {
   const { user } = useContext(AuthContext);
@@ -50,9 +52,7 @@ function ArticlesAdmin() {
       admin_id: user.id,
     });
     fetchArticles();
-    setTitle("");
-    setContent("");
-    setImageFile(null);
+    resetForm();
   };
 
   const handleEdit = (article) => {
@@ -83,10 +83,7 @@ function ArticlesAdmin() {
     });
     fetchArticles();
     setEditId(null);
-    setTitle("");
-    setContent("");
-    setImageFile(null);
-    setEditImageUrl("");
+    resetForm();
   };
 
   const handleDelete = async (id) => {
@@ -112,121 +109,204 @@ function ArticlesAdmin() {
     setArticleToDelete(null);
   };
 
+  const resetForm = () => {
+    setTitle("");
+    setContent("");
+    setImageFile(null);
+    setEditImageUrl("");
+  };
+
   return (
-    <div className="min-vh-100 d-flex flex-row" style={{background: '#f6f8fa'}}>
-      <AdminSidebar alwaysExpanded />
-      <div className="flex-grow-1 d-flex flex-column admin-dashboard" style={{marginLeft: 220, minHeight: '100vh', padding: 0, background: '#f6f8fa'}}>
-        <AdminHeader />
-        <main className="flex-grow-1" style={{padding: 0, maxWidth: '100%', width: '100%', margin: 0}}>
-          <div className="admin-dashboard-cards-row">
-            <div className="container py-4">
-              <h2>Quản lý bài viết</h2>
-
-              {/* Alert Component */}
-              {showAlert && (
-                <div className="alert alert-warning alert-dismissible fade show" role="alert">
-                  <i className="bi bi-exclamation-circle-fill me-2"></i>
-                  {alertMessage}
-                  <button type="button" className="btn-close" onClick={() => setShowAlert(false)}></button>
-                </div>
-              )}
-
-              <div className="mb-3">
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="form-control mb-2"
-                  placeholder="Tiêu đề"
-                />
-                <CKEditorField
-                  value={content}
-                  onChange={setContent}
-                  placeholder="Nội dung"
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={e => setImageFile(e.target.files[0])}
-                  className="form-control mb-2"
-                />
-                {editId ? (
-                  <>
-                    <button onClick={handleUpdate} className="btn admin-main-btn me-2">Cập nhật</button>
-                    <button onClick={() => { setEditId(null); setTitle(""); setContent(""); setImageFile(null); setEditImageUrl(""); }} className="btn admin-btn-secondary">Hủy</button>
-                  </>
-                ) : (
-                  <button onClick={handleCreate} className="btn admin-main-btn">Thêm</button>
-                )}
+    <div className="admin-layout">
+      <AdminHeader />
+      <div className="admin-container">
+        <AdminSidebar />
+        <div className="admin-content">
+          <div className="container-fluid">
+            {/* Alert Component */}
+            {showAlert && (
+              <div className="alert alert-warning alert-dismissible fade show" role="alert">
+                <i className="bi bi-exclamation-circle-fill me-2"></i>
+                {alertMessage}
+                <button type="button" className="btn-close" onClick={() => setShowAlert(false)}></button>
               </div>
+            )}
 
-              <table className="table table-bordered">
-                <thead>
-                  <tr>
-                    <th style={{width: 60}}>ID</th>
-                    <th style={{width: 180}}>Tiêu đề</th>
-                    <th style={{width: 220}}>Nội dung</th>
-                    <th style={{width: 100}}>Ảnh</th>
-                    <th style={{width: 100, textAlign: 'center'}}>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {articles.map((a) => (
-                    <tr key={a.article_id}>
-                      <td>{a.article_id}</td>
-                      <td>{a.title}</td>
-                      <td title={a.content}>{a.content ? a.content.length > 60 ? a.content.substring(0, 60) + "..." : a.content : ""}</td>
-                      <td>
-                        {a.image_url ? (
-                          <img
-                            src={a.image_url.startsWith('http') ? a.image_url : `http://localhost:3000${a.image_url}`}
-                            alt="Ảnh"
-                            style={{ maxWidth: 80, maxHeight: 60 }}
-                          />
-                        ) : ""}
-                      </td>
-                      <td style={{textAlign: 'center'}}>
-                        <button className="btn admin-main-btn btn-sm me-2" onClick={() => handleEdit(a)}>Sửa</button>
-                        <button className="btn admin-btn-danger btn-sm" onClick={() => handleDelete(a.article_id)}>Xóa</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </main>
-      </div>
+            {/* Create/Edit Form */}
+            <div className="card mb-4">
+              <div className="card-header">
+                <h5>{editId ? "Chỉnh sửa Bài viết" : "Tạo Bài viết Mới"}</h5>
+              </div>
+              <div className="card-body">
+                <div className="mb-3">
+                  <label className="form-label">Tiêu đề *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Nhập tiêu đề bài viết"
+                  />
+                </div>
+                
+                <div className="mb-3">
+                  <label className="form-label">Nội dung</label>
+                  <CKEditorField
+                    value={content}
+                    onChange={setContent}
+                    placeholder="Nhập nội dung bài viết"
+                  />
+                </div>
+                
+                <div className="mb-3">
+                  <label className="form-label">Hình ảnh</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={e => setImageFile(e.target.files[0])}
+                    className="form-control"
+                  />
+                  {editImageUrl && !imageFile && (
+                    <div className="mt-2">
+                      <img 
+                        src={editImageUrl.startsWith('http') ? editImageUrl : `http://localhost:3000${editImageUrl}`}
+                        alt="Ảnh hiện tại" 
+                        style={{ 
+                          maxWidth: '200px', 
+                          maxHeight: '150px', 
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          border: '1px solid #ddd'
+                        }} 
+                      />
+                    </div>
+                  )}
+                </div>
 
-      {/* Delete Confirmation Modal */}
-      <div className={`modal fade ${showDeleteModal ? 'show' : ''}`} 
-           style={{ display: showDeleteModal ? 'block' : 'none' }} 
-           tabIndex="-1">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content border-0 shadow-lg">
-            <div className="modal-header bg-danger text-white">
-              <h5 className="modal-title">
-                <i className="bi bi-exclamation-triangle me-2"></i>
-                Xác nhận xóa
-              </h5>
-              <button type="button" className="btn-close btn-close-white" onClick={cancelDelete}></button>
+                <div className="d-flex gap-2">
+                  {editId ? (
+                    <>
+                      <Button variant="primary" className="admin-main-btn" onClick={handleUpdate}>
+                        Cập nhật Bài viết
+                      </Button>
+                      <Button variant="secondary" onClick={() => { setEditId(null); resetForm(); }}>
+                        Hủy
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="primary" className="admin-main-btn" onClick={handleCreate}>
+                      Tạo Bài viết
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="modal-body">
-              <p className="mb-0">Bạn có chắc muốn xóa bài viết này? Hành động này không thể hoàn tác.</p>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={cancelDelete}>
-                <i className="bi bi-x-circle me-1"></i>
-                Hủy
-              </button>
-              <button type="button" className="btn btn-danger" onClick={confirmDelete}>
-                <i className="bi bi-trash me-1"></i>
-                Xóa
-              </button>
+
+            {/* Articles List */}
+            <div className="card">
+              <div className="card-header">
+                <h5>Tất cả Bài viết</h5>
+              </div>
+              <div className="card-body">
+                <div className="table-responsive">
+                  <table className="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Tiêu đề</th>
+                        <th>Nội dung</th>
+                        <th>Hình ảnh</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {articles.map((a) => (
+                        <tr key={a.article_id}>
+                          <td>{a.article_id}</td>
+                          <td>{a.title}</td>
+                          <td>
+                            <div 
+                              style={{ 
+                                maxHeight: '60px', 
+                                overflow: 'hidden',
+                                fontSize: '0.9rem'
+                              }}
+                              dangerouslySetInnerHTML={{ __html: a.content ? (a.content.length > 60 ? a.content.substring(0, 60) + "..." : a.content) : "" }}
+                            />
+                          </td>
+                          <td>
+                            {a.image_url ? (
+                              <img
+                                src={a.image_url.startsWith('http') ? a.image_url : `http://localhost:3000${a.image_url}`}
+                                alt="Ảnh bài viết"
+                                style={{ 
+                                  width: '80px', 
+                                  height: '60px', 
+                                  objectFit: 'cover',
+                                  borderRadius: '4px'
+                                }}
+                              />
+                            ) : (
+                              <div 
+                                style={{ 
+                                  width: '80px', 
+                                  height: '60px', 
+                                  backgroundColor: '#e9ecef',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#6c757d',
+                                  borderRadius: '4px'
+                                }}
+                              >
+                                <i className="bi bi-image"></i>
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <div className="btn-group" role="group">
+                              <button
+                                className="btn btn-sm btn-outline-primary"
+                                onClick={() => handleEdit(a)}
+                              >
+                                Sửa
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => handleDelete(a.article_id)}
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      {showDeleteModal && <div className="modal-backdrop fade show"></div>}
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={cancelDelete}>
+        <Modal.Header closeButton>
+          <Modal.Title>Xác nhận xóa</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Bạn có chắc chắn muốn xóa bài viết này? Hành động này không thể hoàn tác.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={cancelDelete}>
+            Hủy
+          </Button>
+          <Button variant="danger" className="admin-btn-danger" onClick={confirmDelete}>
+            Xóa
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

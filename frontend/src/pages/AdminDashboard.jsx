@@ -4,7 +4,7 @@ import AdminSidebar from "../components/AdminSidebar.jsx";
 import { AuthContext } from "../contexts/AuthContext.jsx";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import "../css/luxury-home.css";
+import "../css/AdminLayout.css";
 
 function AdminDashboard() {
   const { user } = useContext(AuthContext);
@@ -139,180 +139,182 @@ function AdminDashboard() {
   );
 
   return (
-    <div className="min-vh-100 d-flex flex-row" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e3f0ff 100%)'}}>
-      <AdminSidebar alwaysExpanded />
-      <div className="flex-grow-1 d-flex flex-column luxury-home-container admin-dashboard" style={{marginLeft: 220, minHeight: '100vh', padding: 0}}>
-        <AdminHeader />
-        <main className="flex-grow-1 p-4">
-          {/* Header Section */}
-          <div className="dashboard-header text-center mb-5">
-            <h1 className="display-5 fw-bold mb-2" style={{color: '#1a5bb8', textShadow: '0 2px 4px rgba(26, 91, 184, 0.1)'}}>
-              Bảng Quản Trị
-            </h1>
-            <p className="lead mb-0" style={{color: '#223a5f'}}>
-              Chào mừng trở lại, <span className="fw-bold" style={{color: '#3498db'}}>{user?.full_name || 'Admin'}</span>! 
-              Đây là tổng quan về hệ thống của bạn.
-            </p>
-          </div>
+    <div className="admin-layout">
+      <AdminHeader />
+      <div className="admin-container">
+        <AdminSidebar />
+        <div className="admin-content">
+          <div className="container-fluid">
+            {/* Header Section */}
+            <div className="dashboard-header text-center mb-5">
+              <h1 className="display-5 fw-bold mb-2" style={{color: '#1a5bb8', textShadow: '0 2px 4px rgba(26, 91, 184, 0.1)'}}>
+                Bảng Quản Trị
+              </h1>
+              <p className="lead mb-0" style={{color: '#223a5f'}}>
+                Chào mừng trở lại, <span className="fw-bold" style={{color: '#3498db'}}>{user?.full_name || 'Admin'}</span>! 
+                Đây là tổng quan về hệ thống của bạn.
+              </p>
+            </div>
 
-          {/* Statistics Cards */}
-          <div className="row mb-5">
-            <div className="col-lg-3 col-md-6">
-              <StatCard 
-                title="Tổng Người Dùng" 
-                value={stats.totalUsers} 
-                icon="bi-people-fill" 
-                color="#3498db"
-                trend={12}
-                subtitle="Người dùng đã đăng ký"
-              />
-            </div>
-            <div className="col-lg-3 col-md-6">
-              <StatCard 
-                title="Địa Điểm Du Lịch" 
-                value={stats.totalPlaces} 
-                icon="bi-geo-alt-fill" 
-                color="#e74c3c"
-                trend={8}
-                subtitle="Địa điểm đã thêm"
-              />
-            </div>
-            <div className="col-lg-3 col-md-6">
-              <StatCard 
-                title="Lộ Trình Tour" 
-                value={stats.totalTours} 
-                icon="bi-map-fill" 
-                color="#f39c12"
-                trend={-3}
-                subtitle="Tour đã tạo"
-              />
-            </div>
-            <div className="col-lg-3 col-md-6">
-              <StatCard 
-                title="Bài Viết" 
-                value={stats.totalArticles} 
-                icon="bi-newspaper" 
-                color="#27ae60"
-                trend={15}
-                subtitle="Bài viết đã xuất bản"
-              />
-            </div>
-          </div>
-
-          {/* Quick Actions and Recent Activity */}
-          <div className="row mb-5">
-            <div className="col-lg-8">
-              <h4 className="fw-bold mb-4" style={{color: '#1a5bb8'}}>Thao Tác Nhanh</h4>
-              <div className="row">
-                <div className="col-md-6 mb-3">
-                  <QuickActionCard 
-                    title="Quản Lý Người Dùng"
-                    description="Xem, chỉnh sửa và quản lý tài khoản người dùng"
-                    icon="bi-people-fill"
-                    link="/admin/users"
-                    color="#3498db"
-                  />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <QuickActionCard 
-                    title="Quản Lý Địa Điểm"
-                    description="Thêm, sửa, xóa địa điểm du lịch và thông tin"
-                    icon="bi-geo-alt-fill"
-                    link="/admin/places"
-                    color="#e74c3c"
-                  />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <QuickActionCard 
-                    title="Quản Lý Tour"
-                    description="Tạo và quản lý các lộ trình du lịch"
-                    icon="bi-map-fill"
-                    link="/admin/tours"
-                    color="#f39c12"
-                  />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <QuickActionCard 
-                    title="Quản Lý Bài Viết"
-                    description="Kiểm duyệt và quản lý nội dung bài viết"
-                    icon="bi-newspaper"
-                    link="/admin/articles"
-                    color="#27ae60"
-                  />
-                </div>
+            {/* Statistics Cards */}
+            <div className="row mb-5">
+              <div className="col-lg-3 col-md-6">
+                <StatCard 
+                  title="Tổng Người Dùng" 
+                  value={stats.totalUsers} 
+                  icon="bi-people-fill" 
+                  color="#3498db"
+                  trend={12}
+                  subtitle="Người dùng đã đăng ký"
+                />
+              </div>
+              <div className="col-lg-3 col-md-6">
+                <StatCard 
+                  title="Địa Điểm Du Lịch" 
+                  value={stats.totalPlaces} 
+                  icon="bi-geo-alt-fill" 
+                  color="#e74c3c"
+                  trend={8}
+                  subtitle="Địa điểm đã thêm"
+                />
+              </div>
+              <div className="col-lg-3 col-md-6">
+                <StatCard 
+                  title="Lộ Trình Tour" 
+                  value={stats.totalTours} 
+                  icon="bi-map-fill" 
+                  color="#f39c12"
+                  trend={-3}
+                  subtitle="Tour đã tạo"
+                />
+              </div>
+              <div className="col-lg-3 col-md-6">
+                <StatCard 
+                  title="Bài Viết" 
+                  value={stats.totalArticles} 
+                  icon="bi-newspaper" 
+                  color="#27ae60"
+                  trend={15}
+                  subtitle="Bài viết đã xuất bản"
+                />
               </div>
             </div>
-            <div className="col-lg-4">
-              <h4 className="fw-bold mb-4" style={{color: '#1a5bb8'}}>Hoạt Động Gần Đây</h4>
-              <RecentActivityCard 
-                title="Người Dùng Mới"
-                items={recentUsers.map(u => ({
-                  title: `${u.full_name} đã đăng ký`,
-                  time: timeAgo(u.created_at)
-                }))}
-                icon="bi-person-plus"
-                color="#3498db"
-              />
-            </div>
-          </div>
 
-          {/* System Status and Performance */}
-          <div className="row">
-            <div className="col-lg-6 mb-4 mt-5">
-              <div className="system-status-card shadow-lg border-0 rounded-4 p-4" style={{background: 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)'}}>
-                <h5 className="fw-bold mb-3" style={{color: '#1a5bb8'}}>Trạng Thái Hệ Thống</h5>
-                <div className="status-item d-flex justify-content-between align-items-center py-2">
-                  <span className="fw-semibold">Máy chủ</span>
-                  <span className="badge bg-success">Hoạt động</span>
-                </div>
-                <div className="status-item d-flex justify-content-between align-items-center py-2">
-                  <span className="fw-semibold">Cơ sở dữ liệu</span>
-                  <span className="badge bg-success">Hoạt động</span>
-                </div>
-                <div className="status-item d-flex justify-content-between align-items-center py-2">
-                  <span className="fw-semibold">API</span>
-                  <span className="badge bg-success">Hoạt động</span>
-                </div>
-                <div className="status-item d-flex justify-content-between align-items-center py-2">
-                  <span className="fw-semibold">Bảo mật</span>
-                  <span className="badge bg-warning">Cần kiểm tra</span>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-6 mb-4 mt-5">
-              <div className="performance-card shadow-lg border-0 rounded-4 p-4" style={{background: 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)'}}>
-                <h5 className="fw-bold mb-3" style={{color: '#1a5bb8'}}>Hiệu Suất</h5>
-                <div className="performance-item mb-3">
-                  <div className="d-flex justify-content-between mb-1">
-                    <span className="fw-semibold">CPU</span>
-                    <span className="text-muted">45%</span>
+            {/* Quick Actions and Recent Activity */}
+            <div className="row mb-5">
+              <div className="col-lg-8">
+                <h4 className="fw-bold mb-4" style={{color: '#1a5bb8'}}>Thao Tác Nhanh</h4>
+                <div className="row">
+                  <div className="col-md-6 mb-3">
+                    <QuickActionCard 
+                      title="Quản Lý Người Dùng"
+                      description="Xem, chỉnh sửa và quản lý tài khoản người dùng"
+                      icon="bi-people-fill"
+                      link="/admin/users"
+                      color="#3498db"
+                    />
                   </div>
-                  <div className="progress" style={{height: 8}}>
-                    <div className="progress-bar bg-success" style={{width: '45%'}}></div>
+                  <div className="col-md-6 mb-3">
+                    <QuickActionCard 
+                      title="Quản Lý Địa Điểm"
+                      description="Thêm, sửa, xóa địa điểm du lịch và thông tin"
+                      icon="bi-geo-alt-fill"
+                      link="/admin/places"
+                      color="#e74c3c"
+                    />
                   </div>
-                </div>
-                <div className="performance-item mb-3">
-                  <div className="d-flex justify-content-between mb-1">
-                    <span className="fw-semibold">RAM</span>
-                    <span className="text-muted">62%</span>
+                  <div className="col-md-6 mb-3">
+                    <QuickActionCard 
+                      title="Quản Lý Tour"
+                      description="Tạo và quản lý các lộ trình du lịch"
+                      icon="bi-map-fill"
+                      link="/admin/tours"
+                      color="#f39c12"
+                    />
                   </div>
-                  <div className="progress" style={{height: 8}}>
-                    <div className="progress-bar bg-warning" style={{width: '62%'}}></div>
-                  </div>
-                </div>
-                <div className="performance-item mb-3">
-                  <div className="d-flex justify-content-between mb-1">
-                    <span className="fw-semibold">Lưu trữ</span>
-                    <span className="text-muted">28%</span>
-                  </div>
-                  <div className="progress" style={{height: 8}}>
-                    <div className="progress-bar bg-info" style={{width: '28%'}}></div>
+                  <div className="col-md-6 mb-3">
+                    <QuickActionCard 
+                      title="Quản Lý Bài Viết"
+                      description="Kiểm duyệt và quản lý nội dung bài viết"
+                      icon="bi-newspaper"
+                      link="/admin/articles"
+                      color="#27ae60"
+                    />
                   </div>
                 </div>
               </div>
+              <div className="col-lg-4">
+                <h4 className="fw-bold mb-4" style={{color: '#1a5bb8'}}>Hoạt Động Gần Đây</h4>
+                <RecentActivityCard 
+                  title="Người Dùng Mới"
+                  items={recentUsers.map(u => ({
+                    title: `${u.full_name} đã đăng ký`,
+                    time: timeAgo(u.created_at)
+                  }))}
+                  icon="bi-person-plus"
+                  color="#3498db"
+                />
+              </div>
+            </div>
+
+            {/* System Status and Performance */}
+            <div className="row">
+              <div className="col-lg-6 mb-4 mt-5">
+                <div className="system-status-card shadow-lg border-0 rounded-4 p-4" style={{background: 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)'}}>
+                  <h5 className="fw-bold mb-3" style={{color: '#1a5bb8'}}>Trạng Thái Hệ Thống</h5>
+                  <div className="status-item d-flex justify-content-between align-items-center py-2">
+                    <span className="fw-semibold">Máy chủ</span>
+                    <span className="badge bg-success">Hoạt động</span>
+                  </div>
+                  <div className="status-item d-flex justify-content-between align-items-center py-2">
+                    <span className="fw-semibold">Cơ sở dữ liệu</span>
+                    <span className="badge bg-success">Hoạt động</span>
+                  </div>
+                  <div className="status-item d-flex justify-content-between align-items-center py-2">
+                    <span className="fw-semibold">API</span>
+                    <span className="badge bg-success">Hoạt động</span>
+                  </div>
+                  <div className="status-item d-flex justify-content-between align-items-center py-2">
+                    <span className="fw-semibold">Bảo mật</span>
+                    <span className="badge bg-warning">Cần kiểm tra</span>
+                  </div>
+                </div>
+              </div>
+              <div className="col-lg-6 mb-4 mt-5">
+                <div className="performance-card shadow-lg border-0 rounded-4 p-4" style={{background: 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)'}}>
+                  <h5 className="fw-bold mb-3" style={{color: '#1a5bb8'}}>Hiệu Suất</h5>
+                  <div className="performance-item mb-3">
+                    <div className="d-flex justify-content-between mb-1">
+                      <span className="fw-semibold">CPU</span>
+                      <span className="text-muted">45%</span>
+                    </div>
+                    <div className="progress" style={{height: 8}}>
+                      <div className="progress-bar bg-success" style={{width: '45%'}}></div>
+                    </div>
+                  </div>
+                  <div className="performance-item mb-3">
+                    <div className="d-flex justify-content-between mb-1">
+                      <span className="fw-semibold">RAM</span>
+                      <span className="text-muted">62%</span>
+                    </div>
+                    <div className="progress" style={{height: 8}}>
+                      <div className="progress-bar bg-warning" style={{width: '62%'}}></div>
+                    </div>
+                  </div>
+                  <div className="performance-item mb-3">
+                    <div className="d-flex justify-content-between mb-1">
+                      <span className="fw-semibold">Lưu trữ</span>
+                      <span className="text-muted">28%</span>
+                    </div>
+                    <div className="progress" style={{height: 8}}>
+                      <div className="progress-bar bg-info" style={{width: '28%'}}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

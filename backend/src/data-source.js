@@ -17,6 +17,10 @@ const TourRating = require("./models/TourRating");
 const ArticleLike = require("./models/ArticleLike");
 const ArticleComment = require("./models/ArticleComment");
 const Booking = require("./models/Booking");
+const Hotel = require("./models/Hotel");
+const Restaurant = require("./models/Restaurant");
+const HotelImage = require("./models/HotelImage");
+const RestaurantImage = require("./models/RestaurantImage");
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -45,9 +49,13 @@ const AppDataSource = new DataSource({
     ArticleLike,
     ArticleComment,
     Booking,
+    Hotel,
+    Restaurant,
+    HotelImage,
+    RestaurantImage,
   ],
   migrations: [
-    "src/migrations/1752135212273-addCommentIdToNotification.js",
+    "src/migrations/",
   ],
   subscribers: [],
 });

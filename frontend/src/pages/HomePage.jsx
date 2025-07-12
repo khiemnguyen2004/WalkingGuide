@@ -34,6 +34,8 @@ function HomePage() {
   const [places, setPlaces] = useState([]);
   const [tours, setTours] = useState([]);
   const [articles, setArticles] = useState([]);
+  const [hotels, setHotels] = useState([]);
+  const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showManual, setShowManual] = useState(false);
@@ -46,6 +48,8 @@ function HomePage() {
   const [placeForDetailMap, setPlaceForDetailMap] = useState(null);
   const [showAllPlaces, setShowAllPlaces] = useState(false);
   const [showAllTours, setShowAllTours] = useState(false);
+  const [showAllHotels, setShowAllHotels] = useState(false);
+  const [showAllRestaurants, setShowAllRestaurants] = useState(false);
   const mapRef = useRef();
   const [showManualModal, setShowManualModal] = useState(false);
   const [showAutoModal, setShowAutoModal] = useState(false);
@@ -83,14 +87,18 @@ function HomePage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [placesRes, toursRes, articlesRes] = await Promise.all([
+        const [placesRes, toursRes, articlesRes, hotelsRes, restaurantsRes] = await Promise.all([
           axios.get("http://localhost:3000/api/places"),
           axios.get("http://localhost:3000/api/tours"),
           axios.get("http://localhost:3000/api/articles"),
+          axios.get("http://localhost:3000/api/hotels"),
+          axios.get("http://localhost:3000/api/restaurants"),
         ]);
         setPlaces(placesRes.data);
         setTours(toursRes.data);
         setArticles(articlesRes.data);
+        setHotels(hotelsRes.data.data); // Fix: access the data property
+        setRestaurants(restaurantsRes.data.data); // Fix: access the data property
       } catch (err) {
         setError("Không thể tải dữ liệu. Vui lòng thử lại.");
       } finally {
@@ -115,6 +123,16 @@ function HomePage() {
   // Sort articles by updated_at descending to show recently updated articles first
   const sortedArticles = Array.isArray(articles)
     ? [...articles].sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))
+    : [];
+
+  // Sort hotels by rating descending to show highly rated hotels first
+  const sortedHotels = Array.isArray(hotels)
+    ? [...hotels].sort((a, b) => (b.rating || 0) - (a.rating || 0))
+    : [];
+
+  // Sort restaurants by rating descending to show highly rated restaurants first
+  const sortedRestaurants = Array.isArray(restaurants)
+    ? [...restaurants].sort((a, b) => (b.rating || 0) - (a.rating || 0))
     : [];
 
   // Extract unique cities from places
@@ -603,6 +621,412 @@ function HomePage() {
                 </>
               )}
             </section>
+            <hr className="my-5 luxury-divider" />
+            
+            {/* Hotels Section */}
+            <section className="cards-section mb-6">
+              <h2 className="h4 mb-4 fw-bold luxury-section-title">
+                <i className="bi bi-building me-2"></i>
+                {t('Top Hotels')}
+              </h2>
+              {sortedHotels.length === 0 ? (
+                <p className="text-muted">{t('No hotels to display.')}</p>
+              ) : showAllHotels ? (
+                <>
+                  <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {sortedHotels.map((hotel) => (
+                      <div className="col" key={hotel.id}>
+                        <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                          <div className="position-relative">
+                            {hotel.images && hotel.images.length > 0 ? (
+                              <div id={`hotelCarousel${hotel.id}`} className="carousel slide" data-bs-ride="false">
+                                <div className="carousel-inner">
+                                  {hotel.images.map((image, index) => (
+                                    <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
+                                      <img
+                                        src={image.image_url}
+                                        alt={image.caption || hotel.name}
+                                        className="card-img-top luxury-img-top"
+                                        style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                        onError={(e) => { e.target.src = "/default-hotel.jpg"; }}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                                {hotel.images.length > 1 && (
+                                  <>
+                                    <button className="carousel-control-prev" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="prev">
+                                      <span className="carousel-control-prev-icon"></span>
+                                    </button>
+                                    <button className="carousel-control-next" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="next">
+                                      <span className="carousel-control-next-icon"></span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            ) : (
+                              <div 
+                                className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                              >
+                                <i className="bi bi-building"></i>
+                              </div>
+                            )}
+                            <div className="position-absolute top-0 end-0 m-2">
+                              <span className="badge bg-warning text-dark">
+                                {hotel.stars} <i className="bi bi-star-fill"></i>
+                              </span>
+                            </div>
+                          </div>
+                          <div className="card-body luxury-card-body">
+                            <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{hotel.name}</h3>
+                            {hotel.city && (
+                              <p className="card-text text-primary mb-1 small">
+                                <i className="bi bi-geo-alt-fill me-1"></i>
+                                {hotel.city}
+                              </p>
+                            )}
+                            <p className="card-text text-muted mb-2 luxury-desc">
+                              {hotel.description
+                                ? `${hotel.description.substring(0, 100)}...`
+                                : t("No description available")}
+                            </p>
+                            <div className="mb-2">
+                              <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                              <span style={{ fontWeight: 600, marginLeft: 4 }}>{hotel.rating ? hotel.rating.toFixed(1) : '0.0'}</span>
+                              <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                            </div>
+                            {hotel.price_range && (
+                              <p className="card-text text-muted small mb-0">
+                                <span className="luxury-money">💰</span> {hotel.price_range}
+                                {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="d-flex justify-content-center mt-4">
+                    <button
+                      className="btn btn-main btn-lg px-5"
+                      onClick={() => setShowAllHotels(false)}
+                    >
+                      {t('Show Less')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div id="hotelsCarousel" className="carousel slide" data-bs-ride="carousel">
+                    <div className="carousel-inner">
+                      {chunkArray(sortedHotels, 3).map((group, idx) => (
+                        <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(hotel => hotel.id).join('-')}>
+                          <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
+                            {group.map((hotel) => (
+                              <div className="col" key={hotel.id}>
+                                <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                                  <div className="position-relative">
+                                    {hotel.images && hotel.images.length > 0 ? (
+                                      <div id={`hotelCarousel${hotel.id}`} className="carousel slide" data-bs-ride="false">
+                                        <div className="carousel-inner">
+                                          {hotel.images.map((image, index) => (
+                                            <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
+                                              <img
+                                                src={image.image_url}
+                                                alt={image.caption || hotel.name}
+                                                className="card-img-top luxury-img-top"
+                                                style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                                onError={(e) => { e.target.src = "/default-hotel.jpg"; }}
+                                              />
+                                            </div>
+                                          ))}
+                                        </div>
+                                        {hotel.images.length > 1 && (
+                                          <>
+                                            <button className="carousel-control-prev" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="prev">
+                                              <span className="carousel-control-prev-icon"></span>
+                                            </button>
+                                            <button className="carousel-control-next" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="next">
+                                              <span className="carousel-control-next-icon"></span>
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div 
+                                        className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                        style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                                      >
+                                        <i className="bi bi-building"></i>
+                                      </div>
+                                    )}
+                                    <div className="position-absolute top-0 end-0 m-2">
+                                      <span className="badge bg-warning text-dark">
+                                        {hotel.stars} <i className="bi bi-star-fill"></i>
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="card-body luxury-card-body">
+                                    <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{hotel.name}</h3>
+                                    {hotel.city && (
+                                      <p className="card-text text-primary mb-1 small">
+                                        <i className="bi bi-geo-alt-fill me-1"></i>
+                                        {hotel.city}
+                                      </p>
+                                    )}
+                                    <p className="card-text text-muted mb-2 luxury-desc">
+                                      {hotel.description
+                                        ? `${hotel.description.substring(0, 100)}...`
+                                        : t("No description available")}
+                                    </p>
+                                    <div className="mb-2">
+                                      <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                                      <span style={{ fontWeight: 600, marginLeft: 4 }}>{hotel.rating ? hotel.rating.toFixed(1) : '0.0'}</span>
+                                      <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                                    </div>
+                                    {hotel.price_range && (
+                                      <p className="card-text text-muted small mb-0">
+                                        <span className="luxury-money">💰</span> {hotel.price_range}
+                                        {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="carousel-control-prev" type="button" data-bs-target="#hotelsCarousel" data-bs-slide="prev"
+                      style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                      <span className="visually-hidden">Previous</span>
+                    </button>
+                    <button className="carousel-control-next" type="button" data-bs-target="#hotelsCarousel" data-bs-slide="next"
+                      style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                      <span className="visually-hidden">Next</span>
+                    </button>
+                    <div className="d-flex justify-content-center mt-4">
+                      <button
+                        className="btn btn-main btn-lg px-5"
+                        onClick={() => setShowAllHotels(true)}
+                      >
+                        {t('View All Hotels')}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </section>
+            
+            <hr className="my-5 luxury-divider" />
+            
+            {/* Restaurants Section */}
+            <section className="cards-section mb-6">
+              <h2 className="h4 mb-4 fw-bold luxury-section-title">
+                <i className="bi bi-cup-hot me-2"></i>
+                {t('Top Restaurants')}
+              </h2>
+              {sortedRestaurants.length === 0 ? (
+                <p className="text-muted">{t('No restaurants to display.')}</p>
+              ) : showAllRestaurants ? (
+                <>
+                  <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {sortedRestaurants.map((restaurant) => (
+                      <div className="col" key={restaurant.id}>
+                        <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                          <div className="position-relative">
+                            {restaurant.images && restaurant.images.length > 0 ? (
+                              <div id={`restaurantCarousel${restaurant.id}`} className="carousel slide" data-bs-ride="false">
+                                <div className="carousel-inner">
+                                  {restaurant.images.map((image, index) => (
+                                    <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
+                                      <img
+                                        src={image.image_url}
+                                        alt={image.caption || restaurant.name}
+                                        className="card-img-top luxury-img-top"
+                                        style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                        onError={(e) => { e.target.src = "/default-restaurant.jpg"; }}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                                {restaurant.images.length > 1 && (
+                                  <>
+                                    <button className="carousel-control-prev" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="prev">
+                                      <span className="carousel-control-prev-icon"></span>
+                                    </button>
+                                    <button className="carousel-control-next" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="next">
+                                      <span className="carousel-control-next-icon"></span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            ) : (
+                              <div 
+                                className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}
+                              >
+                                <i className="bi bi-cup-hot"></i>
+                              </div>
+                            )}
+                            {restaurant.cuisine_type && (
+                              <div className="position-absolute top-0 start-0 m-2">
+                                <span className="badge bg-primary">
+                                  {restaurant.cuisine_type}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="card-body luxury-card-body">
+                            <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{restaurant.name}</h3>
+                            {restaurant.city && (
+                              <p className="card-text text-primary mb-1 small">
+                                <i className="bi bi-geo-alt-fill me-1"></i>
+                                {restaurant.city}
+                              </p>
+                            )}
+                            <p className="card-text text-muted mb-2 luxury-desc">
+                              {restaurant.description
+                                ? `${restaurant.description.substring(0, 100)}...`
+                                : t("No description available")}
+                            </p>
+                            <div className="mb-2">
+                              <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                              <span style={{ fontWeight: 600, marginLeft: 4 }}>{restaurant.rating ? restaurant.rating.toFixed(1) : '0.0'}</span>
+                              <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                            </div>
+                            {restaurant.price_range && (
+                              <p className="card-text text-muted small mb-0">
+                                <span className="luxury-money">💰</span> {restaurant.price_range}
+                                {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="d-flex justify-content-center mt-4">
+                    <button
+                      className="btn btn-main btn-lg px-5"
+                      onClick={() => setShowAllRestaurants(false)}
+                    >
+                      {t('Show Less')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div id="restaurantsCarousel" className="carousel slide" data-bs-ride="carousel">
+                    <div className="carousel-inner">
+                      {chunkArray(sortedRestaurants, 3).map((group, idx) => (
+                        <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(restaurant => restaurant.id).join('-')}>
+                          <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
+                            {group.map((restaurant) => (
+                              <div className="col" key={restaurant.id}>
+                                <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                                  <div className="position-relative">
+                                    {restaurant.images && restaurant.images.length > 0 ? (
+                                      <div id={`restaurantCarousel${restaurant.id}`} className="carousel slide" data-bs-ride="false">
+                                        <div className="carousel-inner">
+                                          {restaurant.images.map((image, index) => (
+                                            <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
+                                              <img
+                                                src={image.image_url}
+                                                alt={image.caption || restaurant.name}
+                                                className="card-img-top luxury-img-top"
+                                                style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                                onError={(e) => { e.target.src = "/default-restaurant.jpg"; }}
+                                              />
+                                            </div>
+                                          ))}
+                                        </div>
+                                        {restaurant.images.length > 1 && (
+                                          <>
+                                            <button className="carousel-control-prev" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="prev">
+                                              <span className="carousel-control-prev-icon"></span>
+                                            </button>
+                                            <button className="carousel-control-next" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="next">
+                                              <span className="carousel-control-next-icon"></span>
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div 
+                                        className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                        style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}
+                                      >
+                                        <i className="bi bi-cup-hot"></i>
+                                      </div>
+                                    )}
+                                    {restaurant.cuisine_type && (
+                                      <div className="position-absolute top-0 start-0 m-2">
+                                        <span className="badge bg-primary">
+                                          {restaurant.cuisine_type}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="card-body luxury-card-body">
+                                    <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{restaurant.name}</h3>
+                                    {restaurant.city && (
+                                      <p className="card-text text-primary mb-1 small">
+                                        <i className="bi bi-geo-alt-fill me-1"></i>
+                                        {restaurant.city}
+                                      </p>
+                                    )}
+                                    <p className="card-text text-muted mb-2 luxury-desc">
+                                      {restaurant.description
+                                        ? `${restaurant.description.substring(0, 100)}...`
+                                        : t("No description available")}
+                                    </p>
+                                    <div className="mb-2">
+                                      <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                                      <span style={{ fontWeight: 600, marginLeft: 4 }}>{restaurant.rating ? restaurant.rating.toFixed(1) : '0.0'}</span>
+                                      <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                                    </div>
+                                    {restaurant.price_range && (
+                                      <p className="card-text text-muted small mb-0">
+                                        <span className="luxury-money">💰</span> {restaurant.price_range}
+                                        {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="carousel-control-prev" type="button" data-bs-target="#restaurantsCarousel" data-bs-slide="prev"
+                      style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                      <span className="visually-hidden">Previous</span>
+                    </button>
+                    <button className="carousel-control-next" type="button" data-bs-target="#restaurantsCarousel" data-bs-slide="next"
+                      style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                      <span className="visually-hidden">Next</span>
+                    </button>
+                    <div className="d-flex justify-content-center mt-4">
+                      <button
+                        className="btn btn-main btn-lg px-5"
+                        onClick={() => setShowAllRestaurants(true)}
+                      >
+                        {t('View All Restaurants')}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </section>
+            
             {/* Fast Plan Banner Section with Winding Route and Random Places */}
             <section className="autoplanner-banner-section my-5 py-5 text-center rounded-4 shadow-lg" style={{
               background: `url('/src/images/banner2.jpg') center/cover no-repeat`,
