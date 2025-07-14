@@ -4,6 +4,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import '../css/PlaceDetailMap.css';
+import hotelIconSvg from '../assets/hotel-marker.svg';
+import restaurantIconSvg from '../assets/restaurant-marker.svg';
 
 // Fix for default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -83,6 +85,19 @@ const currentLocationIcon = new L.Icon({
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
+});
+
+const hotelIcon = new L.Icon({
+  iconUrl: hotelIconSvg,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
+});
+const restaurantIcon = new L.Icon({
+  iconUrl: restaurantIconSvg,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
 });
 
 // Component to handle map updates
@@ -189,6 +204,8 @@ function PlaceDetailMap({ place, onClose }) {
   const mapRef = useRef(null);
   const [showLocationAlert, setShowLocationAlert] = useState(false);
   const [locationAlertMessage, setLocationAlertMessage] = useState('');
+  const [hotels, setHotels] = useState([]);
+  const [restaurants, setRestaurants] = useState([]);
 
   // Initialize selectedPlace with the passed place prop
   useEffect(() => {
@@ -245,6 +262,28 @@ function PlaceDetailMap({ place, onClose }) {
     };
     fetchPlaces();
   }, [selectedPlace]);
+
+  // Fetch hotels and restaurants
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        const res = await axios.get('http://localhost:3000/api/hotels');
+        setHotels(res.data.data || res.data);
+      } catch (error) {
+        setHotels([]);
+      }
+    };
+    const fetchRestaurants = async () => {
+      try {
+        const res = await axios.get('http://localhost:3000/api/restaurants');
+        setRestaurants(res.data.data || res.data);
+      } catch (error) {
+        setRestaurants([]);
+      }
+    };
+    fetchHotels();
+    fetchRestaurants();
+  }, []);
 
   // Find nearest place to current location
   const findNearestPlace = (location) => {
@@ -448,6 +487,34 @@ function PlaceDetailMap({ place, onClose }) {
                   <h6 className="text-primary mb-1">{place.name}</h6>
                   {place.address && <p className="mb-1 small">{place.address}</p>}
                   {place.city && <p className="mb-0 text-muted small">{place.city}</p>}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+          {/* Hotel markers */}
+          {hotels.filter(h => h.latitude && h.longitude).map((hotel) => (
+            <Marker key={`hotel-${hotel.id}`} position={[hotel.latitude, hotel.longitude]} icon={hotelIcon}>
+              <Popup>
+                <div>
+                  <strong>{hotel.name}</strong><br/>
+                  {hotel.address && <span>{hotel.address}<br/></span>}
+                  {hotel.city && <span>{hotel.city}<br/></span>}
+                  {hotel.price_range && <span>Giá: {hotel.price_range}<br/></span>}
+                  {hotel.rating && <span>Đánh giá: {hotel.rating.toFixed(1)} / 5</span>}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+          {/* Restaurant markers */}
+          {restaurants.filter(r => r.latitude && r.longitude).map((restaurant) => (
+            <Marker key={`restaurant-${restaurant.id}`} position={[restaurant.latitude, restaurant.longitude]} icon={restaurantIcon}>
+              <Popup>
+                <div>
+                  <strong>{restaurant.name}</strong><br/>
+                  {restaurant.address && <span>{restaurant.address}<br/></span>}
+                  {restaurant.city && <span>{restaurant.city}<br/></span>}
+                  {restaurant.price_range && <span>Giá: {restaurant.price_range}<br/></span>}
+                  {restaurant.rating && <span>Đánh giá: {restaurant.rating.toFixed(1)} / 5</span>}
                 </div>
               </Popup>
             </Marker>

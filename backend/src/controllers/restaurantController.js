@@ -149,6 +149,9 @@ const updateRestaurant = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
+    console.log('Update request for restaurant ID:', id);
+    console.log('Update data:', JSON.stringify(updateData, null, 2));
+
     const restaurant = await Restaurant.findOne({
       where: { id: parseInt(id) }
     });
@@ -160,29 +163,45 @@ const updateRestaurant = async (req, res) => {
       });
     }
 
+    // Remove images from updateData to handle separately
+    const { images, ...restaurantUpdateData } = updateData;
+
     // Update restaurant data
-    Object.assign(restaurant, updateData);
+    Object.assign(restaurant, restaurantUpdateData);
     restaurant.updated_at = new Date();
     
     await Restaurant.save(restaurant);
 
     // Update images if provided
-    if (updateData.images && Array.isArray(updateData.images)) {
+    if (images && Array.isArray(images)) {
+      console.log('Processing images:', images.length);
+      
       // Delete existing images
       await RestaurantImage.delete({ restaurant_id: parseInt(id) });
+      console.log('Deleted existing images for restaurant:', id);
 
       // Add new images
-      const restaurantImages = updateData.images.map((image, index) => {
-        return RestaurantImage.create({
-          restaurant_id: parseInt(id),
-          image_url: image.url,
-          caption: image.caption || "",
-          is_primary: image.is_primary || (index === 0),
-          sort_order: index
+      if (images.length > 0) {
+        const restaurantImages = images.map((image, index) => {
+          console.log('Creating image:', index, image);
+          
+          if (!image.url) {
+            throw new Error(`Image at index ${index} is missing URL`);
+          }
+          
+          return RestaurantImage.create({
+            restaurant_id: parseInt(id),
+            image_url: image.url,
+            caption: image.caption || "",
+            is_primary: image.is_primary || (index === 0),
+            sort_order: index
+          });
         });
-      });
 
-      await RestaurantImage.save(restaurantImages);
+        console.log('Saving restaurant images:', restaurantImages.length);
+        await RestaurantImage.save(restaurantImages);
+        console.log('Successfully saved restaurant images');
+      }
     }
 
     // Fetch updated restaurant with images
@@ -198,6 +217,7 @@ const updateRestaurant = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating restaurant:", error);
+    console.error("Error stack:", error.stack);
     res.status(500).json({
       success: false,
       message: "Failed to update restaurant",

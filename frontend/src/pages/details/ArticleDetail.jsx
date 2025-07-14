@@ -6,6 +6,7 @@ import Footer from '../../components/Footer.jsx';
 import userApi from '../../api/userApi';
 import articleApi from '../../api/articleApi';
 import { AuthContext } from '../../contexts/AuthContext.jsx';
+import ReportArticleModal from '../../components/ReportArticleModal';
 
 const highlightStyle = `
   .highlight-comment {
@@ -33,6 +34,10 @@ const ArticleDetail = () => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState("");
   const location = useLocation();
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportError, setReportError] = useState(null);
+  const [reportSuccess, setReportSuccess] = useState(false);
 
   useEffect(() => {
     if (!id || isNaN(id)) {
@@ -260,7 +265,14 @@ const ArticleDetail = () => {
       <main className="flex-grow-1">
         <div className="container mx-auto p-4 max-w-3xl">
           <div style={{ background: 'rgba(245, 250, 255, 0.95)', borderRadius: '1.5rem', boxShadow: '0 4px 24px 0 rgba(31, 38, 135, 0.10)', padding: '2.5rem 2rem', margin: '2rem 0' }}>
-            <h1 className="text-3xl font-bold mb-2 text-gray-800 text-center">{article.title}</h1>
+            {article && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <h2 style={{ margin: 0 }}>{article.title}</h2>
+                {user && (
+                  <button onClick={() => setReportOpen(true)} className="btn btn-outline-danger btn-sm">Báo cáo</button>
+                )}
+              </div>
+            )}
             {article.published_at && (
               <div className="text-center text-muted mb-2" style={{fontSize: '1rem'}}>
                 Đăng ngày: {new Date(article.published_at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -430,6 +442,44 @@ const ArticleDetail = () => {
       </div>
       <Footer />
       <style>{highlightStyle}</style>
+      <ReportArticleModal
+        open={reportOpen}
+        onClose={() => {
+          setReportOpen(false);
+          setReportError(null);
+          setReportSuccess(false);
+        }}
+        onSubmit={async (reason) => {
+          setReportSubmitting(true);
+          setReportError(null);
+          setReportSuccess(false);
+          try {
+            const res = await fetch(`http://localhost:3000/api/articles/${id}/report`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${user?.token}`,
+              },
+              body: JSON.stringify({ reason }),
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.message || 'Gửi báo cáo thất bại');
+            }
+            setReportSuccess(true);
+            setTimeout(() => setReportOpen(false), 1500);
+          } catch (err) {
+            setReportError(err.message);
+          } finally {
+            setReportSubmitting(false);
+          }
+        }}
+        submitting={reportSubmitting}
+        error={reportError}
+        success={reportSuccess}
+      />
+      {reportSuccess && <div style={{ color: 'green', marginTop: 8 }}>Report submitted!</div>}
+      {reportError && <div style={{ color: 'red', marginTop: 8 }}>{reportError}</div>}
     </div>
   );
 };

@@ -10,6 +10,8 @@ import axios from 'axios';
 import LikeButton from '../../components/LikeButton';
 import RatingStars from '../../components/RatingStars';
 import CommentSection from '../../components/CommentSection';
+import hotelIconSvg from '../../assets/hotel-marker.svg';
+import restaurantIconSvg from '../../assets/restaurant-marker.svg';
 
 // Fix for default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -86,6 +88,19 @@ const createCustomIcon = (place) => {
 const OTM_API_KEY = '5ae2e3f221c38a28845f05b61952da66ed7231df6303c387c3d2a08c';
 const OTM_BASE_URL = 'https://api.opentripmap.com/0.1/en/places';
 
+const hotelIcon = new L.Icon({
+  iconUrl: hotelIconSvg,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
+});
+const restaurantIcon = new L.Icon({
+  iconUrl: restaurantIconSvg,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
+});
+
 const PlaceDetail = () => {
   const [place, setPlace] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -106,6 +121,8 @@ const PlaceDetail = () => {
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [nearbyError, setNearbyError] = useState(null);
   const [nearbyDetails, setNearbyDetails] = useState({}); // xid -> details
+  const [hotels, setHotels] = useState([]);
+  const [restaurants, setRestaurants] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -126,6 +143,25 @@ const PlaceDetail = () => {
     fetchData();
     // Fetch all places for map markers
     axios.get('http://localhost:3000/api/places').then(res => setAllPlaces(res.data)).catch(() => setAllPlaces([]));
+    // Fetch hotels and restaurants from backend
+    const fetchHotels = async () => {
+      try {
+        const res = await axios.get('http://localhost:3000/api/hotels');
+        setHotels(res.data.data || res.data);
+      } catch (error) {
+        setHotels([]);
+      }
+    };
+    const fetchRestaurants = async () => {
+      try {
+        const res = await axios.get('http://localhost:3000/api/restaurants');
+        setRestaurants(res.data.data || res.data);
+      } catch (error) {
+        setRestaurants([]);
+      }
+    };
+    fetchHotels();
+    fetchRestaurants();
   }, [id]);
 
   useEffect(() => {
@@ -423,6 +459,64 @@ const PlaceDetail = () => {
                             <h5 className="text-primary mb-2">{p.name}</h5>
                             {p.address && <p className="mb-1 small">{p.address}</p>}
                             {p.city && <p className="mb-0 text-muted small">{p.city}</p>}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                    {/* Hotel markers (backend) */}
+                    {hotels.filter(h => h.latitude && h.longitude).map((hotel) => (
+                      <Marker key={`hotel-backend-${hotel.id}`} position={[hotel.latitude, hotel.longitude]} icon={hotelIcon}>
+                        <Popup>
+                          <div>
+                            <strong>{hotel.name}</strong><br/>
+                            {hotel.address && <span>{hotel.address}<br/></span>}
+                            {hotel.city && <span>{hotel.city}<br/></span>}
+                            {hotel.price_range && <span>Giá: {hotel.price_range}<br/></span>}
+                            {hotel.rating && <span>Đánh giá: {hotel.rating.toFixed(1)} / 5</span>}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                    {/* Restaurant markers (backend) */}
+                    {restaurants.filter(r => r.latitude && r.longitude).map((restaurant) => (
+                      <Marker key={`restaurant-backend-${restaurant.id}`} position={[restaurant.latitude, restaurant.longitude]} icon={restaurantIcon}>
+                        <Popup>
+                          <div>
+                            <strong>{restaurant.name}</strong><br/>
+                            {restaurant.address && <span>{restaurant.address}<br/></span>}
+                            {restaurant.city && <span>{restaurant.city}<br/></span>}
+                            {restaurant.price_range && <span>Giá: {restaurant.price_range}<br/></span>}
+                            {restaurant.rating && <span>Đánh giá: {restaurant.rating.toFixed(1)} / 5</span>}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                    {/* Hotel markers (OpenTripMap) */}
+                    {nearbyHotels.filter(h => h.geometry && h.geometry.coordinates).map((hotel, idx) => (
+                      <Marker
+                        key={`hotel-otm-${hotel.properties.xid}`}
+                        position={[hotel.geometry.coordinates[1], hotel.geometry.coordinates[0]]}
+                        icon={hotelIcon}
+                      >
+                        <Popup>
+                          <div>
+                            <strong>{hotel.properties.name || 'Khách sạn lân cận'}</strong><br/>
+                            {hotel.properties.address && <span>{Object.values(hotel.properties.address).join(', ')}<br/></span>}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                    {/* Restaurant markers (OpenTripMap) */}
+                    {nearbyRestaurants.filter(r => r.geometry && r.geometry.coordinates).map((restaurant, idx) => (
+                      <Marker
+                        key={`restaurant-otm-${restaurant.properties.xid}`}
+                        position={[restaurant.geometry.coordinates[1], restaurant.geometry.coordinates[0]]}
+                        icon={restaurantIcon}
+                      >
+                        <Popup>
+                          <div>
+                            <strong>{restaurant.properties.name || 'Nhà hàng lân cận'}</strong><br/>
+                            {restaurant.properties.address && <span>{Object.values(restaurant.properties.address).join(', ')}<br/></span>}
                           </div>
                         </Popup>
                       </Marker>

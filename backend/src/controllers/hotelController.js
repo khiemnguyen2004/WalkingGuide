@@ -145,6 +145,9 @@ const updateHotel = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
+    console.log('Update request for hotel ID:', id);
+    console.log('Update data:', JSON.stringify(updateData, null, 2));
+
     const hotel = await Hotel.findOne({
       where: { id: parseInt(id) }
     });
@@ -156,29 +159,45 @@ const updateHotel = async (req, res) => {
       });
     }
 
+    // Remove images from updateData to handle separately
+    const { images, ...hotelUpdateData } = updateData;
+
     // Update hotel data
-    Object.assign(hotel, updateData);
+    Object.assign(hotel, hotelUpdateData);
     hotel.updated_at = new Date();
     
     await Hotel.save(hotel);
 
     // Update images if provided
-    if (updateData.images && Array.isArray(updateData.images)) {
+    if (images && Array.isArray(images)) {
+      console.log('Processing images:', images.length);
+      
       // Delete existing images
       await HotelImage.delete({ hotel_id: parseInt(id) });
+      console.log('Deleted existing images for hotel:', id);
 
       // Add new images
-      const hotelImages = updateData.images.map((image, index) => {
-        return HotelImage.create({
-          hotel_id: parseInt(id),
-          image_url: image.url,
-          caption: image.caption || "",
-          is_primary: image.is_primary || (index === 0),
-          sort_order: index
+      if (images.length > 0) {
+        const hotelImages = images.map((image, index) => {
+          console.log('Creating image:', index, image);
+          
+          if (!image.url) {
+            throw new Error(`Image at index ${index} is missing URL`);
+          }
+          
+          return HotelImage.create({
+            hotel_id: parseInt(id),
+            image_url: image.url,
+            caption: image.caption || "",
+            is_primary: image.is_primary || (index === 0),
+            sort_order: index
+          });
         });
-      });
 
-      await HotelImage.save(hotelImages);
+        console.log('Saving hotel images:', hotelImages.length);
+        await HotelImage.save(hotelImages);
+        console.log('Successfully saved hotel images');
+      }
     }
 
     // Fetch updated hotel with images
@@ -194,6 +213,7 @@ const updateHotel = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating hotel:", error);
+    console.error("Error stack:", error.stack);
     res.status(500).json({
       success: false,
       message: "Failed to update hotel",

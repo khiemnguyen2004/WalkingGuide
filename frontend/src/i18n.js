@@ -6,7 +6,7 @@ const resources = {
     translation: {
       'Trang chủ': 'Home',
       'Khám phá': 'Explore',
-      'Tour của tôi': 'My Tours',
+      'Chuyến đi của bạn': 'Your Bookings',
       'Trang cá nhân': 'Profile',
       'Đăng nhập': 'Login',
       'Đăng ký': 'Register',
@@ -27,7 +27,7 @@ const resources = {
     translation: {
       'Home': 'Trang chủ',
       'Explore': 'Khám phá',
-      'My Tours': 'Tour của bạn',
+      'Your Bookings': 'Chuyến đi của bạn',
       'Profile': 'Hồ sơ',
       'Login': 'Đăng nhập',
       'Register': 'Đăng ký',

@@ -60,6 +60,16 @@ function HomePage() {
   const [dateError, setDateError] = useState("");
   const { user } = useAuth();
 
+  // Helper function to get proper image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http')) {
+      return imageUrl; // Already absolute URL
+    }
+    // Prepend backend URL for relative paths
+    return `http://localhost:3000${imageUrl}`;
+  };
+
   const handleBookTour = async () => {
     setDateError("");
     if (!startDate || !endDate) {
@@ -310,6 +320,8 @@ function HomePage() {
                       lng: p.longitude,
                         image_url: p.image_url,
                     }))}
+                    hotels={hotels}
+                    restaurants={restaurants}
                     className="w-100 h-100"
                     selectedPlace={selectedPlace}
                   />
@@ -644,7 +656,7 @@ function HomePage() {
                                   {hotel.images.map((image, index) => (
                                     <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
                                       <img
-                                        src={image.image_url}
+                                        src={getImageUrl(image.image_url)}
                                         alt={image.caption || hotel.name}
                                         className="card-img-top luxury-img-top"
                                         style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
@@ -733,7 +745,7 @@ function HomePage() {
                                           {hotel.images.map((image, index) => (
                                             <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
                                               <img
-                                                src={image.image_url}
+                                                src={getImageUrl(image.image_url)}
                                                 alt={image.caption || hotel.name}
                                                 className="card-img-top luxury-img-top"
                                                 style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
@@ -845,7 +857,7 @@ function HomePage() {
                                   {restaurant.images.map((image, index) => (
                                     <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
                                       <img
-                                        src={image.image_url}
+                                        src={getImageUrl(image.image_url)}
                                         alt={image.caption || restaurant.name}
                                         className="card-img-top luxury-img-top"
                                         style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
@@ -936,7 +948,7 @@ function HomePage() {
                                           {restaurant.images.map((image, index) => (
                                             <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
                                               <img
-                                                src={image.image_url}
+                                                src={getImageUrl(image.image_url)}
                                                 alt={image.caption || restaurant.name}
                                                 className="card-img-top luxury-img-top"
                                                 style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}

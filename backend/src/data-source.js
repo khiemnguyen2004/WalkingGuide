@@ -21,6 +21,7 @@ const Hotel = require("./models/Hotel");
 const Restaurant = require("./models/Restaurant");
 const HotelImage = require("./models/HotelImage");
 const RestaurantImage = require("./models/RestaurantImage");
+const ArticleReport = require("./models/ArticleReport");
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -39,6 +40,7 @@ const AppDataSource = new DataSource({
     Tour,
     TourStep,
     Article,
+    ArticleReport,
     Comment,
     FavoriteTour,
     Notification,
@@ -55,7 +57,7 @@ const AppDataSource = new DataSource({
     RestaurantImage,
   ],
   migrations: [
-    "src/migrations/",
+    "src/migrations/1752550000000-create-article-reports.js",
   ],
   subscribers: [],
 });

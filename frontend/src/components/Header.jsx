@@ -97,7 +97,7 @@ function Header() {
           {user && (
             <Link to="/my-tours" className="btn d-flex align-items-center me-2 text-decoration-none" style={{gap: 8}}>
               <i className="bi bi-person-walking" style={{fontSize: 20, color: '#1a5bb8'}}></i>
-              <span style={{color: '#1a5bb8'}}>{t('My Tours')}</span>
+              <span style={{color: '#1a5bb8'}}>{t('Your Bookings')}</span>
             </Link>
           )}
           {user && <NotificationIcon />}

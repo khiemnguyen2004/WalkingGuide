@@ -737,7 +737,7 @@ function MyTours() {
                                   {place?.name || `Địa điểm #${step.place_id}`}
                           </Link>
                                 </div>
-                        <div className="small text-muted mb-1" style={{fontStyle: 'italic'}}>
+                        <div className="small text-muted mb-1">
                           {place?.description ? `${place.description.replace(/<[^>]+>/g, '').slice(0, 100)}${place.description.length > 100 ? '...' : ''}` : 'Chưa có mô tả'}
                               </div>
                         <div className="d-flex gap-2 flex-wrap align-items-center mt-1">

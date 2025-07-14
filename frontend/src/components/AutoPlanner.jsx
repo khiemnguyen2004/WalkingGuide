@@ -4,6 +4,7 @@ import { AuthContext } from "../contexts/AuthContext.jsx";
 import Header from "./Header.jsx";
 import Footer from "./Footer.jsx";
 import CityAutocomplete from "./CityAutocomplete.jsx";
+import LocationAutocomplete from "./LocationAutocomplete.jsx";
 import placeApi from "../api/placeApi.js";
 import "../css/luxury-home.css";
 
@@ -75,18 +76,18 @@ const AutoPlanner = ({ noLayout }) => {
     }
 
     try {
-      // Get coordinates for the city using Nominatim
+      // Get coordinates for the city using backend geocoding
       const geocodeResponse = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(selectedCity)}&countrycodes=vn&limit=1`
+        `http://localhost:3000/api/geocoding/coordinates?q=${encodeURIComponent(selectedCity)}&limit=1`
       );
       const geocodeData = await geocodeResponse.json();
       
       let latitude = 10.8231; // Default to Ho Chi Minh City
       let longitude = 106.6297;
       
-      if (geocodeData.length > 0) {
-        latitude = parseFloat(geocodeData[0].lat);
-        longitude = parseFloat(geocodeData[0].lon);
+      if (geocodeData.success && geocodeData.data) {
+        latitude = geocodeData.data.latitude;
+        longitude = geocodeData.data.longitude;
       }
 
       const placeData = {
@@ -284,16 +285,15 @@ const AutoPlanner = ({ noLayout }) => {
         <div className="luxury-card-body">
           <div className="row g-3">
             <div className="col-md-6">
-              <label className="form-label fw-bold">Tên tour</label>
-              <input
-                className="form-control"
+              <label className="form-label fw-bold">Khởi hành từ</label>
+              <LocationAutocomplete
                 value={tourName}
-                onChange={e => setTourName(e.target.value)}
-                placeholder="Nhập tên tour (tuỳ chọn)"
+                onChange={setTourName}
+                placeholder="Nhập điểm khởi hành"
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label fw-bold">Thành phố</label>
+              <label className="form-label fw-bold">Thành phố muốn đi</label>
               <CityAutocomplete
                 value={selectedCity}
                 onChange={handleCityChange}
@@ -301,22 +301,69 @@ const AutoPlanner = ({ noLayout }) => {
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label fw-bold">Ngày bắt đầu</label>
-              <input
-                type="date"
-                className="form-control"
-                value={start_time}
-                onChange={e => setStart_time(e.target.value)}
-              />
+              <label className="form-label fw-bold">
+                <i className="bi bi-calendar-event me-2 text-primary"></i>
+                Ngày bắt đầu
+              </label>
+              <div className="position-relative">
+                <input
+                  type="date"
+                  className="form-control"
+                  value={start_time}
+                  onChange={e => setStart_time(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+                {start_time && (
+                  <div className="form-text mt-1">
+                    <i className="bi bi-info-circle me-1"></i>
+                    {new Date(start_time).toLocaleDateString('vi-VN', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="col-md-6">
-              <label className="form-label fw-bold">Ngày kết thúc</label>
-              <input
-                type="date"
-                className="form-control"
-                value={end_time}
-                onChange={e => setEnd_time(e.target.value)}
-              />
+              <label className="form-label fw-bold">
+                <i className="bi bi-calendar-check me-2 text-primary"></i>
+                Ngày kết thúc
+              </label>
+              <div className="position-relative">
+                <input
+                  type="date"
+                  className="form-control"
+                  value={end_time}
+                  onChange={e => setEnd_time(e.target.value)}
+                  min={start_time || new Date().toISOString().split('T')[0]}
+                  disabled={!start_time}
+                />
+                {end_time && (
+                  <div className="form-text mt-1">
+                    <i className="bi bi-info-circle me-1"></i>
+                    {new Date(end_time).toLocaleDateString('vi-VN', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })} ({(() => {
+                      const startDate = new Date(start_time);
+                      const endDate = new Date(end_time);
+                      const diffTime = Math.abs(endDate - startDate);
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      return Math.max(1, diffDays);
+                    })()} ngày)
+                  </div>
+                )}
+                {!start_time && (
+                  <div className="form-text mt-1">
+                    <i className="bi bi-exclamation-triangle me-1 text-warning"></i>
+                    Vui lòng chọn ngày bắt đầu trước
+                  </div>
+                )}
+              </div>
             </div>
                         <div className="col-md-6">
               <label className="form-label fw-bold">Bạn thích đi đâu?</label>
@@ -750,7 +797,7 @@ const AutoPlanner = ({ noLayout }) => {
                   <button type="button" className="btn-close" onClick={() => setShowSuccessModal(false)}></button>
                 </div>
                 <div className="modal-body">
-                  <p>Bạn đã tạo tour <b>{createdTour.name}</b> thành công.</p>
+                  <p>Bạn đã tạo tour bắt đầu từ <b>{createdTour.name}</b> thành công.</p>
                   <div className="mb-3">
                     <b>Thời gian:</b> {createdTour.start_time || "-"} đến {createdTour.end_time || "-"}
                   </div>

@@ -10,7 +10,13 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
+    const token = localStorage.getItem("token");
+    if (!token || token === 'null') return null;
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      return { ...parsed, token };
+    }
+    return null;
   });
   const [notificationRefreshTrigger, setNotificationRefreshTrigger] = useState(0);
 
@@ -40,7 +46,8 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   const login = (userData) => {
-    setUser(userData);
+    const token = localStorage.getItem("token");
+    setUser({ ...userData, token });
   };
 
   const logout = () => {

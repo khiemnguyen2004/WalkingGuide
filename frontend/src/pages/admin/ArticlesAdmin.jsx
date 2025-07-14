@@ -19,14 +19,29 @@ function ArticlesAdmin() {
   const [alertMessage, setAlertMessage] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [articleToDelete, setArticleToDelete] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [reportActionStatus, setReportActionStatus] = useState(null);
 
   useEffect(() => {
     fetchArticles();
+    fetchReports();
   }, []);
 
   const fetchArticles = async () => {
     const res = await axios.get("http://localhost:3000/api/articles");
     setArticles(res.data);
+  };
+
+  const fetchReports = async () => {
+    try {
+      console.log('Admin fetching reports with token:', user?.token);
+      const res = await axios.get('http://localhost:3000/api/article-reports', {
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      setReports(res.data);
+    } catch (e) {
+      setReports([]);
+    }
   };
 
   const handleCreate = async () => {
@@ -107,6 +122,33 @@ function ArticlesAdmin() {
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setArticleToDelete(null);
+  };
+
+  const handleReportStatus = async (reportId, status) => {
+    try {
+      console.log('Admin updating report with token:', user?.token, 'role:', user?.role);
+      await axios.patch(`http://localhost:3000/api/article-reports/${reportId}`, { status }, {
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      setReportActionStatus('success');
+      fetchReports();
+    } catch (e) {
+      setReportActionStatus('error');
+    }
+  };
+
+  const handleDeleteReportedArticle = async (articleId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này? Hành động này không thể hoàn tác.')) return;
+    try {
+      await axios.delete(`http://localhost:3000/api/articles/${articleId}`, {
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      fetchArticles();
+      fetchReports();
+      setReportActionStatus('success');
+    } catch (e) {
+      setReportActionStatus('error');
+    }
   };
 
   const resetForm = () => {
@@ -278,6 +320,60 @@ function ArticlesAdmin() {
                                 Xóa
                               </button>
                             </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Article Reports Section */}
+            <div className="card mt-5">
+              <div className="card-header">
+                <h5>Báo cáo bài viết</h5>
+              </div>
+              <div className="card-body">
+                {reportActionStatus === 'success' && <div className="alert alert-success">Cập nhật trạng thái thành công!</div>}
+                {reportActionStatus === 'error' && <div className="alert alert-danger">Có lỗi khi cập nhật trạng thái.</div>}
+                <div className="table-responsive">
+                  <table className="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Bài viết</th>
+                        <th>Người báo cáo</th>
+                        <th>Lý do</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th>Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reports
+                        .filter(report => report.status === 'pending')
+                        .filter(report => articles.some(a => a.article_id === report.article_id))
+                        .length === 0 && (
+                        <tr><td colSpan="7" className="text-center">Không có báo cáo nào.</td></tr>
+                      )}
+                      {reports
+                        .filter(report => report.status === 'pending')
+                        .filter(report => articles.some(a => a.article_id === report.article_id))
+                        .map(report => (
+                        <tr key={report.id}>
+                          <td>{report.id}</td>
+                          <td>
+                            <a href={`/articles/${report.article_id}`} target="_blank" rel="noopener noreferrer">Xem bài viết</a>
+                          </td>
+                          <td>{report.user_id}</td>
+                          <td>{report.reason}</td>
+                          <td>{report.status}</td>
+                          <td>{new Date(report.created_at).toLocaleString()}</td>
+                          <td>
+                            <button className="btn btn-success btn-sm me-2" onClick={() => handleReportStatus(report.id, 'resolved')}>Đã xử lý</button>
+                            <button className="btn btn-secondary btn-sm me-2" onClick={() => handleReportStatus(report.id, 'dismissed')}>Bỏ qua</button>
+                            <button className="btn btn-danger btn-sm" onClick={() => handleDeleteReportedArticle(report.article_id)}>Xóa bài viết</button>
                           </td>
                         </tr>
                       ))}

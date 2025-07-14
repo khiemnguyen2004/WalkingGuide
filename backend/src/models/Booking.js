@@ -13,5 +13,7 @@ module.exports = new EntitySchema({
     updated_at: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" },
     spots: { type: "int", default: 1 },
     total_price: { type: "float", default: 0 },
+    status: { type: "varchar", length: 20, default: "pending" }, // pending, approved, rejected, cancelled
+    admin_notes: { type: "text", nullable: true }, // Admin notes for approval/rejection
   }
 }); 

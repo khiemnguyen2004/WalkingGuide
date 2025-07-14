@@ -73,8 +73,14 @@ function PlacesAdmin() {
     }
 
     try {
+      // If city is selected, search within that city for faster results
+      let searchQuery = query;
+      if (city && city.trim()) {
+        searchQuery = `${query}, ${city}`;
+      }
+
       const response = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`
+        `http://localhost:3000/api/geocoding/search?q=${encodeURIComponent(searchQuery)}&limit=5&addressdetails=1`
       );
       setAddressSuggestions(response.data);
       setShowSuggestions(true);
@@ -99,14 +105,13 @@ function PlacesAdmin() {
     setIsLoadingLocation(true);
     try {
       const response = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+        `http://localhost:3000/api/geocoding/coordinates?q=${encodeURIComponent(address)}&limit=1`
       );
       
-      if (response.data && response.data.length > 0) {
-        const location = response.data[0];
+      if (response.data.success && response.data.data) {
         return {
-          latitude: parseFloat(location.lat),
-          longitude: parseFloat(location.lon)
+          latitude: response.data.data.latitude,
+          longitude: response.data.data.longitude
         };
       }
       return null;
@@ -359,7 +364,7 @@ function PlacesAdmin() {
                           className="form-control"
                           value={address}
                           onChange={(e) => handleAddressChange(e.target.value)}
-                          placeholder="Nhập địa chỉ để tìm kiếm..."
+                          placeholder={city ? `Nhập địa chỉ trong ${city}...` : "Nhập địa chỉ để tìm kiếm..."}
                           autoComplete="off"
                         />
                         {isLoadingLocation && (

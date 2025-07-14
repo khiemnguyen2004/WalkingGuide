@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const CityAutocomplete = ({ value, onChange, placeholder = "Thành phố" }) => {
+const CityAutocomplete = ({ value, onChange, onKeyPress, placeholder = "Thành phố" }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [inputValue, setInputValue] = useState(value);
@@ -26,7 +26,7 @@ const CityAutocomplete = ({ value, onChange, placeholder = "Thành phố" }) => 
   }, []);
 
   const searchCities = async (query) => {
-    if (!query || query.length < 2) {
+    if (!query || query.length < 3) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -34,16 +34,12 @@ const CityAutocomplete = ({ value, onChange, placeholder = "Thành phố" }) => 
 
     setLoading(true);
     try {
-      // Using Nominatim API with focus on Vietnam and cities
+      // Using backend geocoding endpoint with focus on Vietnam and cities
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?` +
-        `format=json&` +
+        `http://localhost:3000/api/geocoding/search?` +
         `q=${encodeURIComponent(query)}&` +
-        `countrycodes=vn&` +
-        `addressdetails=1&` +
         `limit=10&` +
-        `featuretype=city&` +
-        `accept-language=vi`
+        `addressdetails=1`
       );
 
       if (!response.ok) {
@@ -52,39 +48,37 @@ const CityAutocomplete = ({ value, onChange, placeholder = "Thành phố" }) => 
 
       const data = await response.json();
       
-      // Filter and format the results
-      const formattedSuggestions = data
-        .filter(item => 
-          item.type === 'city' || 
-          item.type === 'administrative' || 
-          item.class === 'place'
-        )
+      // Filter for Vietnamese cities and format the results
+      const citySuggestions = data
+        .filter(item => {
+          const address = item.address;
+          return (
+            address &&
+            (address.country === 'Việt Nam' || address.country === 'Vietnam') &&
+            (address.city || address.town || address.state) &&
+            (address.city || address.town || address.state).toLowerCase().includes(query.toLowerCase())
+          );
+        })
         .map(item => {
           const address = item.address;
-          let cityName = item.name;
-          let province = '';
-          let country = 'VN';
-
-          // Extract province/state
-          if (address.state) {
-            province = address.state;
-          } else if (address.province) {
-            province = address.province;
-          }
-
-          // Format the display name
-          if (province) {
-            return `${cityName}, ${province}, ${country}`;
-          } else {
-            return `${cityName}, ${country}`;
-          }
+          const cityName = address.city || address.town || address.state;
+          return {
+            id: item.place_id,
+            name: cityName,
+            display_name: item.display_name,
+            state: address.state,
+            country: address.country
+          };
         })
-        .filter((item, index, arr) => arr.indexOf(item) === index); // Remove duplicates
+        .filter((item, index, self) => 
+          index === self.findIndex(t => t.name === item.name)
+        )
+        .slice(0, 10);
 
-      setSuggestions(formattedSuggestions);
-      setShowSuggestions(formattedSuggestions.length > 0);
+      setSuggestions(citySuggestions);
+      setShowSuggestions(citySuggestions.length > 0);
     } catch (error) {
-      console.error('Error fetching city suggestions:', error);
+      console.error('Error searching cities:', error);
       setSuggestions([]);
       setShowSuggestions(false);
     } finally {
@@ -109,15 +103,19 @@ const CityAutocomplete = ({ value, onChange, placeholder = "Thành phố" }) => 
   };
 
   const handleSuggestionClick = (suggestion) => {
-    setInputValue(suggestion);
-    onChange(suggestion);
+    const cityName = typeof suggestion === 'string' ? suggestion : suggestion.name;
+    setInputValue(cityName);
+    onChange(cityName);
     setShowSuggestions(false);
     setSuggestions([]);
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && suggestions.length > 0) {
-      handleSuggestionClick(suggestions[0]);
+    if (e.key === 'Enter') {
+      // Don't automatically select suggestions, let parent handle Enter
+      if (onKeyPress) {
+        onKeyPress(e);
+      }
     } else if (e.key === 'Escape') {
       setShowSuggestions(false);
     }
@@ -169,7 +167,7 @@ const CityAutocomplete = ({ value, onChange, placeholder = "Thành phố" }) => 
                 onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
               >
-                {suggestion}
+                {suggestion.display_name}
               </div>
             ))
           ) : (

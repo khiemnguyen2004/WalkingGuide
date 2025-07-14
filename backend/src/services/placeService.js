@@ -20,8 +20,8 @@ module.exports = {
   async findByCity(city) {
     return await placeRepository
       .createQueryBuilder("place")
-      .where("LOWER(TRIM(place.city)) = :city", { 
-        city: city.toLowerCase().trim() 
+      .where("LOWER(TRIM(place.city)) LIKE LOWER(:city)", { 
+        city: `%${city.toLowerCase().trim()}%` 
       })
       .getMany();
   },

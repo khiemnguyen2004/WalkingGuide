@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AdminHeader from "../../components/AdminHeader.jsx";
 import AdminSidebar from "../../components/AdminSidebar.jsx";
+import CityAutocomplete from "../../components/CityAutocomplete.jsx";
 import axios from "axios";
 import { Modal, Button } from "react-bootstrap";
 import "../../css/AdminLayout.css";
@@ -19,6 +20,10 @@ function HotelsAdmin() {
   const [maxPrice, setMaxPrice] = useState("");
   const [amenities, setAmenities] = useState("");
   const [roomTypes, setRoomTypes] = useState("");
+  const [amenitiesList, setAmenitiesList] = useState([]);
+  const [roomTypesList, setRoomTypesList] = useState([]);
+  const [newAmenity, setNewAmenity] = useState("");
+  const [newRoomType, setNewRoomType] = useState("");
   const [checkInTime, setCheckInTime] = useState("15:00");
   const [checkOutTime, setCheckOutTime] = useState("11:00");
   const [stars, setStars] = useState(0);
@@ -30,6 +35,11 @@ function HotelsAdmin() {
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [showImageGallery, setShowImageGallery] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState({});
+  const [isUploading, setIsUploading] = useState(false);
+  const [dragIndex, setDragIndex] = useState(null);
 
   useEffect(() => {
     fetchHotels();
@@ -63,8 +73,14 @@ function HotelsAdmin() {
     }
 
     try {
+      // If city is selected, search within that city for faster results
+      let searchQuery = query;
+      if (city && city.trim()) {
+        searchQuery = `${query}, ${city}`;
+      }
+
       const response = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`
+        `http://localhost:3000/api/geocoding/search?q=${encodeURIComponent(searchQuery)}&limit=5&addressdetails=1`
       );
       setAddressSuggestions(response.data);
       setShowSuggestions(true);
@@ -85,20 +101,50 @@ function HotelsAdmin() {
     setAddressSuggestions([]);
   };
 
+  const handleCityChange = (value) => {
+    setCity(value);
+    // If there's already an address typed, refresh the address suggestions with the new city
+    if (address && address.trim()) {
+      searchAddress(address);
+    }
+  };
+
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setImageFiles(files);
+    
+    // Validate files
+    const validFiles = files.filter(file => {
+      const isValidType = file.type.startsWith('image/');
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+      
+      if (!isValidType) {
+        alert(`File ${file.name} không phải là hình ảnh hợp lệ`);
+        return false;
+      }
+      
+      if (!isValidSize) {
+        alert(`File ${file.name} quá lớn (tối đa 5MB)`);
+        return false;
+      }
+      
+      return true;
+    });
+    
+    if (validFiles.length === 0) return;
+    
+    setImageFiles(prev => [...prev, ...validFiles]);
     
     // Create preview URLs for new images
-    const newImages = files.map((file, index) => ({
-      id: `new-${index}`,
+    const newImages = validFiles.map((file, index) => ({
+      id: `new-${Date.now()}-${index}`,
       image_url: URL.createObjectURL(file),
       caption: "",
-      is_primary: index === 0,
-      sort_order: index
+      is_primary: images.length === 0 && index === 0, // First image is primary if no existing images
+      sort_order: images.length + index,
+      file: file // Store file reference for upload
     }));
     
-    setImages(newImages);
+    setImages(prev => [...prev, ...newImages]);
   };
 
   const removeImage = (index) => {
@@ -120,18 +166,96 @@ function HotelsAdmin() {
     setImages(updatedImages);
   };
 
+  // Drag and drop functionality
+  const handleDragStart = (e, index) => {
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === dropIndex) return;
+    
+    const newImages = [...images];
+    const draggedImage = newImages[dragIndex];
+    newImages.splice(dragIndex, 1);
+    newImages.splice(dropIndex, 0, draggedImage);
+    
+    // Update sort order and primary image
+    newImages.forEach((img, index) => {
+      img.sort_order = index;
+      img.is_primary = index === 0; // First image is always primary
+    });
+    
+    setImages(newImages);
+    setDragIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+  };
+
+  // Helper functions for amenities and room types
+  const addAmenity = () => {
+    if (newAmenity.trim() && !amenitiesList.includes(newAmenity.trim())) {
+      const updatedList = [...amenitiesList, newAmenity.trim()];
+      setAmenitiesList(updatedList);
+      setAmenities(JSON.stringify(updatedList));
+      setNewAmenity("");
+    }
+  };
+
+  const removeAmenity = (index) => {
+    const updatedList = amenitiesList.filter((_, i) => i !== index);
+    setAmenitiesList(updatedList);
+    setAmenities(JSON.stringify(updatedList));
+  };
+
+  const addRoomType = () => {
+    if (newRoomType.trim() && !roomTypesList.includes(newRoomType.trim())) {
+      const updatedList = [...roomTypesList, newRoomType.trim()];
+      setRoomTypesList(updatedList);
+      setRoomTypes(JSON.stringify(updatedList));
+      setNewRoomType("");
+    }
+  };
+
+  const removeRoomType = (index) => {
+    const updatedList = roomTypesList.filter((_, i) => i !== index);
+    setRoomTypesList(updatedList);
+    setRoomTypes(JSON.stringify(updatedList));
+  };
+
+  const handleAmenityKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addAmenity();
+    }
+  };
+
+  const handleRoomTypeKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addRoomType();
+    }
+  };
+
   const getCoordinatesFromAddress = async (address) => {
     setIsLoadingLocation(true);
     try {
       const response = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+        `http://localhost:3000/api/geocoding/coordinates?q=${encodeURIComponent(address)}&limit=1`
       );
       
-      if (response.data && response.data.length > 0) {
-        const location = response.data[0];
+      if (response.data.success && response.data.data) {
         return {
-          latitude: parseFloat(location.lat),
-          longitude: parseFloat(location.lon)
+          latitude: response.data.data.latitude,
+          longitude: response.data.data.longitude
         };
       }
       return null;
@@ -161,7 +285,7 @@ function HotelsAdmin() {
           headers: { "Content-Type": "multipart/form-data" },
         });
         uploadedImages.push({
-          image_url: uploadRes.data.url,
+          url: uploadRes.data.url,
           caption: images[i].caption,
           is_primary: images[i].is_primary,
           sort_order: i
@@ -218,6 +342,21 @@ function HotelsAdmin() {
     setImages(hotel.images || []);
     setImageFiles([]);
     
+    // Parse amenities and room types
+    try {
+      const amenitiesData = hotel.amenities ? JSON.parse(hotel.amenities) : [];
+      setAmenitiesList(Array.isArray(amenitiesData) ? amenitiesData : []);
+    } catch (e) {
+      setAmenitiesList([]);
+    }
+    
+    try {
+      const roomTypesData = hotel.room_types ? JSON.parse(hotel.room_types) : [];
+      setRoomTypesList(Array.isArray(roomTypesData) ? roomTypesData : []);
+    } catch (e) {
+      setRoomTypesList([]);
+    }
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -232,26 +371,43 @@ function HotelsAdmin() {
 
       // Upload new images first
       const uploadedImages = [];
-      for (let i = 0; i < imageFiles.length; i++) {
-        const formData = new FormData();
-        formData.append("file", imageFiles[i]);
-        const uploadRes = await axios.post("http://localhost:3000/api/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        uploadedImages.push({
-          image_url: uploadRes.data.url,
-          caption: images[i].caption,
-          is_primary: images[i].is_primary,
-          sort_order: i
-        });
+      const newImages = images.filter(img => img.id.toString().startsWith('new-'));
+      
+      console.log('New images to upload:', newImages.length);
+      
+      for (let i = 0; i < newImages.length; i++) {
+        const image = newImages[i];
+        if (image.file) {
+          console.log('Uploading image:', image.file.name);
+          const formData = new FormData();
+          formData.append("file", image.file);
+          const uploadRes = await axios.post("http://localhost:3000/api/upload", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          uploadedImages.push({
+            url: uploadRes.data.url,
+            caption: image.caption || "",
+            is_primary: image.is_primary || false,
+            sort_order: image.sort_order || 0
+          });
+        }
       }
 
       // Combine existing images with new ones
-      const existingImages = images.filter(img => !img.id.toString().startsWith('new-'));
+      const existingImages = images.filter(img => !img.id.toString().startsWith('new-')).map(img => ({
+        url: img.image_url,
+        caption: img.caption || "",
+        is_primary: img.is_primary || false,
+        sort_order: img.sort_order || 0
+      }));
+      
       const allImages = [...existingImages, ...uploadedImages];
+      
+      console.log('Total images to send:', allImages.length);
+      console.log('Images data:', allImages);
 
       // Update the hotel
-      await axios.put(`http://localhost:3000/api/hotels/${editId}`, {
+      const updateData = {
         name,
         description,
         latitude: coordinates.latitude,
@@ -270,13 +426,47 @@ function HotelsAdmin() {
         check_out_time: checkOutTime,
         stars: parseInt(stars) || 0,
         images: allImages
-      });
+      };
+      
+      console.log('Update data:', updateData);
+
+      // Validate required fields
+      if (!updateData.name || !updateData.name.trim()) {
+        alert("Tên khách sạn không được để trống");
+        return;
+      }
+
+      if (!updateData.address || !updateData.address.trim()) {
+        alert("Địa chỉ không được để trống");
+        return;
+      }
+
+      // Validate coordinates
+      if (!updateData.latitude || !updateData.longitude) {
+        alert("Không thể xác định tọa độ. Vui lòng kiểm tra lại địa chỉ.");
+        return;
+      }
+
+      // Validate images structure
+      if (updateData.images && updateData.images.length > 0) {
+        for (let i = 0; i < updateData.images.length; i++) {
+          const img = updateData.images[i];
+          if (!img.url) {
+            alert(`Ảnh thứ ${i + 1} không có URL hợp lệ`);
+            return;
+          }
+        }
+      }
+
+      const response = await axios.put(`http://localhost:3000/api/hotels/${editId}`, updateData);
+      console.log('Update response:', response.data);
 
       fetchHotels();
       setEditId(null);
       resetForm();
     } catch (error) {
       console.error("Error updating hotel:", error);
+      console.error("Error response:", error.response?.data);
       alert("Lỗi khi cập nhật khách sạn. Vui lòng thử lại.");
     }
   };
@@ -317,6 +507,10 @@ function HotelsAdmin() {
     setMaxPrice("");
     setAmenities("");
     setRoomTypes("");
+    setAmenitiesList([]);
+    setRoomTypesList([]);
+    setNewAmenity("");
+    setNewRoomType("");
     setCheckInTime("15:00");
     setCheckOutTime("11:00");
     setStars(0);
@@ -361,11 +555,10 @@ function HotelsAdmin() {
                     </div>
                     <div className="mb-3">
                       <label className="form-label">Thành phố</label>
-                      <input
-                        type="text"
-                        className="form-control"
+                      <CityAutocomplete
                         value={city}
-                        onChange={(e) => setCity(e.target.value)}
+                        onChange={handleCityChange}
+                        placeholder="Chọn thành phố"
                       />
                     </div>
                     <div className="mb-3">
@@ -376,7 +569,7 @@ function HotelsAdmin() {
                           className="form-control"
                           value={address}
                           onChange={(e) => handleAddressChange(e.target.value)}
-                          placeholder="Nhập địa chỉ để tìm kiếm..."
+                          placeholder={city ? `Nhập địa chỉ trong ${city}...` : "Nhập địa chỉ để tìm kiếm..."}
                         />
                         {isLoadingLocation && (
                           <div className="position-absolute top-50 end-0 translate-middle-y me-2">
@@ -498,26 +691,94 @@ function HotelsAdmin() {
                 <div className="row">
                   <div className="col-md-6">
                     <div className="mb-3">
-                      <label className="form-label">Tiện ích (JSON)</label>
-                      <textarea
-                        className="form-control"
-                        rows="3"
-                        placeholder='["WiFi", "Hồ bơi", "Spa"]'
-                        value={amenities}
-                        onChange={(e) => setAmenities(e.target.value)}
-                      />
+                      <label className="form-label">Tiện ích</label>
+                      <div className="input-group">
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Nhập tiện ích và nhấn Enter hoặc +"
+                          value={newAmenity}
+                          onChange={(e) => setNewAmenity(e.target.value)}
+                          onKeyPress={handleAmenityKeyPress}
+                        />
+                        <button
+                          className="btn btn-outline-primary"
+                          type="button"
+                          onClick={addAmenity}
+                        >
+                          <i className="bi bi-plus"></i>
+                        </button>
+                      </div>
+                      {amenitiesList.length > 0 && (
+                        <div className="mt-2">
+                          <div className="d-flex flex-wrap gap-1">
+                            {amenitiesList.map((amenity, index) => (
+                              <span
+                                key={index}
+                                className="badge bg-primary d-flex align-items-center gap-1"
+                                style={{ fontSize: '0.875rem' }}
+                              >
+                                {amenity}
+                                <button
+                                  type="button"
+                                  className="btn-close btn-close-white"
+                                  style={{ fontSize: '0.5rem' }}
+                                  onClick={() => removeAmenity(index)}
+                                ></button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="form-text">
+                        Gợi ý: WiFi, Hồ bơi, Spa, Gym, Nhà hàng, Bar, Dịch vụ giặt ủi
+                      </div>
                     </div>
                   </div>
                   <div className="col-md-6">
                     <div className="mb-3">
-                      <label className="form-label">Loại phòng (JSON)</label>
-                      <textarea
-                        className="form-control"
-                        rows="3"
-                        placeholder='["Deluxe", "Suite", "Standard"]'
-                        value={roomTypes}
-                        onChange={(e) => setRoomTypes(e.target.value)}
-                      />
+                      <label className="form-label">Loại phòng</label>
+                      <div className="input-group">
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Nhập loại phòng và nhấn Enter hoặc +"
+                          value={newRoomType}
+                          onChange={(e) => setNewRoomType(e.target.value)}
+                          onKeyPress={handleRoomTypeKeyPress}
+                        />
+                        <button
+                          className="btn btn-outline-primary"
+                          type="button"
+                          onClick={addRoomType}
+                        >
+                          <i className="bi bi-plus"></i>
+                        </button>
+                      </div>
+                      {roomTypesList.length > 0 && (
+                        <div className="mt-2">
+                          <div className="d-flex flex-wrap gap-1">
+                            {roomTypesList.map((roomType, index) => (
+                              <span
+                                key={index}
+                                className="badge bg-success d-flex align-items-center gap-1"
+                                style={{ fontSize: '0.875rem' }}
+                              >
+                                {roomType}
+                                <button
+                                  type="button"
+                                  className="btn-close btn-close-white"
+                                  style={{ fontSize: '0.5rem' }}
+                                  onClick={() => removeRoomType(index)}
+                                ></button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="form-text">
+                        Gợi ý: Standard, Deluxe, Suite, Executive, Family, Presidential
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -547,56 +808,165 @@ function HotelsAdmin() {
                   </div>
                 </div>
 
-                {/* Images Section */}
-                <div className="mb-3">
-                  <label className="form-label">Hình ảnh</label>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="form-control"
-                    onChange={handleImageChange}
-                  />
+                {/* Enhanced Images Section */}
+                <div className="mb-4">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <label className="form-label fw-bold">Hình ảnh ({images.length})</label>
+                    <div className="d-flex gap-2">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="form-control"
+                        style={{ width: 'auto' }}
+                        onChange={handleImageChange}
+                        id="hotel-image-upload"
+                      />
+                      <label htmlFor="hotel-image-upload" className="btn btn-outline-primary btn-sm">
+                        <i className="bi bi-plus-circle me-1"></i>
+                        Thêm ảnh
+                      </label>
+                      {images.length > 1 && (
+                        <button 
+                          className="btn btn-outline-warning btn-sm"
+                          onClick={() => {
+                            if (window.confirm('Bạn có chắc muốn xóa tất cả ảnh?')) {
+                              setImages([]);
+                              setImageFiles([]);
+                            }
+                          }}
+                        >
+                          <i className="bi bi-trash me-1"></i>
+                          Xóa tất cả
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
                   {images.length > 0 && (
                     <div className="mt-3">
-                      <h6>Xem trước hình ảnh:</h6>
+                      <div className="alert alert-info">
+                        <i className="bi bi-info-circle me-2"></i>
+                        Kéo thả để sắp xếp lại thứ tự ảnh. Ảnh đầu tiên sẽ là ảnh chính.
+                      </div>
+                      
                       <div className="row">
                         {images.map((image, index) => (
-                          <div key={index} className="col-md-3 mb-3">
-                            <div className="card">
-                              <img
-                                src={getImageUrl(image.image_url)}
-                                className="card-img-top"
-                                alt={`Khách sạn ${index + 1}`}
-                                style={{ height: "150px", objectFit: "cover" }}
-                              />
+                          <div
+                            key={image.id}
+                            className="col-md-3 col-sm-6 mb-3"
+                            onDragStart={(e) => handleDragStart(e, index)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, index)}
+                            onDragEnd={handleDragEnd}
+                            draggable={true}
+                          >
+                            <div className="card h-100 shadow-sm">
+                              <div className="position-relative">
+                                <img
+                                  src={getImageUrl(image.image_url)}
+                                  className="card-img-top"
+                                  alt={`Khách sạn ${index + 1}`}
+                                  style={{ height: "200px", objectFit: "cover" }}
+                                  onError={(e) => {
+                                    e.target.src = "/default-hotel.jpg";
+                                  }}
+                                />
+                                <div className="position-absolute top-0 start-0 p-2">
+                                  {image.is_primary && (
+                                    <span className="badge bg-success">
+                                      <i className="bi bi-star-fill me-1"></i>Chính
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="position-absolute top-0 end-0 p-2">
+                                  <span className="badge bg-secondary">#{index + 1}</span>
+                                </div>
+                                <div className="position-absolute bottom-0 start-0 w-100 p-2" 
+                                     style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' }}>
+                                  <div className="d-flex justify-content-between align-items-center">
+                                    <button
+                                      className={`btn btn-sm ${image.is_primary ? 'btn-success' : 'btn-outline-success'}`}
+                                      onClick={() => setPrimaryImage(index)}
+                                      title={image.is_primary ? 'Đã là ảnh chính' : 'Đặt làm ảnh chính'}
+                                    >
+                                      <i className={`bi ${image.is_primary ? 'bi-star-fill' : 'bi-star'}`}></i>
+                                    </button>
+                                    <button
+                                      className="btn btn-sm btn-outline-danger"
+                                      onClick={() => removeImage(index)}
+                                      title="Xóa ảnh"
+                                    >
+                                      <i className="bi bi-trash"></i>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
                               <div className="card-body">
                                 <input
                                   type="text"
-                                  className="form-control mb-2"
-                                  placeholder="Chú thích"
+                                  className="form-control form-control-sm"
+                                  placeholder="Chú thích ảnh..."
                                   value={image.caption}
                                   onChange={(e) => updateImageCaption(index, e.target.value)}
                                 />
-                                <div className="d-flex gap-2">
-                                  <button
-                                    className={`btn btn-sm ${image.is_primary ? 'btn-primary' : 'btn-outline-primary'}`}
-                                    onClick={() => setPrimaryImage(index)}
-                                  >
-                                    {image.is_primary ? 'Chính' : 'Đặt làm chính'}
-                                  </button>
-                                  <button
-                                    className="btn btn-sm btn-danger"
-                                    onClick={() => removeImage(index)}
-                                  >
-                                    Xóa
-                                  </button>
+                                <div className="mt-2">
+                                  <small className="text-muted">
+                                    {image.image_url && image.image_url.startsWith('blob:') ? 'Ảnh mới' : 'Ảnh hiện có'}
+                                  </small>
                                 </div>
                               </div>
                             </div>
                           </div>
                         ))}
                       </div>
+                      
+                      {/* Image Gallery View */}
+                      <div className="mt-3">
+                        <button 
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() => setShowImageGallery(!showImageGallery)}
+                        >
+                          <i className="bi bi-images me-1"></i>
+                          {showImageGallery ? 'Ẩn' : 'Xem'} thư viện ảnh
+                        </button>
+                      </div>
+                      
+                      {showImageGallery && (
+                        <div className="mt-3">
+                          <div className="row">
+                            {images.map((image, index) => (
+                              <div key={index} className="col-md-2 col-sm-4 col-6 mb-2">
+                                <div className="position-relative">
+                                  <img
+                                    src={getImageUrl(image.image_url)}
+                                    className="img-thumbnail"
+                                    alt={`Khách sạn ${index + 1}`}
+                                    style={{ height: "100px", objectFit: "cover", cursor: 'pointer' }}
+                                    onClick={() => setSelectedImage(image)}
+                                    onError={(e) => {
+                                      e.target.src = "/default-hotel.jpg";
+                                    }}
+                                  />
+                                  {image.is_primary && (
+                                    <div className="position-absolute top-0 start-0">
+                                      <i className="bi bi-star-fill text-warning"></i>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {images.length === 0 && (
+                    <div className="text-center py-4 border rounded bg-light">
+                      <i className="bi bi-images text-muted" style={{ fontSize: '3rem' }}></i>
+                      <p className="text-muted mt-2">Chưa có hình ảnh nào</p>
+                      <p className="text-muted small">Nhấn "Thêm ảnh" để bắt đầu</p>
                     </div>
                   )}
                 </div>

@@ -259,7 +259,6 @@ body{
 .herosection h1, .herosection .display-4 {
   color: #1a2a47;
   font-size: 3.8rem;
-  font-style: italic;
   font-weight: 900;
   letter-spacing: 2.5px;
   margin-bottom: 1.2rem;
@@ -270,7 +269,6 @@ body{
 .herosection p.lead {
   color: #2266bb;
   font-size: 1.55rem;
-  font-style: italic;
   font-weight: 500;
   margin-bottom: 0;
   animation: fadeInCard 1.1s;
@@ -978,5 +976,357 @@ body{
 
 .badge.bg-info {
   background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+}
+
+/* Enhanced date input styling */
+.luxury-planner-container input[type="date"] {
+  position: relative;
+  background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+  border: 2px solid #e3f2fd;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+}
+
+.luxury-planner-container input[type="date"]:focus {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+  border-color: #3498db;
+  box-shadow: 0 4px 16px rgba(52, 152, 219, 0.2);
+  transform: translateY(-2px);
+}
+
+.luxury-planner-container input[type="date"]:disabled {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+  border-color: #ddd;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.luxury-planner-container input[type="date"]:disabled:focus {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Date input label styling */
+.luxury-planner-container .form-label.fw-bold {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #1a5bb8;
+  font-size: 1.1rem;
+}
+
+.luxury-planner-container .form-label.fw-bold i {
+  margin-right: 8px;
+  font-size: 1.2rem;
+}
+
+/* Form text styling for date info */
+.luxury-planner-container .form-text {
+  background: linear-gradient(135deg, #e8f4fd 0%, #d1ecf1 100%);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  border-left: 3px solid #3498db;
+  font-size: 0.9rem;
+  color: #2c3e50;
+}
+
+.luxury-planner-container .form-text i {
+  color: #3498db;
+}
+
+/* Warning text styling */
+.luxury-planner-container .form-text .text-warning {
+  color: #f39c12 !important;
+}
+
+/* Enhanced form control styling */
+.luxury-planner-container .form-control {
+  border-radius: 12px;
+  border: 2px solid #e3f2fd;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+}
+
+.luxury-planner-container .form-control:focus {
+  border-color: #3498db;
+  box-shadow: 0 4px 16px rgba(52, 152, 219, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Enhanced select styling */
+.luxury-planner-container .form-select {
+  border-radius: 12px;
+  border: 2px solid #e3f2fd;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 12px;
+}
+
+.luxury-planner-container .form-select:focus {
+  border-color: #3498db;
+  box-shadow: 0 4px 16px rgba(52, 152, 219, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Enhanced textarea styling */
+.luxury-planner-container textarea.form-control {
+  border-radius: 12px;
+  border: 2px solid #e3f2fd;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+  resize: vertical;
+  min-height: 100px;
+}
+
+.luxury-planner-container textarea.form-control:focus {
+  border-color: #3498db;
+  box-shadow: 0 4px 16px rgba(52, 152, 219, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Enhanced time input styling */
+.luxury-planner-container input[type="time"] {
+  border-radius: 12px;
+  border: 2px solid #e3f2fd;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+}
+
+.luxury-planner-container input[type="time"]:focus {
+  border-color: #3498db;
+  box-shadow: 0 4px 16px rgba(52, 152, 219, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Enhanced number input styling */
+.luxury-planner-container input[type="number"] {
+  border-radius: 12px;
+  border: 2px solid #e3f2fd;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+}
+
+.luxury-planner-container input[type="number"]:focus {
+  border-color: #3498db;
+  box-shadow: 0 4px 16px rgba(52, 152, 219, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Placeholder styling */
+.luxury-planner-container .form-control::placeholder,
+.luxury-planner-container .form-select::placeholder {
+  color: #95a5a6;
+}
+
+/* Hover effects */
+.luxury-planner-container .form-control:hover,
+.luxury-planner-container .form-select:hover {
+  border-color: #b6e0fe;
+  transform: translateY(-1px);
+}
+
+/* Disabled state styling */
+.luxury-planner-container .form-control:disabled,
+.luxury-planner-container .form-select:disabled {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+  border-color: #ddd;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Success state for cost input */
+.luxury-planner-container .form-control:focus:valid {
+  border-color: #27ae60;
+  box-shadow: 0 4px 16px rgba(39, 174, 96, 0.2);
+}
+
+/* Error state */
+.luxury-planner-container .form-control:focus:invalid {
+  border-color: #e74c3c;
+  box-shadow: 0 4px 16px rgba(231, 76, 60, 0.2);
+}
+
+/* Enhanced city and tag input styling */
+.luxury-planner-container .city-tag-input {
+  border-radius: 12px;
+  border: 2px solid #e3f2fd;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+}
+
+.luxury-planner-container .city-tag-input:focus {
+  border-color: #3498db;
+  box-shadow: 0 4px 16px rgba(52, 152, 219, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Badge styling for cities and tags */
+.luxury-planner-container .badge {
+  border-radius: 20px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.luxury-planner-container .badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.luxury-planner-container .badge.bg-primary {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+}
+
+.luxury-planner-container .badge.bg-success {
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
+}
+
+.luxury-planner-container .badge.bg-info {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+}
+
+/* Remove button styling in badges */
+.luxury-planner-container .badge .btn-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+}
+
+.luxury-planner-container .badge .btn-link:hover {
+  color: white !important;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+/* Add button styling */
+.luxury-planner-container .btn-add {
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  border: 2px solid;
+  background: transparent;
+  font-weight: 500;
+}
+
+.luxury-planner-container .btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.luxury-planner-container .btn-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Summary section styling */
+.luxury-planner-container .summary-section {
+  background: linear-gradient(135deg, #e8f4fd 0%, #d1ecf1 100%);
+  border-radius: 16px;
+  border: 2px solid #b6e0fe;
+  box-shadow: 0 4px 16px rgba(52, 152, 219, 0.1);
+}
+
+.luxury-planner-container .summary-section h6 {
+  color: #1a5bb8;
+  font-weight: 600;
+}
+
+.luxury-planner-container .summary-section .text-primary {
+  color: #1a5bb8 !important;
+}
+
+.luxury-planner-container .summary-section .text-info {
+  color: #17a2b8 !important;
+}
+
+/* Input group styling */
+.luxury-planner-container .input-group {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+}
+
+.luxury-planner-container .input-group .form-control {
+  border-radius: 12px 0 0 12px;
+  border-right: none;
+}
+
+.luxury-planner-container .input-group .btn {
+  border-radius: 0 12px 12px 0;
+  border-left: none;
+  background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+  border-color: #e3f2fd;
+  transition: all 0.3s ease;
+}
+
+.luxury-planner-container .input-group .btn:hover {
+  background: linear-gradient(135deg, #e3f2fd 0%, #b6e0fe 100%);
+  border-color: #3498db;
+}
+
+/* Animation for new badges */
+@keyframes badgeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.luxury-planner-container .badge {
+  animation: badgeSlideIn 0.3s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .luxury-planner-container .badge {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+  
+  .luxury-planner-container .input-group {
+    flex-direction: column;
+  }
+  
+  .luxury-planner-container .input-group .form-control,
+  .luxury-planner-container .input-group .btn {
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .luxury-planner-container .input-group .btn {
+    margin-bottom: 0;
+  }
 }
 

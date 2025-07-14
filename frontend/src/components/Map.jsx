@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "../css/index.css";
+import hotelIconSvg from '../assets/hotel-marker.svg';
+import restaurantIconSvg from '../assets/restaurant-marker.svg';
 
 const defaultIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -88,6 +90,22 @@ const createCustomIcon = (place) => {
     });
   }
 };
+
+// Custom icon for hotel
+const hotelIcon = new L.Icon({
+  iconUrl: hotelIconSvg,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
+});
+
+// Custom icon for restaurant
+const restaurantIcon = new L.Icon({
+  iconUrl: restaurantIconSvg,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
+});
 
 // Component for current location button
 function CurrentLocationButton({ onLocationUpdate }) {
@@ -220,7 +238,7 @@ function FitAllMarkersButton({ locations, currentLocation }) {
   );
 }
 
-function Map({ locations = [], className, selectedCity }) {
+function Map({ locations = [], hotels = [], restaurants = [], className, selectedCity }) {
   const defaultCenter = [10.8231, 106.6297]; // Ho Chi Minh City
   let center = defaultCenter;
   let zoom = 13;
@@ -257,22 +275,35 @@ function Map({ locations = [], className, selectedCity }) {
     setCurrentLocation(location);
   };
 
+  // Prepare valid locations for places, hotels, and restaurants
   const validLocations = locations.filter(
     (loc) => typeof loc.lat === "number" && typeof loc.lng === "number" && !isNaN(loc.lat) && !isNaN(loc.lng)
   );
+  const validHotels = hotels.filter(
+    (h) => typeof h.latitude === "number" && typeof h.longitude === "number" && !isNaN(h.latitude) && !isNaN(h.longitude)
+  );
+  const validRestaurants = restaurants.filter(
+    (r) => typeof r.latitude === "number" && typeof r.longitude === "number" && !isNaN(r.latitude) && !isNaN(r.longitude)
+  );
+
+  // Debug logs
+  console.log('validHotels', validHotels);
+  console.log('validRestaurants', validRestaurants);
 
   // Calculate initial center and zoom based on all markers
-  if (validLocations.length > 0) {
-    if (validLocations.length === 1) {
-      // Single location - center on it
-      center = [validLocations[0].lat, validLocations[0].lng];
+  const allLatLngs = [
+    ...validLocations.map(loc => [loc.lat, loc.lng]),
+    ...validHotels.map(h => [h.latitude, h.longitude]),
+    ...validRestaurants.map(r => [r.latitude, r.longitude]),
+  ];
+  if (allLatLngs.length > 0) {
+    if (allLatLngs.length === 1) {
+      center = allLatLngs[0];
       zoom = 15;
     } else {
-      // Multiple locations - calculate bounds
-      const bounds = L.latLngBounds(validLocations.map(loc => [loc.lat, loc.lng]));
+      const bounds = L.latLngBounds(allLatLngs);
       center = bounds.getCenter();
-      // Let the MapAutoCenter component handle the zoom and bounds fitting
-      zoom = 10; // Default zoom, will be overridden by fitBounds
+      zoom = 10;
     }
   }
 
@@ -286,13 +317,12 @@ function Map({ locations = [], className, selectedCity }) {
           <button type="button" className="btn-close" onClick={() => setShowLocationAlert(false)}></button>
         </div>
       )}
-      
-      {validLocations.length === 0 ? (
+      {allLatLngs.length === 0 ? (
         <div className="text-center text-muted h-100 d-flex align-items-center justify-content-center">
           Không có địa điểm hợp lệ để hiển thị
         </div>
       ) : (
-        <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%", borderRadius: "1.5rem" }}>
+        <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%", borderRadius: "1.5rem" }} scrollWheelZoom={false}>
           <TileLayer
             attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -301,7 +331,6 @@ function Map({ locations = [], className, selectedCity }) {
           <FitAllMarkersButton locations={validLocations} currentLocation={currentLocation} />
           <CurrentLocationButton onLocationUpdate={handleLocationUpdate} />
           <ZoomControls />
-          
           {/* Current location marker */}
           {currentLocation && (
             <Marker 
@@ -318,11 +347,38 @@ function Map({ locations = [], className, selectedCity }) {
               </Popup>
             </Marker>
           )}
-          
           {/* Place markers */}
           {validLocations.map((location) => (
             <Marker key={location.id} position={[location.lat, location.lng]} icon={createCustomIcon(location)}>
               <Popup>{location.name}</Popup>
+            </Marker>
+          ))}
+          {/* Hotel markers */}
+          {validHotels.map((hotel) => (
+            <Marker key={`hotel-${hotel.id}`} position={[hotel.latitude, hotel.longitude]} icon={hotelIcon}>
+              <Popup>
+                <div>
+                  <strong>{hotel.name}</strong><br/>
+                  {hotel.address && <span>{hotel.address}<br/></span>}
+                  {hotel.city && <span>{hotel.city}<br/></span>}
+                  {hotel.price_range && <span>Giá: {hotel.price_range}<br/></span>}
+                  {hotel.rating && <span>Đánh giá: {hotel.rating.toFixed(1)} / 5</span>}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+          {/* Restaurant markers */}
+          {validRestaurants.map((restaurant) => (
+            <Marker key={`restaurant-${restaurant.id}`} position={[restaurant.latitude, restaurant.longitude]} icon={restaurantIcon}>
+              <Popup>
+                <div>
+                  <strong>{restaurant.name}</strong><br/>
+                  {restaurant.address && <span>{restaurant.address}<br/></span>}
+                  {restaurant.city && <span>{restaurant.city}<br/></span>}
+                  {restaurant.price_range && <span>Giá: {restaurant.price_range}<br/></span>}
+                  {restaurant.rating && <span>Đánh giá: {restaurant.rating.toFixed(1)} / 5</span>}
+                </div>
+              </Popup>
             </Marker>
           ))}
         </MapContainer>

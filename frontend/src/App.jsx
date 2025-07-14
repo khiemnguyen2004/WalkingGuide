@@ -13,6 +13,7 @@ import PlacesAdmin from "./pages/admin/PlacesAdmin";
 import HotelsAdmin from "./pages/admin/HotelsAdmin";
 import RestaurantsAdmin from "./pages/admin/RestaurantsAdmin";
 import ToursAdmin from "./pages/admin/ToursAdmin";
+import BookingsAdmin from "./pages/admin/BookingsAdmin";
 import TagsAdmin from "./pages/admin/TagsAdmin";
 import SettingsAdmin from "./pages/admin/SettingsAdmin";
 import { PrivateRoute, AdminRoute } from "./components/ProtectedRoute";
@@ -58,15 +59,18 @@ function App() {
         <Route path="/admin/restaurants" element={<AdminRoute><RestaurantsAdmin /></AdminRoute>} />
         <Route path="/admin/articles" element={<AdminRoute><ArticlesAdmin /></AdminRoute>} />
         <Route path="/admin/tours" element={<AdminRoute><ToursAdmin /></AdminRoute>} />
+        <Route path="/admin/bookings" element={<AdminRoute><BookingsAdmin /></AdminRoute>} />
         <Route path="/admin/tags" element={<AdminRoute><TagsAdmin /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><SettingsAdmin /></AdminRoute>} />
         <Route path="/manual-planner" element={<PrivateRoute><ManualPlanner /></PrivateRoute>} />
         <Route path="/my-tours" element={<PrivateRoute><MyTours /></PrivateRoute>} />
         <Route path="/ai/generate-tour" element={<PrivateRoute><AutoPlanner /></PrivateRoute>} />
         <Route path="/articles/:id" element={<ArticleDetail />} />
+        <Route path="/articles/:id/report" element={<ArticleDetail />} />
         <Route path="/places/:id" element={<PlaceDetail />} />
         <Route path="/tours/:id" element={<TourDetail />} />
         <Route path="/place-ratings/rate/:id" element={<RatingStars />} />
+
       </Routes>
     </Router>
   );
