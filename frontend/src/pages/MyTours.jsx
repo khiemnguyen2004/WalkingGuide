@@ -14,6 +14,7 @@ import { Modal, Button } from 'react-bootstrap';
 import RatingStars from '../components/RatingStars.jsx';
 import CustomAlertModal from '../components/CustomAlertModal.jsx';
 import CustomConfirmModal from '../components/CustomConfirmModal.jsx';
+import LocationAutocomplete from "../components/LocationAutocomplete.jsx";
 
 function MyTours() {
   const { user } = useContext(AuthContext);
@@ -34,6 +35,7 @@ function MyTours() {
     description: "",
     image_url: "",
     total_cost: "",
+    start_from: "",
   });
   const [editError, setEditError] = useState("");
   const [showEditStepModal, setShowEditStepModal] = useState(false);
@@ -110,6 +112,7 @@ function MyTours() {
         start_time: selected.start_time || "",
         end_time: selected.end_time || "",
         steps: tourSteps.map(s => ({ ...s })),
+        start_from: selected.start_from || "",
       });
       setEditError("");
     }
@@ -150,12 +153,20 @@ function MyTours() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Get first place info
+      const firstStep = editForm.steps && editForm.steps[0];
+      const firstPlace = firstStep ? allPlaces.find(p => p.id == firstStep.place_id) : null;
+      const autoTourName = firstPlace ? firstPlace.name : editForm.name;
+      const autoImageUrl = firstPlace && firstPlace.image_url ? firstPlace.image_url : editForm.image_url;
       // Update tour info
       const res = await axios.put(`http://localhost:3000/api/tours/${selected.id}`, {
-        name: editForm.name,
+        name: autoTourName,
         description: editForm.description,
-        image_url: editForm.image_url,
+        image_url: autoImageUrl,
         total_cost: editForm.total_cost,
+        start_time: editForm.start_time,
+        end_time: editForm.end_time,
+        start_from: editForm.start_from,
       });
       // Update steps
       await Promise.all(editForm.steps.map(s =>
@@ -250,7 +261,7 @@ function MyTours() {
       <Header />
       <main className="container px-4 py-4 flex-grow-1">
         <div className="mb-5 d-flex align-items-center gap-3 border-bottom pb-3">
-          <h2 className="fw-bold mb-0" style={{color: '#1a5bb8'}}>Tour của tôi</h2>
+          <h2 className="fw-bold mb-0" style={{color: '#1a5bb8'}}>Tour của bạn</h2>
           <button className="btn btn-main ms-auto d-flex align-items-center gap-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={() => setShowAddModal(true)}>
             <FaPlusCircle /> Tạo tour mới
             </button>
@@ -346,11 +357,23 @@ function MyTours() {
                       <div className="col-md-6">
                         <div className="mb-3">
                           <label className="form-label">Tên tour</label>
-                          <input type="text" className="form-control" name="name" value={editForm.name} onChange={handleEditChange} required />
+                          <input type="text" className="form-control" name="name" value={(() => {
+                            const firstStep = editForm.steps && editForm.steps[0];
+                            const firstPlace = firstStep ? allPlaces.find(p => p.id == firstStep.place_id) : null;
+                            return firstPlace ? firstPlace.name : '';
+                          })()} readOnly />
                         </div>
                         <div className="mb-3">
                           <label className="form-label">Mô tả</label>
                           <textarea className="form-control" name="description" value={editForm.description} onChange={handleEditChange} rows={4} required />
+                        </div>
+                        <div className="mb-3">
+                          <label className="form-label">Điểm khởi hành</label>
+                          <LocationAutocomplete
+                            value={editForm.start_from}
+                            onChange={val => setEditForm(prev => ({ ...prev, start_from: val }))}
+                            placeholder="Nhập điểm khởi hành"
+                          />
                         </div>
                         <div className="mb-3">
                           <label className="form-label">Ngày bắt đầu</label>
@@ -535,7 +558,7 @@ function MyTours() {
           </div>
         )}
         {/* Created/Cloned Tours Section */}
-        <section className="mb-5">
+        {/* <section className="mb-5">
                 {loading ? (
             <div className="d-flex justify-content-center align-items-center py-5">
                     <div className="spinner-border text-primary" role="status"></div>
@@ -553,6 +576,8 @@ function MyTours() {
                 const steps = tourSteps && tour.id === selected?.id ? tourSteps : [];
                 const firstStep = steps[0];
                 const firstPlace = firstStep ? places[firstStep.place_id] : null;
+                // Always use first place's name and image if available
+                const cardName = firstPlace?.name || tour.name;
                 const cardImg = firstPlace?.image_url
                   ? (firstPlace.image_url.startsWith('http') ? firstPlace.image_url : `http://localhost:3000${firstPlace.image_url}`)
                   : (tour.image_url ? (tour.image_url.startsWith('http') ? tour.image_url : `http://localhost:3000${tour.image_url}`) : null);
@@ -586,7 +611,7 @@ function MyTours() {
                       {cardImg ? (
                         <img
                           src={cardImg}
-                          alt={tour.name}
+                          alt={cardName}
                           className="card-img-top luxury-img-top"
                           style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
                         />
@@ -597,7 +622,7 @@ function MyTours() {
                         </div>
                       )}
                       <div className="card-body luxury-card-body">
-                        <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{tour.name}</h3>
+                        <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{cardName}</h3>
                         <p className="card-text text-muted mb-2 luxury-desc">
                           {tour.description ? `${tour.description.replace(/<[^>]+>/g, '').substring(0, 100)}...` : ''}
                         </p>
@@ -620,11 +645,11 @@ function MyTours() {
               })}
             </div>
           )}
-        </section>
+        </section> */}
         {/* Booked Tours Section */}
         <section className="mb-5">
           <div className="d-flex align-items-center mb-3 gap-2">
-            <h4 className="fw-bold mb-0 luxury-section-title">Tour bạn đã đặt</h4>
+            {/* <h4 className="fw-bold mb-0 luxury-section-title">Tour bạn đã đặt</h4> */}
           </div>
           {bookedTours.length === 0 ? (
             <div className="text-center text-muted py-5">

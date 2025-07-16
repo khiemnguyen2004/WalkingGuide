@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
@@ -12,13 +12,15 @@ import PlaceDetailMap from "../components/PlaceDetailMap";
 import PlaceExplorer from '../components/PlaceExplorer';
 import "../css/HomePage.css";
 import "../css/luxury-home.css";
-import { Modal } from "react-bootstrap";
+import { Modal, Button, Form } from "react-bootstrap";
 import RatingStars from '../components/RatingStars.jsx';
 import dayjs from "dayjs";
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from '../contexts/AuthContext';
 import tourApi from '../api/tourApi';
+import hotelApi from '../api/hotelApi';
+import { AuthContext } from '../contexts/AuthContext';
 
 // Helper to chunk array into groups of 3
 function chunkArray(arr, size) {
@@ -58,7 +60,12 @@ function HomePage() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [dateError, setDateError] = useState("");
-  const { user } = useAuth();
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingHotel, setBookingHotel] = useState(null);
+  const [bookingCheckIn, setBookingCheckIn] = useState("");
+  const [bookingCheckOut, setBookingCheckOut] = useState("");
+  const [bookingStatus, setBookingStatus] = useState(null);
+  const { user } = useContext(AuthContext);
 
   // Helper function to get proper image URL
   const getImageUrl = (imageUrl) => {
@@ -649,71 +656,78 @@ function HomePage() {
                     {sortedHotels.map((hotel) => (
                       <div className="col" key={hotel.id}>
                         <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                          <div className="position-relative">
-                            {hotel.images && hotel.images.length > 0 ? (
-                              <div id={`hotelCarousel${hotel.id}`} className="carousel slide" data-bs-ride="false">
-                                <div className="carousel-inner">
-                                  {hotel.images.map((image, index) => (
-                                    <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
-                                      <img
-                                        src={getImageUrl(image.image_url)}
-                                        alt={image.caption || hotel.name}
-                                        className="card-img-top luxury-img-top"
-                                        style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
-                                        onError={(e) => { e.target.src = "/default-hotel.jpg"; }}
-                                      />
-                                    </div>
-                                  ))}
+                          <Link to={`/hotels/${hotel.id}`} className="text-decoration-none" style={{ display: 'block', height: '100%' }}>
+                            <div className="position-relative">
+                              {hotel.images && hotel.images.length > 0 ? (
+                                <div id={`hotelCarousel${hotel.id}`} className="carousel slide" data-bs-ride="false">
+                                  <div className="carousel-inner">
+                                    {hotel.images.map((image, index) => (
+                                      <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
+                                        <img
+                                          src={getImageUrl(image.image_url)}
+                                          alt={image.caption || hotel.name}
+                                          className="card-img-top luxury-img-top"
+                                          style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                          onError={(e) => { e.target.src = "/default-hotel.jpg"; }}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                  {hotel.images.length > 1 && (
+                                    <>
+                                      <button className="carousel-control-prev" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="prev">
+                                        <span className="carousel-control-prev-icon"></span>
+                                      </button>
+                                      <button className="carousel-control-next" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="next">
+                                        <span className="carousel-control-next-icon"></span>
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
-                                {hotel.images.length > 1 && (
-                                  <>
-                                    <button className="carousel-control-prev" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="prev">
-                                      <span className="carousel-control-prev-icon"></span>
-                                    </button>
-                                    <button className="carousel-control-next" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="next">
-                                      <span className="carousel-control-next-icon"></span>
-                                    </button>
-                                  </>
-                                )}
+                              ) : (
+                                <div 
+                                  className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                  style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                                >
+                                  <i className="bi bi-building"></i>
+                                </div>
+                              )}
+                              <div className="position-absolute top-0 end-0 m-2">
+                                <span className="badge bg-warning text-dark">
+                                  {hotel.stars} <i className="bi bi-star-fill"></i>
+                                </span>
                               </div>
-                            ) : (
-                              <div 
-                                className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                                style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
-                              >
-                                <i className="bi bi-building"></i>
+                            </div>
+                            <div className="card-body luxury-card-body">
+                              <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{hotel.name}</h3>
+                              {hotel.city && (
+                                <p className="card-text text-primary mb-1 small">
+                                  <i className="bi bi-geo-alt-fill me-1"></i>
+                                  {hotel.city}
+                                </p>
+                              )}
+                              <p className="card-text text-muted mb-2 luxury-desc">
+                                {hotel.description
+                                  ? `${hotel.description.substring(0, 100)}...`
+                                  : t("No description available")}
+                              </p>
+                              <div className="mb-2">
+                                <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                                <span style={{ fontWeight: 600, marginLeft: 4 }}>{hotel.rating ? hotel.rating.toFixed(1) : '0.0'}</span>
+                                <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
                               </div>
-                            )}
-                            <div className="position-absolute top-0 end-0 m-2">
-                              <span className="badge bg-warning text-dark">
-                                {hotel.stars} <i className="bi bi-star-fill"></i>
-                              </span>
+                              {hotel.price_range && (
+                                <p className="card-text text-muted small mb-0">
+                                  <span className="luxury-money">💰</span> {hotel.price_range}
+                                  {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
+                                </p>
+                              )}
                             </div>
-                          </div>
-                          <div className="card-body luxury-card-body">
-                            <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{hotel.name}</h3>
-                            {hotel.city && (
-                              <p className="card-text text-primary mb-1 small">
-                                <i className="bi bi-geo-alt-fill me-1"></i>
-                                {hotel.city}
-                              </p>
-                            )}
-                            <p className="card-text text-muted mb-2 luxury-desc">
-                              {hotel.description
-                                ? `${hotel.description.substring(0, 100)}...`
-                                : t("No description available")}
-                            </p>
-                            <div className="mb-2">
-                              <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                              <span style={{ fontWeight: 600, marginLeft: 4 }}>{hotel.rating ? hotel.rating.toFixed(1) : '0.0'}</span>
-                              <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
-                            </div>
-                            {hotel.price_range && (
-                              <p className="card-text text-muted small mb-0">
-                                <span className="luxury-money">💰</span> {hotel.price_range}
-                                {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
-                              </p>
-                            )}
+                          </Link>
+                          <div className="px-3 pb-3">
+                            <Button className="btn btn-main w-100 mt-2 " onClick={() => { setBookingHotel(hotel); setShowBookingModal(true); }}>
+                              <i className="bi bi-calendar-check me-2"></i>Đặt ngay
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -738,71 +752,78 @@ function HomePage() {
                             {group.map((hotel) => (
                               <div className="col" key={hotel.id}>
                                 <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                                  <div className="position-relative">
-                                    {hotel.images && hotel.images.length > 0 ? (
-                                      <div id={`hotelCarousel${hotel.id}`} className="carousel slide" data-bs-ride="false">
-                                        <div className="carousel-inner">
-                                          {hotel.images.map((image, index) => (
-                                            <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
-                                              <img
-                                                src={getImageUrl(image.image_url)}
-                                                alt={image.caption || hotel.name}
-                                                className="card-img-top luxury-img-top"
-                                                style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
-                                                onError={(e) => { e.target.src = "/default-hotel.jpg"; }}
-                                              />
-                                            </div>
-                                          ))}
+                                  <Link to={`/hotels/${hotel.id}`} className="text-decoration-none" style={{ display: 'block', height: '100%' }}>
+                                    <div className="position-relative">
+                                      {hotel.images && hotel.images.length > 0 ? (
+                                        <div id={`hotelCarousel${hotel.id}`} className="carousel slide" data-bs-ride="false">
+                                          <div className="carousel-inner">
+                                            {hotel.images.map((image, index) => (
+                                              <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
+                                                <img
+                                                  src={getImageUrl(image.image_url)}
+                                                  alt={image.caption || hotel.name}
+                                                  className="card-img-top luxury-img-top"
+                                                  style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                                  onError={(e) => { e.target.src = "/default-hotel.jpg"; }}
+                                                />
+                                              </div>
+                                            ))}
+                                          </div>
+                                          {hotel.images.length > 1 && (
+                                            <>
+                                              <button className="carousel-control-prev" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="prev">
+                                                <span className="carousel-control-prev-icon"></span>
+                                              </button>
+                                              <button className="carousel-control-next" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="next">
+                                                <span className="carousel-control-next-icon"></span>
+                                              </button>
+                                            </>
+                                          )}
                                         </div>
-                                        {hotel.images.length > 1 && (
-                                          <>
-                                            <button className="carousel-control-prev" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="prev">
-                                              <span className="carousel-control-prev-icon"></span>
-                                            </button>
-                                            <button className="carousel-control-next" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="next">
-                                              <span className="carousel-control-next-icon"></span>
-                                            </button>
-                                          </>
-                                        )}
+                                      ) : (
+                                        <div 
+                                          className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                          style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                                        >
+                                          <i className="bi bi-building"></i>
+                                        </div>
+                                      )}
+                                      <div className="position-absolute top-0 end-0 m-2">
+                                        <span className="badge bg-warning text-dark">
+                                          {hotel.stars} <i className="bi bi-star-fill"></i>
+                                        </span>
                                       </div>
-                                    ) : (
-                                      <div 
-                                        className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                                        style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
-                                      >
-                                        <i className="bi bi-building"></i>
+                                    </div>
+                                    <div className="card-body luxury-card-body">
+                                      <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{hotel.name}</h3>
+                                      {hotel.city && (
+                                        <p className="card-text text-primary mb-1 small">
+                                          <i className="bi bi-geo-alt-fill me-1"></i>
+                                          {hotel.city}
+                                        </p>
+                                      )}
+                                      <p className="card-text text-muted mb-2 luxury-desc">
+                                        {hotel.description
+                                          ? `${hotel.description.substring(0, 100)}...`
+                                          : t("No description available")}
+                                      </p>
+                                      <div className="mb-2">
+                                        <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                                        <span style={{ fontWeight: 600, marginLeft: 4 }}>{hotel.rating ? hotel.rating.toFixed(1) : '0.0'}</span>
+                                        <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
                                       </div>
-                                    )}
-                                    <div className="position-absolute top-0 end-0 m-2">
-                                      <span className="badge bg-warning text-dark">
-                                        {hotel.stars} <i className="bi bi-star-fill"></i>
-                                      </span>
+                                      {hotel.price_range && (
+                                        <p className="card-text text-muted small mb-0">
+                                          <span className="luxury-money">💰</span> {hotel.price_range}
+                                          {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
+                                        </p>
+                                      )}
                                     </div>
-                                  </div>
-                                  <div className="card-body luxury-card-body">
-                                    <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{hotel.name}</h3>
-                                    {hotel.city && (
-                                      <p className="card-text text-primary mb-1 small">
-                                        <i className="bi bi-geo-alt-fill me-1"></i>
-                                        {hotel.city}
-                                      </p>
-                                    )}
-                                    <p className="card-text text-muted mb-2 luxury-desc">
-                                      {hotel.description
-                                        ? `${hotel.description.substring(0, 100)}...`
-                                        : t("No description available")}
-                                    </p>
-                                    <div className="mb-2">
-                                      <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                                      <span style={{ fontWeight: 600, marginLeft: 4 }}>{hotel.rating ? hotel.rating.toFixed(1) : '0.0'}</span>
-                                      <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
-                                    </div>
-                                    {hotel.price_range && (
-                                      <p className="card-text text-muted small mb-0">
-                                        <span className="luxury-money">💰</span> {hotel.price_range}
-                                        {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
-                                      </p>
-                                    )}
+                                  </Link>
+                                  <div className="px-3 pb-3">
+                                    <Button className="btn btn-main w-100 mt-2" onClick={() => { setBookingHotel(hotel); setShowBookingModal(true); }}>
+                                      <i className="bi bi-calendar-check me-2"></i>{t('Đặt ngay')}
+                                    </Button>
                                   </div>
                                 </div>
                               </div>
@@ -849,76 +870,78 @@ function HomePage() {
                   <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                     {sortedRestaurants.map((restaurant) => (
                       <div className="col" key={restaurant.id}>
-                        <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                          <div className="position-relative">
-                            {restaurant.images && restaurant.images.length > 0 ? (
-                              <div id={`restaurantCarousel${restaurant.id}`} className="carousel slide" data-bs-ride="false">
-                                <div className="carousel-inner">
-                                  {restaurant.images.map((image, index) => (
-                                    <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
-                                      <img
-                                        src={getImageUrl(image.image_url)}
-                                        alt={image.caption || restaurant.name}
-                                        className="card-img-top luxury-img-top"
-                                        style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
-                                        onError={(e) => { e.target.src = "/default-restaurant.jpg"; }}
-                                      />
-                                    </div>
-                                  ))}
+                        <Link to={`/restaurants/${restaurant.id}`} className="text-decoration-none">
+                          <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                            <div className="position-relative">
+                              {restaurant.images && restaurant.images.length > 0 ? (
+                                <div id={`restaurantCarousel${restaurant.id}`} className="carousel slide" data-bs-ride="false">
+                                  <div className="carousel-inner">
+                                    {restaurant.images.map((image, index) => (
+                                      <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
+                                        <img
+                                          src={getImageUrl(image.image_url)}
+                                          alt={image.caption || restaurant.name}
+                                          className="card-img-top luxury-img-top"
+                                          style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                          onError={(e) => { e.target.src = "/default-restaurant.jpg"; }}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                  {restaurant.images.length > 1 && (
+                                    <>
+                                      <button className="carousel-control-prev" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="prev">
+                                        <span className="carousel-control-prev-icon"></span>
+                                      </button>
+                                      <button className="carousel-control-next" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="next">
+                                        <span className="carousel-control-next-icon"></span>
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
-                                {restaurant.images.length > 1 && (
-                                  <>
-                                    <button className="carousel-control-prev" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="prev">
-                                      <span className="carousel-control-prev-icon"></span>
-                                    </button>
-                                    <button className="carousel-control-next" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="next">
-                                      <span className="carousel-control-next-icon"></span>
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            ) : (
-                              <div 
-                                className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                                style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}
-                              >
-                                <i className="bi bi-cup-hot"></i>
-                              </div>
-                            )}
-                            {restaurant.cuisine_type && (
-                              <div className="position-absolute top-0 start-0 m-2">
-                                <span className="badge bg-primary">
-                                  {restaurant.cuisine_type}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="card-body luxury-card-body">
-                            <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{restaurant.name}</h3>
-                            {restaurant.city && (
-                              <p className="card-text text-primary mb-1 small">
-                                <i className="bi bi-geo-alt-fill me-1"></i>
-                                {restaurant.city}
-                              </p>
-                            )}
-                            <p className="card-text text-muted mb-2 luxury-desc">
-                              {restaurant.description
-                                ? `${restaurant.description.substring(0, 100)}...`
-                                : t("No description available")}
-                            </p>
-                            <div className="mb-2">
-                              <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                              <span style={{ fontWeight: 600, marginLeft: 4 }}>{restaurant.rating ? restaurant.rating.toFixed(1) : '0.0'}</span>
-                              <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                              ) : (
+                                <div 
+                                  className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                  style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}
+                                >
+                                  <i className="bi bi-cup-hot"></i>
+                                </div>
+                              )}
+                              {restaurant.cuisine_type && (
+                                <div className="position-absolute top-0 start-0 m-2">
+                                  <span className="badge bg-primary">
+                                    {restaurant.cuisine_type}
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                            {restaurant.price_range && (
-                              <p className="card-text text-muted small mb-0">
-                                <span className="luxury-money">💰</span> {restaurant.price_range}
-                                {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
+                            <div className="card-body luxury-card-body">
+                              <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{restaurant.name}</h3>
+                              {restaurant.city && (
+                                <p className="card-text text-primary mb-1 small">
+                                  <i className="bi bi-geo-alt-fill me-1"></i>
+                                  {restaurant.city}
+                                </p>
+                              )}
+                              <p className="card-text text-muted mb-2 luxury-desc">
+                                {restaurant.description
+                                  ? `${restaurant.description.substring(0, 100)}...`
+                                  : t("No description available")}
                               </p>
-                            )}
+                              <div className="mb-2">
+                                <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                                <span style={{ fontWeight: 600, marginLeft: 4 }}>{restaurant.rating ? restaurant.rating.toFixed(1) : '0.0'}</span>
+                                <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                              </div>
+                              {restaurant.price_range && (
+                                <p className="card-text text-muted small mb-0">
+                                  <span className="luxury-money">💰</span> {restaurant.price_range}
+                                  {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        </Link>
                       </div>
                     ))}
                   </div>
@@ -940,76 +963,78 @@ function HomePage() {
                           <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
                             {group.map((restaurant) => (
                               <div className="col" key={restaurant.id}>
-                                <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                                  <div className="position-relative">
-                                    {restaurant.images && restaurant.images.length > 0 ? (
-                                      <div id={`restaurantCarousel${restaurant.id}`} className="carousel slide" data-bs-ride="false">
-                                        <div className="carousel-inner">
-                                          {restaurant.images.map((image, index) => (
-                                            <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
-                                              <img
-                                                src={getImageUrl(image.image_url)}
-                                                alt={image.caption || restaurant.name}
-                                                className="card-img-top luxury-img-top"
-                                                style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
-                                                onError={(e) => { e.target.src = "/default-restaurant.jpg"; }}
-                                              />
-                                            </div>
-                                          ))}
+                                <Link to={`/restaurants/${restaurant.id}`} className="text-decoration-none">
+                                  <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                                    <div className="position-relative">
+                                      {restaurant.images && restaurant.images.length > 0 ? (
+                                        <div id={`restaurantCarousel${restaurant.id}`} className="carousel slide" data-bs-ride="false">
+                                          <div className="carousel-inner">
+                                            {restaurant.images.map((image, index) => (
+                                              <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
+                                                <img
+                                                  src={getImageUrl(image.image_url)}
+                                                  alt={image.caption || restaurant.name}
+                                                  className="card-img-top luxury-img-top"
+                                                  style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                                  onError={(e) => { e.target.src = "/default-restaurant.jpg"; }}
+                                                />
+                                              </div>
+                                            ))}
+                                          </div>
+                                          {restaurant.images.length > 1 && (
+                                            <>
+                                              <button className="carousel-control-prev" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="prev">
+                                                <span className="carousel-control-prev-icon"></span>
+                                              </button>
+                                              <button className="carousel-control-next" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="next">
+                                                <span className="carousel-control-next-icon"></span>
+                                              </button>
+                                            </>
+                                          )}
                                         </div>
-                                        {restaurant.images.length > 1 && (
-                                          <>
-                                            <button className="carousel-control-prev" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="prev">
-                                              <span className="carousel-control-prev-icon"></span>
-                                            </button>
-                                            <button className="carousel-control-next" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="next">
-                                              <span className="carousel-control-next-icon"></span>
-                                            </button>
-                                          </>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <div 
-                                        className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                                        style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}
-                                      >
-                                        <i className="bi bi-cup-hot"></i>
-                                      </div>
-                                    )}
-                                    {restaurant.cuisine_type && (
-                                      <div className="position-absolute top-0 start-0 m-2">
-                                        <span className="badge bg-primary">
-                                          {restaurant.cuisine_type}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="card-body luxury-card-body">
-                                    <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{restaurant.name}</h3>
-                                    {restaurant.city && (
-                                      <p className="card-text text-primary mb-1 small">
-                                        <i className="bi bi-geo-alt-fill me-1"></i>
-                                        {restaurant.city}
-                                      </p>
-                                    )}
-                                    <p className="card-text text-muted mb-2 luxury-desc">
-                                      {restaurant.description
-                                        ? `${restaurant.description.substring(0, 100)}...`
-                                        : t("No description available")}
-                                    </p>
-                                    <div className="mb-2">
-                                      <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                                      <span style={{ fontWeight: 600, marginLeft: 4 }}>{restaurant.rating ? restaurant.rating.toFixed(1) : '0.0'}</span>
-                                      <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                                      ) : (
+                                        <div 
+                                          className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                          style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}
+                                        >
+                                          <i className="bi bi-cup-hot"></i>
+                                        </div>
+                                      )}
+                                      {restaurant.cuisine_type && (
+                                        <div className="position-absolute top-0 start-0 m-2">
+                                          <span className="badge bg-primary">
+                                            {restaurant.cuisine_type}
+                                          </span>
+                                        </div>
+                                      )}
                                     </div>
-                                    {restaurant.price_range && (
-                                      <p className="card-text text-muted small mb-0">
-                                        <span className="luxury-money">💰</span> {restaurant.price_range}
-                                        {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
+                                    <div className="card-body luxury-card-body">
+                                      <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{restaurant.name}</h3>
+                                      {restaurant.city && (
+                                        <p className="card-text text-primary mb-1 small">
+                                          <i className="bi bi-geo-alt-fill me-1"></i>
+                                          {restaurant.city}
+                                        </p>
+                                      )}
+                                      <p className="card-text text-muted mb-2 luxury-desc">
+                                        {restaurant.description
+                                          ? `${restaurant.description.substring(0, 100)}...`
+                                          : t("No description available")}
                                       </p>
-                                    )}
+                                      <div className="mb-2">
+                                        <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                                        <span style={{ fontWeight: 600, marginLeft: 4 }}>{restaurant.rating ? restaurant.rating.toFixed(1) : '0.0'}</span>
+                                        <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                                      </div>
+                                      {restaurant.price_range && (
+                                        <p className="card-text text-muted small mb-0">
+                                          <span className="luxury-money">💰</span> {restaurant.price_range}
+                                          {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
+                                        </p>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
+                                </Link>
                               </div>
                             ))}
                           </div>
@@ -1203,6 +1228,48 @@ function HomePage() {
           </div>
           <div className="modal-backdrop fade show" style={{zIndex:1040}}></div>
         </div>
+      )}
+      {showBookingModal && bookingHotel && (
+        <Modal show={showBookingModal} onHide={() => setShowBookingModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Đặt phòng khách sạn</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Form.Group className="mb-3">
+                <Form.Label>Ngày nhận phòng</Form.Label>
+                <Form.Control type="date" value={bookingCheckIn} onChange={e => setBookingCheckIn(e.target.value)} />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Ngày trả phòng</Form.Label>
+                <Form.Control type="date" value={bookingCheckOut} onChange={e => setBookingCheckOut(e.target.value)} />
+              </Form.Group>
+              {bookingStatus === 'success' && <div className="alert alert-success">Đặt phòng thành công!</div>}
+              {bookingStatus === 'error' && <div className="alert alert-danger">Đặt phòng thất bại. Vui lòng thử lại.</div>}
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowBookingModal(false)}>
+              Đóng
+            </Button>
+            <Button variant="success" onClick={async () => {
+              setBookingStatus(null);
+              try {
+                await hotelApi.bookHotel({
+                  user_id: user?.id,
+                  hotel_id: bookingHotel?.id,
+                  check_in: bookingCheckIn,
+                  check_out: bookingCheckOut,
+                });
+                setBookingStatus('success');
+              } catch {
+                setBookingStatus('error');
+              }
+            }} disabled={!bookingCheckIn || !bookingCheckOut}>
+              Xác nhận đặt phòng
+            </Button>
+          </Modal.Footer>
+        </Modal>
       )}
     </div>
   );

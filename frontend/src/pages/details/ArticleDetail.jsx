@@ -449,7 +449,7 @@ const ArticleDetail = () => {
           setReportError(null);
           setReportSuccess(false);
         }}
-        onSubmit={async (reason) => {
+        onSubmit={async ({ type, reason }) => {
           setReportSubmitting(true);
           setReportError(null);
           setReportSuccess(false);
@@ -460,7 +460,7 @@ const ArticleDetail = () => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${user?.token}`,
               },
-              body: JSON.stringify({ reason }),
+              body: JSON.stringify({ type, reason }),
             });
             if (!res.ok) {
               const data = await res.json().catch(() => ({}));

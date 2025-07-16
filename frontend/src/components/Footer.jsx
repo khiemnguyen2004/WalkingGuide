@@ -1,42 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-
-function getSettings() {
-  const saved = localStorage.getItem('adminSettings');
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch {
-      return {};
-    }
-  }
-  return {};
-}
+import { getFooterSettings } from "../api/settingsApi";
 
 function Footer() {
-  const [settings, setSettings] = useState(getSettings());
-    const { t } = useTranslation();
+  const [settings, setSettings] = useState({});
+  const { t } = useTranslation();
 
-  // Listen for localStorage changes (other tabs/windows)
   useEffect(() => {
-    const handleStorage = (e) => {
-      if (e.key === 'adminSettings') {
-        setSettings(getSettings());
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    let mounted = true;
+    getFooterSettings()
+      .then(res => {
+        if (mounted && res.data && res.data.success) {
+          setSettings(res.data.data || {});
+        }
+      })
+      .catch(() => {});
+    return () => { mounted = false; };
   }, []);
-
-  // Also refresh settings when the page regains focus (for same-tab updates)
-  useEffect(() => {
-    const handleFocus = () => setSettings(getSettings());
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
-
-  // Helper to manually refresh settings (can be called after save in admin)
-  Footer.refreshSettings = () => setSettings(getSettings());
 
   const about = settings.footerDescription || t("Walking Guide là một trang web giúp bạn lên kế hoạch du lịch, và tìm kiếm các địa điểm du lịch gần bạn.");
   const copyright = settings.footerCopyright || t(`© ${new Date().getFullYear()} Walking Guide. All rights reserved.`);

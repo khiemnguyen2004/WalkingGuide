@@ -5,6 +5,7 @@ import CityAutocomplete from "../../components/CityAutocomplete.jsx";
 import axios from "axios";
 import { Modal, Button } from "react-bootstrap";
 import "../../css/AdminLayout.css";
+import { Link } from 'react-router-dom';
 
 function RestaurantsAdmin() {
   const [restaurants, setRestaurants] = useState([]);
@@ -1136,7 +1137,9 @@ function RestaurantsAdmin() {
                               </div>
                             )}
                           </td>
-                          <td>{restaurant.name}</td>
+                          <td>
+                            <Link to={`/restaurants/${restaurant.id}`}>{restaurant.name}</Link>
+                          </td>
                           <td>
                             {restaurant.cuisine_type && (
                               <span className="badge bg-primary">{restaurant.cuisine_type}</span>

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import axios from "axios";
+import { AuthContext } from "../contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import Navbar from "../components/Navbar.jsx";
@@ -18,7 +19,15 @@ function RegisterPage() {
   const [resendMessage, setResendMessage] = useState("");
   const [resendError, setResendError] = useState("");
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  // Redirect to home if already logged in
+  React.useEffect(() => {
+    if (user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleRegister = async (e) => {
     e.preventDefault();

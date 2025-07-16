@@ -58,7 +58,7 @@
 }
 .luxury-modal-header .modal-icon {
   font-size: 1.7rem;
-  color: #c3e7ff;
+  color: #3c69b0 !important;
   display: flex;
   align-items: center;
 }

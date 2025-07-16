@@ -5,6 +5,7 @@ import axios from "axios";
 import { AuthContext } from "../../contexts/AuthContext.jsx";
 import CKEditorField from "../../components/CKEditorField";
 import { Modal, Button } from "react-bootstrap";
+import { Modal as RBModal } from "react-bootstrap";
 import "../../css/AdminLayout.css";
 
 function ArticlesAdmin() {
@@ -21,6 +22,10 @@ function ArticlesAdmin() {
   const [articleToDelete, setArticleToDelete] = useState(null);
   const [reports, setReports] = useState([]);
   const [reportActionStatus, setReportActionStatus] = useState(null);
+  const [showWarnModal, setShowWarnModal] = useState(false);
+  const [warnUserId, setWarnUserId] = useState(null);
+  const [warnMessage, setWarnMessage] = useState("");
+  const [warnStatus, setWarnStatus] = useState(null);
 
   useEffect(() => {
     fetchArticles();
@@ -148,6 +153,34 @@ function ArticlesAdmin() {
       setReportActionStatus('success');
     } catch (e) {
       setReportActionStatus('error');
+    }
+  };
+
+  const handleWarnUser = (userId) => {
+    setWarnUserId(userId);
+    setWarnMessage("");
+    setWarnStatus(null);
+    setShowWarnModal(true);
+  };
+
+  const confirmWarnUser = async () => {
+    if (!warnUserId) return;
+    try {
+      // Find the article being warned (from the current report context)
+      const report = reports.find(r => articles.find(a => a.article_id === r.article_id && a.admin_id === warnUserId));
+      const articleId = report ? report.article_id : null;
+      await axios.post(`http://localhost:3000/api/notifications`, {
+        user_id: warnUserId,
+        content: warnMessage || "Bài viết của bạn đã bị báo cáo. Vui lòng kiểm tra lại nội dung.",
+        type: "warning",
+        article_id: articleId,
+      }, {
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      setWarnStatus("success");
+      setTimeout(() => setShowWarnModal(false), 1200);
+    } catch (e) {
+      setWarnStatus("error");
     }
   };
 
@@ -331,12 +364,62 @@ function ArticlesAdmin() {
 
             {/* Article Reports Section */}
             <div className="card mt-5">
-              <div className="card-header">
-                <h5>Báo cáo bài viết</h5>
+              <div className="card-header bg-danger text-white d-flex align-items-center" style={{ borderTopLeftRadius: '1rem', borderTopRightRadius: '1rem' }}>
+                <i className="bi bi-flag-fill me-2" style={{ fontSize: 22 }}></i>
+                <h5 className="mb-0">Báo cáo bài viết</h5>
               </div>
-              <div className="card-body">
+              <div className="card-body bg-light" style={{ borderBottomLeftRadius: '1rem', borderBottomRightRadius: '1rem' }}>
                 {reportActionStatus === 'success' && <div className="alert alert-success">Cập nhật trạng thái thành công!</div>}
                 {reportActionStatus === 'error' && <div className="alert alert-danger">Có lỗi khi cập nhật trạng thái.</div>}
+                {/* Card-style report display */}
+                <div className="row mb-4 g-4">
+                  {reports
+                    .filter(report => report.status === 'pending')
+                    .filter(report => articles.some(a => a.article_id === report.article_id))
+                    .map(report => {
+                      const article = articles.find(a => a.article_id === report.article_id);
+                      return (
+                        <div className="col-md-6 col-lg-4" key={report.id}>
+                          <div className="card h-100 shadow border-0 report-card position-relative" style={{ borderRadius: '1rem', transition: 'box-shadow 0.2s', background: '#fff' }}>
+                            <div className="card-body p-4">
+                              <div className="d-flex align-items-center mb-2">
+                                <i className="bi bi-flag text-danger me-2" style={{ fontSize: 20 }}></i>
+                                <h6 className="card-title mb-0">Báo cáo #{report.id}</h6>
+                                <span className="badge bg-warning text-dark ms-2" style={{ fontSize: '0.95em' }}>{report.status}</span>
+                              </div>
+                              <div className="mb-2">
+                                <b>Bài viết:</b> <a href={`/articles/${report.article_id}`} target="_blank" rel="noopener noreferrer" className="text-decoration-underline fw-semibold">{article?.title || 'Không tìm thấy'}</a>
+                              </div>
+                              <div className="mb-2"><b>Người báo cáo:</b> <span className="badge bg-secondary">User #{report.user_id}</span></div>
+                              <div className="mb-2"><b>Loại báo cáo:</b> <span className="badge bg-info text-dark text-capitalize">{report.type || 'Không rõ'}</span></div>
+                              <div className="mb-2"><b>Lý do:</b> <span className="fst-italic">{report.reason}</span></div>
+                              <div className="mb-2"><b>Ngày tạo:</b> {new Date(report.created_at).toLocaleString()}</div>
+                              <div className="d-flex gap-2 mt-3 flex-wrap">
+                                <button className="btn btn-success btn-sm px-3" onClick={() => handleReportStatus(report.id, 'resolved')} title="Đánh dấu đã xử lý">
+                                  <i className="bi bi-check-circle me-1"></i>Đã xử lý
+                                </button>
+                                <button className="btn btn-secondary btn-sm px-3" onClick={() => handleReportStatus(report.id, 'dismissed')} title="Bỏ qua báo cáo">
+                                  <i className="bi bi-x-circle me-1"></i>Bỏ qua
+                                </button>
+                                <button className="btn btn-danger btn-sm px-3" onClick={() => handleDeleteReportedArticle(report.article_id)} title="Xóa bài viết này">
+                                  <i className="bi bi-trash me-1"></i>Xóa bài viết
+                                </button>
+                                {article?.admin_id && (
+                                  <button className="btn btn-warning btn-sm px-3 text-white" style={{ background: '#ffc107', border: 'none' }} onClick={() => handleWarnUser(article.admin_id)} title="Cảnh báo tác giả">
+                                    <i className="bi bi-exclamation-triangle me-1"></i>Cảnh báo tác giả
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {reports.filter(report => report.status === 'pending').filter(report => articles.some(a => a.article_id === report.article_id)).length === 0 && (
+                    <div className="col-12 text-center text-muted">Không có báo cáo nào.</div>
+                  )}
+                </div>
+                {/* Table-style report display (existing) */}
                 <div className="table-responsive">
                   <table className="table table-bordered">
                     <thead>
@@ -403,6 +486,35 @@ function ArticlesAdmin() {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Warn User Modal */}
+      <RBModal show={showWarnModal} onHide={() => setShowWarnModal(false)} centered>
+        <RBModal.Header closeButton>
+          <RBModal.Title>Gửi cảnh báo tới tác giả</RBModal.Title>
+        </RBModal.Header>
+        <RBModal.Body>
+          {warnStatus === 'success' && <div className="alert alert-success">Đã gửi cảnh báo thành công!</div>}
+          {warnStatus === 'error' && <div className="alert alert-danger">Có lỗi khi gửi cảnh báo.</div>}
+          <div className="mb-3">
+            <label className="form-label">Nội dung cảnh báo</label>
+            <textarea
+              className="form-control"
+              value={warnMessage}
+              onChange={e => setWarnMessage(e.target.value)}
+              placeholder="Nhập nội dung cảnh báo gửi tới tác giả..."
+              rows={3}
+            />
+          </div>
+        </RBModal.Body>
+        <RBModal.Footer>
+          <Button variant="secondary" onClick={() => setShowWarnModal(false)}>
+            Hủy
+          </Button>
+          <Button variant="warning" className="text-white" onClick={confirmWarnUser}>
+            Gửi cảnh báo
+          </Button>
+        </RBModal.Footer>
+      </RBModal>
     </div>
   );
 }

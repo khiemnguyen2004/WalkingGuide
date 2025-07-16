@@ -7,6 +7,7 @@ import CityAutocomplete from "./CityAutocomplete.jsx";
 import LocationAutocomplete from "./LocationAutocomplete.jsx";
 import placeApi from "../api/placeApi.js";
 import "../css/luxury-home.css";
+import { useNavigate } from "react-router-dom";
 
 const AutoPlanner = ({ noLayout }) => {
   const [interests, setInterests] = useState("");
@@ -37,6 +38,8 @@ const AutoPlanner = ({ noLayout }) => {
     opening_hours: "",
     service: ""
   });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     axios.get("http://localhost:3000/api/tags").then(res => setTags(res.data));
@@ -175,7 +178,6 @@ const AutoPlanner = ({ noLayout }) => {
 
   const saveTour = async () => {
     if (!tourData) return;
-    
     setIsSaving(true);
     try {
       // Calculate days based on start and end dates
@@ -189,13 +191,24 @@ const AutoPlanner = ({ noLayout }) => {
       } else {
         totalDays = parseInt(days) || 1;
       }
-      
       // Distribute steps across days evenly
       const stepsPerDay = Math.ceil(tourData.steps.length / totalDays);
+
+      // Find the first place with an image for the tour cover
+      let tourImageUrl = "";
+      if (tourData.steps && tourData.steps.length > 0) {
+        const firstPlaceWithImage = tourData.steps.find(
+          (step) => step.place && step.place.image_url
+        );
+        if (firstPlaceWithImage) {
+          tourImageUrl = firstPlaceWithImage.place.image_url;
+        }
+      }
       
       const response = await axios.post("http://localhost:3000/api/tours", {
         name: tourName || tourData.tour.name,
         description: tourData.tour.description,
+        image_url: tourImageUrl, // set cover image
         user_id: user.id,
         total_cost: total_cost ? parseFloat(total_cost) : 0,
         steps: tourData.steps.map((step, i) => ({
@@ -207,7 +220,8 @@ const AutoPlanner = ({ noLayout }) => {
           day: Math.floor(i / stepsPerDay) + 1 // Distribute evenly across calculated days
         })),
         start_time: start_time,
-        end_time: end_time
+        end_time: end_time,
+        start_from: tourName
       });
       
       setCreatedTour(response.data.tour);
@@ -217,6 +231,8 @@ const AutoPlanner = ({ noLayout }) => {
       
       // Trigger notification refresh to update unread count
       refreshNotifications();
+      // Add: redirect to /my-tours after a short delay or after closing modal
+      setTimeout(() => navigate('/my-tours'), 1200);
     } catch (error) {
       console.error('Error saving tour:', error);
       setAlertMessage('Lỗi khi lưu tour vào hệ thống!');
@@ -653,6 +669,15 @@ const AutoPlanner = ({ noLayout }) => {
                     </div>
                     <div className="timeline-content">
                       <div className="place-card">
+                        {/* Place image */}
+                        {place?.image_url && (
+                          <img
+                            src={place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`}
+                            alt={place.name}
+                            className="mb-2 rounded"
+                            style={{ width: '100%', maxHeight: '160px', objectFit: 'cover' }}
+                          />
+                        )}
                         <div className="place-header">
                           <h6 className="place-name mb-1">
                             <i className="bi bi-map-marker-alt me-2 text-primary"></i>
@@ -685,7 +710,12 @@ const AutoPlanner = ({ noLayout }) => {
                         )}
                         {place?.description && (
                           <p className="place-description">
-                            <small className="text-muted">{htmlToPlainText(place.description)}</small>
+                            <small className="text-muted">
+                              {(() => {
+                                const plain = htmlToPlainText(place.description);
+                                return plain.length > 100 ? plain.slice(0, 100) + '...' : plain;
+                              })()}
+                            </small>
                           </p>
                         )}
                       </div>
@@ -794,7 +824,7 @@ const AutoPlanner = ({ noLayout }) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Tạo tour thành công!</h5>
-                  <button type="button" className="btn-close" onClick={() => setShowSuccessModal(false)}></button>
+                  <button type="button" className="btn-close" onClick={() => { setShowSuccessModal(false); navigate('/my-tours'); }}></button>
                 </div>
                 <div className="modal-body">
                   <p>Bạn đã tạo tour bắt đầu từ <b>{createdTour.name}</b> thành công.</p>

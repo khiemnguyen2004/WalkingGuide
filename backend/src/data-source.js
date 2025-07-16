@@ -22,6 +22,7 @@ const Restaurant = require("./models/Restaurant");
 const HotelImage = require("./models/HotelImage");
 const RestaurantImage = require("./models/RestaurantImage");
 const ArticleReport = require("./models/ArticleReport");
+const SiteSetting = require("./models/SiteSetting");
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -55,9 +56,10 @@ const AppDataSource = new DataSource({
     Restaurant,
     HotelImage,
     RestaurantImage,
+    SiteSetting,
   ],
   migrations: [
-    "src/migrations/1752550000000-create-article-reports.js",
+    "src/migrations/1752650000001-add-rejection-reason-to-tours.js",
   ],
   subscribers: [],
 });

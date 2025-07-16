@@ -17,10 +17,15 @@ const resources = {
       'Bắt đầu lên kế hoạch': 'Start Planning',
       'Tự tạo lộ trình': 'Manual Planning',
       'Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ thủ công để tự tạo tour theo ý thích của mình.': 'Want to plan your own trip? Use manual mode to create your custom tour.',
-      'Tạo lộ trình tự': 'Auto Planning',
+      'Tạo lộ trình tự động': 'Auto Planning',
       'Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ tự động để chúng tôi đề xuất tour cho bạn!': 'Want us to create a suitable itinerary? Try auto mode for our suggestions!',
       'Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!': 'No plans yet? Explore the travel map!',
       'Viết bài viết': 'Write Blog',
+      'Các khách sạn hàng đầu': 'Top Hotels',
+      'Đặt ngay': 'Booking now',
+      'Xem tất cả khách sạn': 'View All Hotels',
+      'Các nhà hàng nổi tiếg': 'Top Hotels',
+      'Xem tất cả nhà hàng': 'View All Restaurants'
     }
   },
   vi: {
@@ -38,7 +43,7 @@ const resources = {
       'Start Planning': 'Bắt đầu lên kế hoạch',
       'Manual Planning': 'Tự tạo lộ trình',
       'Want to plan your own trip? Use manual mode to create your custom tour.': 'Bạn muốn tự lên kế hoạch chuyến đi? Hãy sử dụng chế độ thủ công để tự tạo tour theo ý thích của mình.',
-      'Auto Planning': 'Tạo lộ trình tự',
+      'Auto Planning': 'Tạo lộ trình tự động',
       'Want us to create a suitable itinerary? Try auto mode for our suggestions!': 'Bạn muốn chúng tôi tạo lộ trình phù hợp? Hãy thử chế độ tự động để chúng tôi đề xuất tour cho bạn!',
       'No plans yet? Explore the travel map!': 'Bạn chưa có dự định? Hãy cùng khám phá bản đồ du lịch!',
       'Trips & Itineraries': 'Chuyến đi & Lịch trình',
@@ -58,6 +63,11 @@ const resources = {
       'Tours': 'Tour',
       'Articles': 'Bài viết',
       'Write Blog': 'Viết bài viết',
+      'Top Hotels': 'Các khách sạn hàng đầu',
+      'Booking now': 'Đặt ngay',
+      'View All Hotels': 'Xem tất cả khách sạn',
+      'Top Restaurants': 'Các nhà hàng nổi tiếng',
+      'View All Restaurants': 'Xem tất cả nhà hàng'
     }
   }
 };

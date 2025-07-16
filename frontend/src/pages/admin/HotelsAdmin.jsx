@@ -5,6 +5,7 @@ import CityAutocomplete from "../../components/CityAutocomplete.jsx";
 import axios from "axios";
 import { Modal, Button } from "react-bootstrap";
 import "../../css/AdminLayout.css";
+import { Link } from 'react-router-dom';
 
 function HotelsAdmin() {
   const [hotels, setHotels] = useState([]);
@@ -1028,7 +1029,9 @@ function HotelsAdmin() {
                               </div>
                             )}
                           </td>
-                          <td>{hotel.name}</td>
+                          <td>
+                            <Link to={`/hotels/${hotel.id}`}>{hotel.name}</Link>
+                          </td>
                           <td>{hotel.city}</td>
                           <td>
                             <div style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

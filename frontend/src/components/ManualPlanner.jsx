@@ -7,7 +7,8 @@ import Footer from "./Footer.jsx";
 import LocationAutocomplete from "./LocationAutocomplete.jsx";
 import CityAutocomplete from "./CityAutocomplete.jsx";
 import "../css/luxury-home.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { Card, Button } from "react-bootstrap";
 
 function ManualPlanner({ noLayout }) {
   const [places, setPlaces] = useState([]);
@@ -33,6 +34,11 @@ function ManualPlanner({ noLayout }) {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('danger');
+  const [hotels, setHotels] = useState([]);
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [hotelCheckIn, setHotelCheckIn] = useState("");
+  const [hotelCheckOut, setHotelCheckOut] = useState("");
+  const [start_from, setStart_from] = useState(null); // New state for start_from location
 
   useEffect(() => {
     axios.get("http://localhost:3000/api/places").then((res) => {
@@ -40,6 +46,52 @@ function ManualPlanner({ noLayout }) {
     });
     axios.get("http://localhost:3000/api/tags").then(res => setTags(res.data));
   }, []);
+
+  useEffect(() => {
+    axios.get("http://localhost:3000/api/hotels").then((res) => {
+      setHotels(res.data.data || res.data);
+    });
+  }, []);
+
+  // Set default hotel check-in/out to tour start/end
+  useEffect(() => {
+    if (start_time && end_time) {
+      setHotelCheckIn(start_time);
+      setHotelCheckOut(end_time);
+    }
+  }, [start_time, end_time]);
+
+  // Helper to get proper image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return "/default-hotel.jpg";
+    if (imageUrl.startsWith("http")) return imageUrl;
+    return `http://localhost:3000${imageUrl}`;
+  };
+
+  // Helper to get proper place image URL
+  const getPlaceImageUrl = (place) => {
+    if (!place) return "/default-place.jpg";
+    if (place.image_url) {
+      if (place.image_url.startsWith("http")) return place.image_url;
+      return `http://localhost:3000${place.image_url}`;
+    }
+    return "/default-place.jpg";
+  };
+
+  // Fetch hotels when start_from changes (prefer lat/lng, else city)
+  useEffect(() => {
+    if (start_from && start_from.latitude && start_from.longitude) {
+      axios.get(`http://localhost:3000/api/hotels/search?latitude=${start_from.latitude}&longitude=${start_from.longitude}&radius=10`)
+        .then((res) => {
+          setHotels(res.data.data || res.data);
+        });
+    } else if (start_from && start_from.city) {
+      axios.get(`http://localhost:3000/api/hotels/search?city=${encodeURIComponent(start_from.city)}`)
+        .then((res) => {
+          setHotels(res.data.data || res.data);
+        });
+    }
+  }, [start_from]);
 
   // Get all available cities from places
   const getAvailableCities = () => {
@@ -258,37 +310,34 @@ function ManualPlanner({ noLayout }) {
     e.preventDefault();
     
     // Validation
-    if (!tourName.trim()) {
-      setAlertMessage('Vui lòng nhập điểm bắt đầu!');
-      setAlertType('warning');
-      setShowAlert(true);
-      return;
-    }
-    
     if (steps.length === 0) {
       setAlertMessage('Vui lòng thêm ít nhất một địa điểm!');
       setAlertType('warning');
       setShowAlert(true);
       return;
     }
-    
     if (steps.some(step => !step.place_id)) {
       setAlertMessage('Vui lòng chọn địa điểm cho tất cả các bước!');
       setAlertType('warning');
       setShowAlert(true);
       return;
     }
-    
+    // Get first place info
+    const firstStep = steps[0];
+    const firstPlace = getSelectedPlace(firstStep.place_id);
+    const autoTourName = firstPlace ? firstPlace.name : tourName;
+    const autoImageUrl = firstPlace && firstPlace.image_url ? firstPlace.image_url : '';
     setIsSubmitting(true);
     try {
       const res = await axios.post("http://localhost:3000/api/tours", {
-        name: tourName,
+        name: autoTourName,
         description,
         user_id: userId,
         total_cost: parseFloat(totalCost) || 0,
         start_time: start_time,
         end_time: end_time,
         steps,
+        image_url: autoImageUrl,
       });
       // Show modal with summary and buttons
       setCreatedTour(res.data.tour || res.data); // support both {tour, steps} and just tour
@@ -297,9 +346,10 @@ function ManualPlanner({ noLayout }) {
       setDescription("");
       setTotalCost(0);
       setSteps([]);
-      
       // Trigger notification refresh to update unread count
       refreshNotifications();
+      // Add: redirect to /my-tours after a short delay or after closing modal
+      setTimeout(() => navigate('/my-tours'), 1200);
     } catch (error) {
       setAlertMessage('Lỗi khi tạo tour');
       setAlertType('danger');
@@ -660,96 +710,63 @@ function ManualPlanner({ noLayout }) {
             </div>
           )}
 
-          {/* Place Suggestions Section */}
+          {/* Add Place Section - Card-based suggestion */}
           {selectedCities.length > 0 && (
-            <div className="mt-4">
-              <div className="alert alert-success border-0 shadow-sm">
-                <h6 className="mb-3">
-                  <i className="bi bi-lightbulb me-2"></i>
-                  Địa điểm gợi ý từ thành phố đã chọn
-                </h6>
-                {isLoadingCityPlaces ? (
-                  <div className="text-center py-3">
-                    <div className="spinner-border text-success" role="status">
-                      <span className="visually-hidden">Loading...</span>
+            <div className="mb-4">
+              <h5 className="form-label">Gợi ý địa điểm từ thành phố đã chọn</h5>
+              <div className="row row-cols-1 row-cols-md-3 g-4">
+                {cityPlaces.length === 0 && <div className="col">Không có địa điểm gợi ý cho thành phố này.</div>}
+                {cityPlaces.map(place => {
+                  const isSelected = steps.some(step => step.place_id === place.id);
+                  return (
+                    <div className="col" key={place.id}>
+                      <Card
+                        style={{ border: isSelected ? "2px solid #1a5bb8" : undefined, boxShadow: isSelected ? "0 0 10px #1a5bb844" : undefined, cursor: "pointer", transition: 'box-shadow 0.2s, border 0.2s' }}
+                        className={isSelected ? "shadow-lg" : "shadow-sm"}
+                        onClick={() => {
+                          if (!isSelected) {
+                            // Add as a new step
+                            setSteps([...steps, {
+                              place_id: place.id,
+                              step_order: steps.length + 1,
+                              day: 1 + Math.floor(steps.length / 3),
+                              start_time: "",
+                              end_time: ""
+                            }]);
+                          }
+                        }}
+                      >
+                        <Card.Img variant="top" src={getPlaceImageUrl(place)} style={{ height: 140, objectFit: "cover", borderTopLeftRadius: 12, borderTopRightRadius: 12 }} onError={e => { e.target.src = "/default-place.jpg"; }} />
+                        <Card.Body>
+                          <Card.Title className="fw-bold" style={{ color: isSelected ? '#1a5bb8' : undefined }}>{place.name}</Card.Title>
+                          <Card.Text>
+                            <span>{place.address}</span><br/>
+                            <span className="text-muted">{place.city}</span><br/>
+                            {place.description && (
+                              <span className="text-muted small">{place.description.substring(0, 60)}...</span>
+                            )}
+                          </Card.Text>
+                          <div className="d-flex gap-2 mt-2">
+                            {isSelected ? (
+                              <Button variant="primary" size="sm" disabled>Đã thêm</Button>
+                            ) : (
+                              <Button variant="outline-primary" size="sm" onClick={e => { e.stopPropagation(); setSteps([...steps, {
+                                place_id: place.id,
+                                step_order: steps.length + 1,
+                                day: 1 + Math.floor(steps.length / 3),
+                                start_time: "",
+                                end_time: ""
+                              }]); }}>Thêm vào kế hoạch</Button>
+                            )}
+                            <Link to={`/places/${place.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline-info btn-sm" onClick={e => e.stopPropagation()}>
+                              Xem chi tiết
+                            </Link>
+                          </div>
+                        </Card.Body>
+                      </Card>
                     </div>
-                    <p className="mt-2 text-muted">Đang tìm địa điểm...</p>
-                  </div>
-                ) : cityPlaces.length > 0 ? (
-                  <div>
-                    {Object.entries(getPlacesByCity()).map(([city, places]) => (
-                      <div key={city} className="mb-4">
-                        <h6 className="text-primary mb-3">
-                          <i className="bi bi-building me-2"></i>
-                          {city}
-                        </h6>
-                        <div className="row g-3">
-                          {places.slice(0, 4).map((place) => (
-                            <div key={place.id} className="col-md-6 col-lg-3">
-                              <div className="card h-100 border-0 shadow-sm">
-                                {place.image_url && (
-                                  <img
-                                    src={place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`}
-                                    className="card-img-top"
-                                    alt={place.name}
-                                    style={{ height: '100px', objectFit: 'cover' }}
-                                  />
-                                )}
-                                <div className="card-body">
-                                  <h6 className="card-title text-primary" style={{ fontSize: '0.9rem' }}>{place.name}</h6>
-                                  {place.address && (
-                                    <p className="card-text small text-muted">
-                                      <i className="bi bi-geo-alt me-1"></i>
-                                      {place.address}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-3">
-                    <i className="bi bi-map text-muted" style={{ fontSize: '2rem' }}></i>
-                    <p className="mt-2 text-muted">Chưa có địa điểm nào tại các thành phố đã chọn</p>
-                    
-                    {/* Show available cities */}
-                    <div className="mt-3">
-                      <p className="text-muted small mb-2">
-                        <i className="bi bi-info-circle me-1"></i>
-                        Các thành phố có sẵn trong hệ thống:
-                      </p>
-                      <div className="d-flex flex-wrap gap-1 justify-content-center">
-                        {getAvailableCities().map((city, index) => (
-                          <button
-                            key={index}
-                            type="button"
-                            className="badge bg-light text-dark border"
-                            style={{ cursor: 'pointer', fontSize: '0.8rem' }}
-                            onClick={() => {
-                              if (!selectedCities.includes(city)) {
-                                const updatedCities = [...selectedCities, city];
-                                setSelectedCities(updatedCities);
-                                searchPlacesByCities(updatedCities);
-                              }
-                            }}
-                            title={`Thêm ${city} vào danh sách`}
-                          >
-                            {city}
-                          </button>
-                        ))}
-                      </div>
-                      {getAvailableCities().length === 0 && (
-                        <p className="text-muted small mt-2">
-                          Chưa có thành phố nào trong hệ thống
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -910,6 +927,84 @@ function ManualPlanner({ noLayout }) {
         </div>
       </div>
 
+      {/* Hotel selection section */}
+      <div className="mb-4 mt-4">
+        <h5 className="form-label">Chọn khách sạn</h5>
+        <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 8 }}>
+          <div className="d-flex flex-row flex-nowrap gap-3" style={{ minHeight: 280 }}>
+            {hotels.length === 0 && <div className="d-flex align-items-center">Không tìm thấy khách sạn phù hợp.</div>}
+            {hotels.map(hotel => (
+              <div key={hotel.id} style={{ display: 'inline-block', minWidth: 280, maxWidth: 320 }}>
+                <Card
+                  style={{ border: selectedHotel?.id === hotel.id ? "2px solid #007bff" : undefined, boxShadow: selectedHotel?.id === hotel.id ? "0 0 10px #007bff44" : undefined, cursor: "pointer", transition: 'box-shadow 0.2s, border 0.2s' }}
+                  className={selectedHotel?.id === hotel.id ? "shadow-lg" : "shadow-sm"}
+                  onClick={e => {
+                    // Only select if not clicking the button or link
+                    if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') setSelectedHotel(hotel);
+                  }}
+                >
+                  <Card.Img variant="top" src={hotel.images && hotel.images[0] ? getImageUrl(hotel.images[0].image_url) : "/default-hotel.jpg"} style={{ height: 180, objectFit: "cover", borderTopLeftRadius: 12, borderTopRightRadius: 12 }} onError={e => { e.target.src = "/default-hotel.jpg"; }} />
+                  <Card.Body>
+                    <Card.Title className="fw-bold" style={{ color: selectedHotel?.id === hotel.id ? '#1a5bb8' : undefined }}>{hotel.name}</Card.Title>
+                    <Card.Text>
+                      <span>{hotel.address}</span><br/>
+                      <span className="text-muted">{hotel.city}</span><br/>
+                      {hotel.min_price && hotel.max_price && (
+                        <span>Giá: {hotel.min_price} - {hotel.max_price} VND</span>
+                      )}
+                    </Card.Text>
+                    <div className="d-flex gap-2 mt-2">
+                      <Button variant={selectedHotel?.id === hotel.id ? "primary" : "outline-primary"} size="sm" onClick={e => { e.stopPropagation(); setSelectedHotel(hotel); }}>
+                        {selectedHotel?.id === hotel.id ? "Đã chọn" : "Chọn"}
+                      </Button>
+                      <Link to={`/hotels/${hotel.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline-info btn-sm" onClick={e => e.stopPropagation()}>
+                        Xem chi tiết
+                      </Link>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Booking now button */}
+      <div className="mb-4">
+        <Button variant="success" size="lg" type="submit">
+          Booking now
+        </Button>
+      </div>
+
+      {/* Check-in/out date pickers */}
+      <div className="mb-3 d-flex gap-3 align-items-end">
+        <div>
+          <label className="form-label">Ngày nhận phòng</label>
+          <input type="date" className="form-control" value={hotelCheckIn} onChange={e => setHotelCheckIn(e.target.value)} />
+        </div>
+        <div>
+          <label className="form-label">Ngày trả phòng</label>
+          <input type="date" className="form-control" value={hotelCheckOut} onChange={e => setHotelCheckOut(e.target.value)} />
+        </div>
+      </div>
+
+      {/* In trip summary, show selected hotel as a card */}
+      {selectedHotel && (
+        <div className="mt-4">
+          <h6>Khách sạn đã chọn</h6>
+          <Card style={{ width: "18rem" }}>
+            <Card.Img variant="top" src={selectedHotel.images && selectedHotel.images[0] ? getImageUrl(selectedHotel.images[0].image_url) : "/default-hotel.jpg"} style={{ height: 120, objectFit: "cover" }} onError={e => { e.target.src = "/default-hotel.jpg"; }} />
+            <Card.Body>
+              <Card.Title>{selectedHotel.name}</Card.Title>
+              <Card.Text>
+                <span>{selectedHotel.address}</span><br/>
+                <span className="text-muted">{selectedHotel.city}</span>
+              </Card.Text>
+            </Card.Body>
+          </Card>
+        </div>
+      )}
+
       {/* Submit Button */}
       <div className="text-center mt-4">
         <button 
@@ -947,7 +1042,7 @@ function ManualPlanner({ noLayout }) {
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Tạo tour thành công!</h5>
-                  <button type="button" className="btn-close" onClick={() => setShowSuccessModal(false)}></button>
+                  <button type="button" className="btn-close" onClick={() => { setShowSuccessModal(false); navigate('/my-tours'); }}></button>
                 </div>
                 <div className="modal-body">
                   <p>Bạn đã tạo tour bắt đầu từ <b>{createdTour.name}</b> thành công.</p>

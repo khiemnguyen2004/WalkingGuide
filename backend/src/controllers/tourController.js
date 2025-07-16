@@ -36,7 +36,8 @@ module.exports = {
           user_id: userId,
         },
       });
-      res.json(tours);
+      // Ensure start_from is included (TypeORM should include it by default, but for clarity)
+      res.json(tours.map(tour => ({ ...tour, start_from: tour.start_from })));
     } catch (err) {
       console.error("Lỗi khi lấy tour người dùng:", err);
       res.status(500).json({ error: "Lỗi server" });
@@ -86,14 +87,14 @@ module.exports = {
   },
   createTour: async (req, res) => {
     try {
-      const { name, description, image_url, user_id, total_cost = 0, steps = [], start_time, end_time } = req.body;
+      const { name, description, image_url, user_id, total_cost = 0, steps = [], start_time, end_time, start_from } = req.body;
 
       if (!name || !user_id) {
         return res.status(400).json({ error: "Thiếu tên tour hoặc user_id" });
       }
 
       // 1. Tạo tour
-      const newTour = await tourRepo.save({ name, description, image_url, total_cost, user_id, start_time, end_time });
+      const newTour = await tourRepo.save({ name, description, image_url, total_cost, user_id, start_time, end_time, start_from });
 
       // 2. Lưu các bước của tour nếu có
       const savedSteps = [];
@@ -138,7 +139,21 @@ module.exports = {
         }
       }
 
-      res.status(201).json({ tour: newTour, steps: savedSteps });
+      // 5. Create booking for the creator
+      let booking = null;
+      if (start_time && end_time) {
+        booking = await bookingRepo.save({
+          user_id,
+          tour_id: newTour.id,
+          start_date: start_time,
+          end_date: end_time,
+          spots: 1,
+          total_price: total_cost,
+          status: 'pending',
+        });
+      }
+
+      res.status(201).json({ tour: newTour, steps: savedSteps, booking });
     } catch (err) {
       console.error("Lỗi khi tạo tour:", err);
       res.status(500).json({ error: "Lỗi server khi tạo tour" });
@@ -200,7 +215,7 @@ module.exports = {
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
       // Fetch steps for this tour
       const steps = await tourStepRepo.find({ where: { tour_id: tour.id } });
-      res.json({ ...tour, steps });
+      res.json({ ...tour, start_from: tour.start_from, steps });
     } catch (err) {
       console.error("Lỗi khi lấy chi tiết tour:", err);
       res.status(500).json({ error: "Lỗi server khi lấy chi tiết tour" });

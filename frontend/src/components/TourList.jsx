@@ -45,7 +45,7 @@ function TourList() {
 
   return (
     <div className="container mt-4">
-      <h2>Tour của tôi</h2>
+      <h2>Tour của bạn</h2>
       {myTours.map((tour) => (
         <div key={tour.id} className="card shadow-lg border-0 rounded-4 p-4 mb-4 h-100" style={{ background: "rgba(255, 255, 255, 0.97)", minHeight: '420px', display: 'flex', flexDirection: 'column', justifyContent: 'stretch' }}>
           <h1 className="text-3xl font-bold mb-4 text-gray-800 text-center">{tour.name}</h1>

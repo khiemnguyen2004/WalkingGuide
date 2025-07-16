@@ -17,6 +17,7 @@ const placeTagRoutes = require("./routes/placeTagRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const bookingRoutes = require('./routes/bookingRoutes');
 const geocodingRoutes = require('./routes/geocodingRoutes');
+const siteSettingRoutes = require("./routes/siteSettingRoutes");
 
 const cors = require("cors");
 app.use(cors());
@@ -38,6 +39,7 @@ AppDataSource.initialize()
     app.use("/api/place-tags", placeTagRoutes);
     app.use("/api/notifications", notificationRoutes);
     app.use("/api/geocoding", geocodingRoutes);
+    app.use("/api/settings", siteSettingRoutes);
     app.use("/api", mainRouter);
     app.use("/uploads", express.static("uploads"));
     app.use('/api/bookings', bookingRoutes);

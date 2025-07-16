@@ -3,6 +3,7 @@ import AdminHeader from "../../components/AdminHeader.jsx";
 import AdminSidebar from "../../components/AdminSidebar.jsx";
 import { Button } from "react-bootstrap";
 import "../../css/AdminLayout.css";
+import { getFooterSettings, updateFooterSettings } from "../../api/settingsApi";
 
 function SettingsAdmin() {
   const defaultSettings = {
@@ -19,12 +20,21 @@ function SettingsAdmin() {
   const [settings, setSettings] = useState(defaultSettings);
   const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState({ type: '', message: '' });
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
-    const savedSettings = localStorage.getItem('adminSettings');
-    if (savedSettings) {
-      setSettings({ ...defaultSettings, ...JSON.parse(savedSettings) });
-    }
+    let mounted = true;
+    getFooterSettings()
+      .then(res => {
+        if (mounted && res.data && res.data.success) {
+          setSettings({ ...defaultSettings, ...res.data.data });
+        }
+      })
+      .catch(() => {
+        setSaveStatus({ type: 'error', message: 'Không thể tải cài đặt từ máy chủ.' });
+      })
+      .finally(() => setInitialLoading(false));
+    return () => { mounted = false; };
   }, []);
 
   const handleInputChange = (field, value) => {
@@ -38,8 +48,7 @@ function SettingsAdmin() {
     setLoading(true);
     setSaveStatus({ type: '', message: '' });
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      localStorage.setItem('adminSettings', JSON.stringify(settings));
+      await updateFooterSettings(settings);
       setSaveStatus({ type: 'success', message: 'Cài đặt footer đã được lưu thành công!' });
       setTimeout(() => setSaveStatus({ type: '', message: '' }), 2000);
     } catch (error) {
@@ -48,6 +57,10 @@ function SettingsAdmin() {
       setLoading(false);
     }
   };
+
+  if (initialLoading) {
+    return <div className="admin-content"><div className="container-fluid py-5 text-center">Đang tải cài đặt...</div></div>;
+  }
 
   return (
     <div className="admin-layout">
@@ -89,10 +102,8 @@ function SettingsAdmin() {
                     placeholder="© 2024 Walking Guide. Tất cả quyền được bảo lưu."
                   />
                 </div>
-                
                 <hr className="my-4" />
                 <h5 className="mb-3">Thông tin liên hệ & Mạng xã hội</h5>
-                
                 <div className="row">
                   <div className="col-md-4 mb-3">
                     <label className="form-label">Email</label>
@@ -122,7 +133,6 @@ function SettingsAdmin() {
                     />
                   </div>
                 </div>
-                
                 <div className="row">
                   <div className="col-md-6 mb-3">
                     <label className="form-label">Facebook URL</label>
@@ -161,7 +171,6 @@ function SettingsAdmin() {
                     />
                   </div>
                 </div>
-                
                 <Button
                   variant="primary"
                   className="admin-main-btn"
@@ -172,7 +181,6 @@ function SettingsAdmin() {
                 </Button>
               </div>
             </div>
-
             {/* Preview Card */}
             <div className="card">
               <div className="card-header">
