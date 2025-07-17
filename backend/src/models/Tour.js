@@ -15,5 +15,6 @@ module.exports = new EntitySchema({
     start_time: { type: "date", nullable: true },
     end_time: { type: "date", nullable: true },
     start_from: { type: "varchar", length: 255, nullable: true },
+    status: { type: "varchar", length: 20, default: "pending", nullable: false },
   }
 });

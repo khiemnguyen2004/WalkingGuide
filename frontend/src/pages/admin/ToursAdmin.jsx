@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import AdminHeader from "../../components/AdminHeader.jsx";
 import AdminSidebar from "../../components/AdminSidebar.jsx";
 import axios from "axios";
@@ -30,14 +30,10 @@ function ToursAdmin() {
   const [alertType, setAlertType] = useState('danger');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [tourToDelete, setTourToDelete] = useState(null);
-
-  useEffect(() => {
-    fetchTours();
-    placeApi.getAll().then(res => setAllPlaces(res.data)).catch(() => setAllPlaces([]));
-  }, []);
+  const [pendingTours, setPendingTours] = useState([]);
 
   const fetchTours = async () => {
-    const res = await axios.get("http://localhost:3000/api/tours");
+    const res = await axios.get("http://localhost:3000/api/tours?role=ADMIN");
     setTours(res.data);
     // Fetch steps for all tours
     const stepsMap = {};
@@ -53,6 +49,17 @@ function ToursAdmin() {
     );
     setTourStepsMap(stepsMap);
   };
+
+  const fetchPendingTours = useCallback(async () => {
+    const res = await axios.get("http://localhost:3000/api/tours/pending/user");
+    setPendingTours(res.data);
+  }, []);
+
+  useEffect(() => {
+    fetchTours();
+    fetchPendingTours();
+    placeApi.getAll().then(res => setAllPlaces(res.data)).catch(() => setAllPlaces([]));
+  }, [fetchPendingTours]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -231,6 +238,17 @@ function ToursAdmin() {
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setTourToDelete(null);
+  };
+
+  const handleApprove = async (id) => {
+    await axios.post(`http://localhost:3000/api/tours/${id}/approve`);
+    fetchPendingTours();
+    fetchTours();
+  };
+  const handleReject = async (id) => {
+    await axios.post(`http://localhost:3000/api/tours/${id}/reject`);
+    fetchPendingTours();
+    fetchTours();
   };
 
   const resetForm = () => {
@@ -439,6 +457,46 @@ function ToursAdmin() {
                     </Button>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* Pending Approval Tours */}
+            <div className="card mb-4">
+              <div className="card-header bg-warning text-dark">
+                <h5>Tour do người dùng tạo chờ duyệt</h5>
+              </div>
+              <div className="card-body">
+                {pendingTours.length === 0 ? (
+                  <div className="text-muted">Không có tour nào chờ duyệt.</div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Tên tour</th>
+                          <th>Người tạo</th>
+                          <th>Mô tả</th>
+                          <th>Thao tác</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingTours.map((t) => (
+                          <tr key={t.id}>
+                            <td>{t.id}</td>
+                            <td>{t.name}</td>
+                            <td>{t.user_id}</td>
+                            <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.description}</td>
+                            <td>
+                              <button className="btn btn-success btn-sm me-2" onClick={() => handleApprove(t.id)}>Duyệt</button>
+                              <button className="btn btn-danger btn-sm" onClick={() => handleReject(t.id)}>Từ chối</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
 

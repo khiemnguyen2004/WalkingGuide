@@ -13,5 +13,8 @@ router.post("/:id/clone", tourController.cloneTour);
 router.get("/:id", tourController.getById);
 router.post("/:id/book", tourController.bookTour);
 router.get("/bookings/user/:userId", tourController.getUserBookedTours);
+router.get("/pending/user", tourController.getPendingUserTours);
+router.post("/:id/approve", tourController.approveTour);
+router.post("/:id/reject", tourController.rejectTour);
 
 module.exports = router;

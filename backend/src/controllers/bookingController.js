@@ -2,6 +2,7 @@ const { AppDataSource } = require("../data-source");
 const bookingRepo = AppDataSource.getRepository("Booking");
 const tourRepo = AppDataSource.getRepository("Tour");
 const userRepo = AppDataSource.getRepository("User");
+const notiService = require("../services/notificationService");
 
 // Get all bookings for admin management
 exports.getAllBookings = async (req, res) => {
@@ -164,6 +165,16 @@ exports.rejectBooking = async (req, res) => {
     booking.updated_at = new Date();
 
     await bookingRepo.save(booking);
+
+    // Send notification to user about booking refusal
+    const tour = await tourRepo.findOneBy({ id: booking.tour_id });
+    await notiService.create({
+      user_id: booking.user_id,
+      type: 'booking_failed',
+      content: `Đặt tour "${tour ? tour.name : ''}" đã bị từ chối. Vui lòng đặt lại hoặc liên hệ hỗ trợ.`,
+      is_read: false,
+      tour_id: booking.tour_id
+    });
 
     res.json({
       success: true,

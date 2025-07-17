@@ -667,7 +667,7 @@ function MyTours() {
                           src={tour.image_url.startsWith('http') ? tour.image_url : `http://localhost:3000${tour.image_url}`}
                           alt={tour.name}
                           className="card-img-top luxury-img-top"
-                          style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                          style={{ height: 220, objectFit: "cover" }}
                         />
                       ) : (
                         <div className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
@@ -700,18 +700,34 @@ function MyTours() {
                       </div>
                     </Link>
                     <div className="px-3 pb-3 d-flex gap-2">
-                      <button
-                        className="btn btn-outline-danger btn-sm flex-fill"
-                        disabled={!tour.booking?.id}
-                        onClick={e => {
-                          e.stopPropagation();
-                          if (tour.booking?.id) {
-                            setConfirmModal({ show: true, message: 'Bạn có chắc muốn hủy đặt tour này?', onConfirm: () => handleDeleteBooking(tour.booking.id) });
-                          }
-                        }}
-                      >
-                        Hủy đặt
-                      </button>
+                      {tour.booking?.status === 'rejected' ? (
+                        <>
+                          <span className="text-danger small fw-bold flex-fill align-self-center">Đặt tour thất bại</span>
+                          <button
+                            className="btn btn-outline-primary btn-sm flex-fill"
+                            onClick={e => {
+                              e.stopPropagation();
+                              // TODO: Trigger booking modal/flow again for this tour
+                              alert('Chức năng Đặt lại sẽ được triển khai ở đây!');
+                            }}
+                          >
+                            Đặt lại
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="btn btn-outline-danger btn-sm flex-fill"
+                          disabled={!tour.booking?.id}
+                          onClick={e => {
+                            e.stopPropagation();
+                            if (tour.booking?.id) {
+                              setConfirmModal({ show: true, message: 'Bạn có chắc muốn hủy đặt tour này?', onConfirm: () => handleDeleteBooking(tour.booking.id) });
+                            }
+                          }}
+                        >
+                          Hủy đặt
+                        </button>
+                      )}
                     </div>
                   </div>
               </div>

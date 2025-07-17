@@ -3,7 +3,8 @@ import AdminHeader from "../../components/AdminHeader.jsx";
 import AdminSidebar from "../../components/AdminSidebar.jsx";
 import CityAutocomplete from "../../components/CityAutocomplete.jsx";
 import axios from "axios";
-import { Modal, Button } from "react-bootstrap";
+import axiosClient from '../../api/axiosClient';
+import { Modal, Button, Form } from "react-bootstrap";
 import "../../css/AdminLayout.css";
 import { Link } from 'react-router-dom';
 
@@ -45,6 +46,19 @@ function RestaurantsAdmin() {
   const [uploadProgress, setUploadProgress] = useState({});
   const [isUploading, setIsUploading] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
+  const [showMenuModal, setShowMenuModal] = useState(false);
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [menus, setMenus] = useState([]);
+  const [menuLoading, setMenuLoading] = useState(false);
+  const [menuEdit, setMenuEdit] = useState(null); // for editing menu section
+  const [showMenuForm, setShowMenuForm] = useState(false);
+  const [menuItemEdit, setMenuItemEdit] = useState(null); // for editing menu item
+  const [showMenuItemForm, setShowMenuItemForm] = useState(false);
+  const [menuItems, setMenuItems] = useState([]);
+  const [menuItemLoading, setMenuItemLoading] = useState(false);
+  const [menuItemImage, setMenuItemImage] = useState(null);
+  const [menuItemImagePreview, setMenuItemImagePreview] = useState(null);
+  const [selectedMenu, setSelectedMenu] = useState(null);
 
   useEffect(() => {
     fetchRestaurants();
@@ -555,6 +569,157 @@ function RestaurantsAdmin() {
     setImageFiles([]);
     setAddressSuggestions([]);
     setShowSuggestions(false);
+  };
+
+  // Menu management logic
+  const openMenuModal = async (restaurant) => {
+    setSelectedRestaurant(restaurant);
+    setShowMenuModal(true);
+    setMenuLoading(true);
+    try {
+      const res = await axios.get(`http://localhost:3000/api/restaurants/${restaurant.id}/menus`);
+      const menuList = res.data.data || [];
+      setMenus(menuList);
+      if (menuList.length > 0) {
+        setSelectedMenu(menuList[0]);
+        fetchMenuItems(menuList[0].id);
+      } else {
+        setSelectedMenu(null);
+        setMenuItems([]);
+      }
+    } catch {
+      setMenus([]);
+      setSelectedMenu(null);
+      setMenuItems([]);
+    } finally {
+      setMenuLoading(false);
+    }
+  };
+
+  const fetchMenuItems = async (menuId) => {
+    setMenuItemLoading(true);
+    try {
+      const res = await axios.get(`http://localhost:3000/api/restaurants/menus/${menuId}/items`);
+      setMenuItems(res.data.data || []);
+    } catch {
+      setMenuItems([]);
+    } finally {
+      setMenuItemLoading(false);
+    }
+  };
+
+  const handleDeleteMenu = async (menuId) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa mục thực đơn này?')) {
+      return;
+    }
+    try {
+      await axios.delete(`http://localhost:3000/api/restaurants/menus/${menuId}`);
+      const res = await axios.get(`http://localhost:3000/api/restaurants/${selectedRestaurant.id}/menus`);
+      setMenus(res.data.data || []);
+      setShowMenuForm(false);
+      setMenuEdit(null);
+    } catch (err) {
+      alert('Xóa mục thực đơn thất bại.');
+    }
+  };
+
+  const handleSaveMenu = async () => {
+    if (!selectedRestaurant || !menuEdit?.name) return;
+    try {
+      if (menuEdit.id) {
+        // Update existing menu
+        await axios.put(`http://localhost:3000/api/restaurants/menus/${menuEdit.id}`, {
+          name: menuEdit.name,
+          description: menuEdit.description,
+        });
+      } else {
+        // Create new menu
+        await axios.post(`http://localhost:3000/api/restaurants/menus`, {
+          restaurant_id: selectedRestaurant.id,
+          name: menuEdit.name,
+          description: menuEdit.description,
+        });
+      }
+      // Refresh menus
+      const res = await axios.get(`http://localhost:3000/api/restaurants/${selectedRestaurant.id}/menus`);
+      setMenus(res.data.data || []);
+      setShowMenuForm(false);
+      setMenuEdit(null);
+    } catch (err) {
+      alert('Lưu mục thực đơn thất bại.');
+    }
+  };
+
+  const handleDeleteMenuItem = async (itemId) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa mục thực đơn này?')) {
+      return;
+    }
+    try {
+      await axios.delete(`http://localhost:3000/api/restaurants/menu-items/${itemId}`);
+      const res = await axios.get(`http://localhost:3000/api/restaurants/menus/${menuEdit.id}/items`); // Assuming menuEdit.id is the current menu's ID
+      setMenuItems(res.data.data || []);
+      setMenuItemEdit(null);
+    } catch (err) {
+      alert('Xóa mục thực đơn thất bại.');
+    }
+  };
+
+  const handleSaveMenuItem = async () => {
+    if (!selectedMenu || !menuItemEdit?.name) return;
+    let image_url = menuItemEdit.image_url || '';
+    try {
+      // If a new image is selected, upload it first
+      if (menuItemImage) {
+        const formData = new FormData();
+        formData.append('file', menuItemImage);
+        const uploadRes = await axiosClient.post('/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        image_url = uploadRes.data.url;
+      }
+      if (menuItemEdit.id) {
+        // Update existing menu item
+        await axios.put(`http://localhost:3000/api/restaurants/menu-items/${menuItemEdit.id}`, {
+          name: menuItemEdit.name,
+          description: menuItemEdit.description,
+          price: menuItemEdit.price,
+          image_url,
+        });
+      } else {
+        // Create new menu item
+        await axios.post(`http://localhost:3000/api/restaurants/menu-items`, {
+          menu_id: selectedMenu.id,
+          name: menuItemEdit.name,
+          description: menuItemEdit.description,
+          price: menuItemEdit.price,
+          image_url,
+        });
+      }
+      const res = await axios.get(`http://localhost:3000/api/restaurants/menus/${selectedMenu.id}/items`);
+      setMenuItems(res.data.data || []);
+      setMenuItemEdit(null);
+      setMenuItemImage(null);
+      setMenuItemImagePreview(null);
+      setShowMenuItemForm(false);
+    } catch (err) {
+      alert('Lưu mục thực đơn thất bại.');
+    }
+  };
+
+  const handleMenuItemImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setMenuItemImage(file);
+      setMenuItemImagePreview(URL.createObjectURL(file));
+      // Also update the menuItemEdit state to clear previous image_url if new image is selected
+      setMenuItemEdit(edit => ({ ...edit, image_url: '' }));
+    }
+  };
+
+  // When switching menu section, load its items
+  const handleSelectMenu = (menu) => {
+    setSelectedMenu(menu);
+    fetchMenuItems(menu.id);
   };
 
   return (
@@ -1155,6 +1320,7 @@ function RestaurantsAdmin() {
                           <td>{restaurant.rating ? restaurant.rating.toFixed(1) : '0.0'}</td>
                           <td>
                             <div className="btn-group" role="group">
+                              <Button variant="outline-primary" size="sm" onClick={() => openMenuModal(restaurant)}>Quản lý thực đơn</Button>
                               <button
                                 className="btn btn-sm btn-outline-primary"
                                 onClick={() => handleEdit(restaurant)}
@@ -1194,6 +1360,215 @@ function RestaurantsAdmin() {
           </Button>
           <Button variant="danger" className="admin-btn-danger" onClick={confirmDelete}>
             Xóa
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Menu Management Modal */}
+      <Modal show={showMenuModal} onHide={() => setShowMenuModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Quản lý thực đơn cho {selectedRestaurant?.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h6>Các mục thực đơn</h6>
+            <Button variant="outline-primary" onClick={() => setShowMenuForm(true)}>
+              <i className="bi bi-plus-circle me-1"></i>
+              Thêm mục thực đơn
+            </Button>
+          </div>
+          {menuLoading ? (
+            <div className="text-center py-4">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          ) : menus.length === 0 ? (
+            <p>Chưa có mục thực đơn nào cho nhà hàng này.</p>
+          ) : (
+            <div className="list-group">
+              {menus.map((menu) => (
+                <div key={menu.id} className="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 className="mb-1">{menu.name}</h6>
+                    <p className="mb-0 text-muted">{menu.description}</p>
+                  </div>
+                  <div className="d-flex gap-2">
+                    <Button variant="outline-info" size="sm" onClick={() => fetchMenuItems(menu.id)}>
+                      <i className="bi bi-list-ul me-1"></i>
+                      Xem mục
+                    </Button>
+                    <Button variant="outline-warning" size="sm" onClick={() => setMenuEdit(menu)}>
+                      <i className="bi bi-pencil-square me-1"></i>
+                      Sửa
+                    </Button>
+                    <Button variant="outline-danger" size="sm" onClick={() => handleDeleteMenu(menu.id)}>
+                      <i className="bi bi-trash me-1"></i>
+                      Xóa
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Menu Section Tabs */}
+          <div className="d-flex gap-2 mb-3">
+            {menus.map((menu) => (
+              <Button
+                key={menu.id}
+                variant={selectedMenu && selectedMenu.id === menu.id ? 'primary' : 'outline-primary'}
+                size="sm"
+                onClick={() => handleSelectMenu(menu)}
+              >
+                {menu.name}
+              </Button>
+            ))}
+            <Button variant="outline-success" size="sm" onClick={() => setShowMenuForm(true)}>
+              <i className="bi bi-plus-circle me-1"></i> Thêm mục thực đơn
+            </Button>
+          </div>
+          {/* Food List for Selected Menu */}
+          {selectedMenu ? (
+            <div>
+              <h6>Món ăn trong mục: {selectedMenu.name}</h6>
+              {menuItemLoading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : menuItems.length === 0 ? (
+                <p>Chưa có món ăn nào trong mục này.</p>
+              ) : (
+                <div className="list-group">
+                  {menuItems.map((item) => (
+                    <div key={item.id} className="list-group-item d-flex justify-content-between align-items-center">
+                      <div>
+                        <h6 className="mb-1">{item.name}</h6>
+                        <p className="mb-0 text-muted">{item.description}</p>
+                        <p className="mb-0 text-muted">Giá: {item.price ? item.price.toLocaleString('vi-VN') + ' VND' : '---'}</p>
+                        {item.image_url && (
+                          <img src={item.image_url.startsWith('http') ? item.image_url : `http://localhost:3000${item.image_url}`} alt={item.name} style={{ maxWidth: 80, borderRadius: 8, marginTop: 4 }} />
+                        )}
+                      </div>
+                      <div className="d-flex gap-2">
+                        <Button variant="outline-warning" size="sm" onClick={() => setMenuItemEdit(item)}>
+                          <i className="bi bi-pencil-square me-1"></i>
+                          Sửa
+                        </Button>
+                        <Button variant="outline-danger" size="sm" onClick={() => handleDeleteMenuItem(item.id)}>
+                          <i className="bi bi-trash me-1"></i>
+                          Xóa
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button className="mt-3" variant="primary" onClick={() => {
+                setMenuItemEdit({ name: '', description: '', price: '', image_url: '' });
+                setMenuItemImage(null);
+                setMenuItemImagePreview(null);
+                setShowMenuItemForm(true);
+              }}>
+                Thêm món ăn
+              </Button>
+            </div>
+          ) : (
+            <div className="text-muted">Chưa có mục thực đơn nào. Hãy thêm mục thực đơn trước.</div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowMenuModal(false)}>
+            Đóng
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Menu Form Modal */}
+      <Modal show={showMenuForm} onHide={() => setShowMenuForm(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{menuEdit ? 'Sửa mục thực đơn' : 'Thêm mục thực đơn'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>Tên mục thực đơn *</Form.Label>
+            <Form.Control
+              type="text"
+              value={menuEdit?.name || ''}
+              onChange={(e) => setMenuEdit({ ...menuEdit, name: e.target.value })}
+              required
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Mô tả (tùy chọn)</Form.Label>
+            <Form.Control
+              type="text"
+              value={menuEdit?.description || ''}
+              onChange={(e) => setMenuEdit({ ...menuEdit, description: e.target.value })}
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowMenuForm(false)}>
+            Hủy
+          </Button>
+          <Button variant="primary" onClick={handleSaveMenu}>
+            {menuEdit ? 'Cập nhật' : 'Thêm'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Menu Item Form Modal */}
+      <Modal show={showMenuItemForm} onHide={() => setShowMenuItemForm(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{menuItemEdit ? 'Sửa mục thực đơn' : 'Thêm mục thực đơn'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>Tên mục thực đơn *</Form.Label>
+            <Form.Control
+              type="text"
+              value={menuItemEdit?.name || ''}
+              onChange={(e) => setMenuItemEdit({ ...menuItemEdit, name: e.target.value })}
+              required
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Mô tả (tùy chọn)</Form.Label>
+            <Form.Control
+              type="text"
+              value={menuItemEdit?.description || ''}
+              onChange={(e) => setMenuItemEdit({ ...menuItemEdit, description: e.target.value })}
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Giá (VND)</Form.Label>
+            <Form.Control
+              type="number"
+              value={menuItemEdit?.price || ''}
+              onChange={(e) => setMenuItemEdit({ ...menuItemEdit, price: e.target.value })}
+              required
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Hình ảnh món ăn</Form.Label>
+            <Form.Control type="file" accept="image/*" onChange={handleMenuItemImageChange} />
+            {menuItemImagePreview && (
+              <img src={menuItemImagePreview} alt="Preview" style={{ maxWidth: 120, marginTop: 8, borderRadius: 8 }} />
+            )}
+            {!menuItemImagePreview && menuItemEdit?.image_url && (
+              <img src={menuItemEdit.image_url.startsWith('http') ? menuItemEdit.image_url : `http://localhost:3000${menuItemEdit.image_url}`} alt="Preview" style={{ maxWidth: 120, marginTop: 8, borderRadius: 8 }} />
+            )}
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowMenuItemForm(false)}>
+            Hủy
+          </Button>
+          <Button variant="primary" onClick={handleSaveMenuItem}>
+            {menuItemEdit ? 'Cập nhật' : 'Thêm'}
           </Button>
         </Modal.Footer>
       </Modal>

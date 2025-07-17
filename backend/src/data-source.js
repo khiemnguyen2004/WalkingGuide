@@ -23,6 +23,9 @@ const HotelImage = require("./models/HotelImage");
 const RestaurantImage = require("./models/RestaurantImage");
 const ArticleReport = require("./models/ArticleReport");
 const SiteSetting = require("./models/SiteSetting");
+const RestaurantBooking = require("./models/RestaurantBooking");
+const Menu = require("./models/Menu");
+const MenuItem = require("./models/MenuItem");
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -57,9 +60,12 @@ const AppDataSource = new DataSource({
     HotelImage,
     RestaurantImage,
     SiteSetting,
+    RestaurantBooking,
+    Menu,
+    MenuItem,
   ],
   migrations: [
-    "src/migrations/1752650000001-add-rejection-reason-to-tours.js",
+    "src/migrations/1758000000002-create-menu-items.js",
   ],
   subscribers: [],
 });

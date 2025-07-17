@@ -64,7 +64,7 @@ function AdminSidebar() {
               className={`nav-link ${isActive("/admin/bookings") ? "active" : ""}`}
             >
               <i className="bi bi-calendar-check me-2"></i>
-              Quản lý Đặt chỗ
+              Quản lý Booking
             </Link>
           </li>
           <li className="nav-item">

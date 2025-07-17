@@ -9,12 +9,31 @@ const bookingRepo = AppDataSource.getRepository("Booking");
 module.exports = {
   getAllTours: async (req, res) => {
     try {
-      // Only return tours created by ADMIN
-      const tours = await tourRepo
-        .createQueryBuilder("tour")
-        .innerJoin("users", "user", "tour.user_id = user.id")
-        .where("user.role = :role", { role: "ADMIN" })
-        .getMany();
+      // If adminOnly=true, only show tours created by admin
+      if (req.query.adminOnly === 'true') {
+        const tours = await tourRepo
+          .createQueryBuilder("tour")
+          .innerJoin("users", "user", "tour.user_id = user.id")
+          .where("user.role = :role", { role: "ADMIN" })
+          .getMany();
+        const toursWithRating = await Promise.all(
+          tours.map(async (tour) => {
+            const rating = await tourRatingService.getTourAverageRating(tour.id);
+            return { ...tour, rating };
+          })
+        );
+        return res.json(toursWithRating);
+      }
+      // If admin, show all tours; if user, show only approved tours
+      const userRole = req.query.role || "USER";
+      let query = tourRepo.createQueryBuilder("tour").innerJoin("users", "user", "tour.user_id = user.id");
+      if (userRole === "ADMIN") {
+        // Show all tours
+      } else {
+        // Only show approved tours
+        query = query.where("tour.status = :status", { status: "approved" });
+      }
+      const tours = await query.getMany();
       // Fetch average rating for each tour
       const toursWithRating = await Promise.all(
         tours.map(async (tour) => {
@@ -93,8 +112,16 @@ module.exports = {
         return res.status(400).json({ error: "Thiếu tên tour hoặc user_id" });
       }
 
+      // Determine user role
+      const userRepo = AppDataSource.getRepository("User");
+      const user = await userRepo.findOneBy({ id: user_id });
+      let status = "pending";
+      if (user && user.role === "ADMIN") {
+        status = "approved";
+      }
+
       // 1. Tạo tour
-      const newTour = await tourRepo.save({ name, description, image_url, total_cost, user_id, start_time, end_time, start_from });
+      const newTour = await tourRepo.save({ name, description, image_url, total_cost, user_id, start_time, end_time, start_from, status });
 
       // 2. Lưu các bước của tour nếu có
       const savedSteps = [];
@@ -281,6 +308,59 @@ module.exports = {
     } catch (err) {
       console.error("Lỗi khi lấy tour đã đặt:", err);
       res.status(500).json({ error: "Lỗi server khi lấy tour đã đặt" });
+    }
+  },
+
+  // Admin: Get all user-created tours pending approval
+  getPendingUserTours: async (req, res) => {
+    try {
+      const tours = await tourRepo
+        .createQueryBuilder("tour")
+        .innerJoin("users", "user", "tour.user_id = user.id")
+        .where("user.role != :role AND tour.status = :status", { role: "ADMIN", status: "pending" })
+        .getMany();
+      res.json(tours);
+    } catch (err) {
+      console.error("Lỗi khi lấy danh sách tour chờ duyệt:", err);
+      res.status(500).json({ error: "Lỗi server" });
+    }
+  },
+
+  // Admin: Approve a user-created tour
+  approveTour: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tour = await tourRepo.findOneBy({ id: parseInt(id) });
+      if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
+      tour.status = "approved";
+      await tourRepo.save(tour);
+      res.json({ message: "Tour đã được duyệt", tour });
+    } catch (err) {
+      console.error("Lỗi khi duyệt tour:", err);
+      res.status(500).json({ error: "Lỗi server khi duyệt tour" });
+    }
+  },
+
+  // Admin: Reject a user-created tour
+  rejectTour: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tour = await tourRepo.findOneBy({ id: parseInt(id) });
+      if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
+      tour.status = "rejected";
+      await tourRepo.save(tour);
+      // Send notification to user about tour refusal
+      await notiService.create({
+        user_id: tour.user_id,
+        type: 'tour_rejected',
+        content: `Tour \"${tour.name}\" đã bị từ chối bởi quản trị viên.`,
+        is_read: false,
+        tour_id: tour.id
+      });
+      res.json({ message: "Tour đã bị từ chối", tour });
+    } catch (err) {
+      console.error("Lỗi khi từ chối tour:", err);
+      res.status(500).json({ error: "Lỗi server khi từ chối tour" });
     }
   },
 };

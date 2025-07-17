@@ -9,6 +9,9 @@ import CityAutocomplete from "./CityAutocomplete.jsx";
 import "../css/luxury-home.css";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, Button } from "react-bootstrap";
+import groupBy from "lodash/groupBy";
+import hotelApi from '../api/hotelApi';
+import { Modal, Form } from 'react-bootstrap';
 
 function ManualPlanner({ noLayout }) {
   const [places, setPlaces] = useState([]);
@@ -39,6 +42,12 @@ function ManualPlanner({ noLayout }) {
   const [hotelCheckIn, setHotelCheckIn] = useState("");
   const [hotelCheckOut, setHotelCheckOut] = useState("");
   const [start_from, setStart_from] = useState(null); // New state for start_from location
+  const [hotelsByCity, setHotelsByCity] = useState({});
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingHotel, setBookingHotel] = useState(null);
+  const [bookingCheckIn, setBookingCheckIn] = useState("");
+  const [bookingCheckOut, setBookingCheckOut] = useState("");
+  const [bookingStatus, setBookingStatus] = useState(null);
 
   useEffect(() => {
     axios.get("http://localhost:3000/api/places").then((res) => {
@@ -92,6 +101,28 @@ function ManualPlanner({ noLayout }) {
         });
     }
   }, [start_from]);
+
+  // Fetch hotels for all selected cities
+  useEffect(() => {
+    if (selectedCities.length > 0) {
+      Promise.all(selectedCities.map(city =>
+        axios.get(`http://localhost:3000/api/hotels/search?city=${encodeURIComponent(city)}`)
+          .then(res => ({ city, hotels: res.data.data || res.data }))
+          .catch(() => ({ city, hotels: [] }))
+      )).then(results => {
+        const grouped = {};
+        results.forEach(({ city, hotels }) => {
+          grouped[city] = hotels;
+        });
+        setHotelsByCity(grouped);
+      });
+    } else {
+      // fallback: fetch all hotels
+      axios.get("http://localhost:3000/api/hotels").then((res) => {
+        setHotelsByCity({ All: res.data.data || res.data });
+      });
+    }
+  }, [selectedCities]);
 
   // Get all available cities from places
   const getAvailableCities = () => {
@@ -929,54 +960,94 @@ function ManualPlanner({ noLayout }) {
 
       {/* Hotel selection section */}
       <div className="mb-4 mt-4">
-        <h5 className="form-label">Chọn khách sạn</h5>
-        <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 8 }}>
-          <div className="d-flex flex-row flex-nowrap gap-3" style={{ minHeight: 280 }}>
-            {hotels.length === 0 && <div className="d-flex align-items-center">Không tìm thấy khách sạn phù hợp.</div>}
-            {hotels.map(hotel => (
-              <div key={hotel.id} style={{ display: 'inline-block', minWidth: 280, maxWidth: 320 }}>
-                <Card
-                  style={{ border: selectedHotel?.id === hotel.id ? "2px solid #007bff" : undefined, boxShadow: selectedHotel?.id === hotel.id ? "0 0 10px #007bff44" : undefined, cursor: "pointer", transition: 'box-shadow 0.2s, border 0.2s' }}
-                  className={selectedHotel?.id === hotel.id ? "shadow-lg" : "shadow-sm"}
-                  onClick={e => {
-                    // Only select if not clicking the button or link
-                    if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') setSelectedHotel(hotel);
-                  }}
-                >
-                  <Card.Img variant="top" src={hotel.images && hotel.images[0] ? getImageUrl(hotel.images[0].image_url) : "/default-hotel.jpg"} style={{ height: 180, objectFit: "cover", borderTopLeftRadius: 12, borderTopRightRadius: 12 }} onError={e => { e.target.src = "/default-hotel.jpg"; }} />
-                  <Card.Body>
-                    <Card.Title className="fw-bold" style={{ color: selectedHotel?.id === hotel.id ? '#1a5bb8' : undefined }}>{hotel.name}</Card.Title>
-                    <Card.Text>
-                      <span>{hotel.address}</span><br/>
-                      <span className="text-muted">{hotel.city}</span><br/>
-                      {hotel.min_price && hotel.max_price && (
-                        <span>Giá: {hotel.min_price} - {hotel.max_price} VND</span>
-                      )}
-                    </Card.Text>
-                    <div className="d-flex gap-2 mt-2">
-                      <Button variant={selectedHotel?.id === hotel.id ? "primary" : "outline-primary"} size="sm" onClick={e => { e.stopPropagation(); setSelectedHotel(hotel); }}>
-                        {selectedHotel?.id === hotel.id ? "Đã chọn" : "Chọn"}
-                      </Button>
-                      <Link to={`/hotels/${hotel.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline-info btn-sm" onClick={e => e.stopPropagation()}>
-                        Xem chi tiết
-                      </Link>
+        <h5 className="form-label">Bạn có thể chọn khách sạn</h5>
+        <div>
+          {selectedCities.length > 0 ? (
+            Object.entries(hotelsByCity).map(([city, hotels]) => (
+              <div key={city} className="mb-3">
+                <h6 className="fw-bold text-primary mb-2">Khách sạn tại {city}</h6>
+                <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 8 }}>
+                  {hotels.length === 0 && <div className="d-flex align-items-center">Không tìm thấy khách sạn phù hợp.</div>}
+                  {hotels.map(hotel => (
+                    <div key={hotel.id} style={{ display: 'inline-block', minWidth: 280, maxWidth: 320 }}>
+                      <Card
+                        style={{ border: selectedHotel?.id === hotel.id ? "2px solid #007bff" : undefined, boxShadow: selectedHotel?.id === hotel.id ? "0 0 10px #007bff44" : undefined, cursor: "pointer", transition: 'box-shadow 0.2s, border 0.2s' }}
+                        className={selectedHotel?.id === hotel.id ? "shadow-lg" : "shadow-sm"}
+                        onClick={e => {
+                          if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') setSelectedHotel(hotel);
+                        }}
+                      >
+                        <Card.Img variant="top" src={hotel.images && hotel.images[0] ? getImageUrl(hotel.images[0].image_url) : "/default-hotel.jpg"} style={{ height: 180, objectFit: "cover", borderTopLeftRadius: 12, borderTopRightRadius: 12 }} onError={e => { e.target.src = "/default-hotel.jpg"; }} />
+                        <Card.Body>
+                          <Card.Title className="fw-bold" style={{ color: selectedHotel?.id === hotel.id ? '#1a5bb8' : undefined }}>{hotel.name}</Card.Title>
+                          <Card.Text>
+                            <span>{hotel.address}</span><br/>
+                            <span className="text-muted">{hotel.city}</span><br/>
+                            {hotel.min_price && hotel.max_price && (
+                              <span>Giá: {hotel.min_price} - {hotel.max_price} VND</span>
+                            )}
+                          </Card.Text>
+                          <div className="d-flex gap-2 mt-2">
+                            <Button variant={selectedHotel?.id === hotel.id ? "primary" : "outline-primary"} size="sm" onClick={e => { e.stopPropagation(); setSelectedHotel(hotel); }}>
+                              {selectedHotel?.id === hotel.id ? "Đã chọn" : "Chọn"}
+                            </Button>
+                            <Button variant="success" size="sm" className="ms-2" onClick={e => { e.stopPropagation(); setBookingHotel(hotel); setShowBookingModal(true); setBookingCheckIn(""); setBookingCheckOut(""); setBookingStatus(null); }}>
+                              Booking now
+                            </Button>
+                            <Link to={`/hotels/${hotel.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline-info btn-sm" onClick={e => e.stopPropagation()}>
+                              Xem chi tiết
+                            </Link>
+                          </div>
+                        </Card.Body>
+                      </Card>
                     </div>
-                  </Card.Body>
-                </Card>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
+            ))
+          ) : (
+            <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 8 }}>
+              {hotelsByCity.All && hotelsByCity.All.length === 0 && <div className="d-flex align-items-center">Không tìm thấy khách sạn phù hợp.</div>}
+              {hotelsByCity.All && hotelsByCity.All.map(hotel => (
+                <div key={hotel.id} style={{ display: 'inline-block', minWidth: 280, maxWidth: 320 }}>
+                  <Card
+                    style={{ border: selectedHotel?.id === hotel.id ? "2px solid #007bff" : undefined, boxShadow: selectedHotel?.id === hotel.id ? "0 0 10px #007bff44" : undefined, cursor: "pointer", transition: 'box-shadow 0.2s, border 0.2s', borderRadius:'15px' }}
+                    className={selectedHotel?.id === hotel.id ? "shadow-lg me-2" : "shadow-sm me-2"}
+                    onClick={e => {
+                      if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') setSelectedHotel(hotel);
+                    }}
+                  >
+                    <Card.Img variant="top" src={hotel.images && hotel.images[0] ? getImageUrl(hotel.images[0].image_url) : "/default-hotel.jpg"} style={{ height: 180, objectFit: "cover" }} onError={e => { e.target.src = "/default-hotel.jpg"; }} />
+                    <Card.Body>
+                      <Card.Title className="fw-bold" style={{ color: selectedHotel?.id === hotel.id ? '#1a5bb8' : undefined }}>{hotel.name}</Card.Title>
+                      <Card.Text>
+                        <span>{hotel.address}</span><br/>
+                        <span className="text-muted">{hotel.city}</span><br/>
+                        {hotel.min_price && hotel.max_price && (
+                          <span>Giá: {hotel.min_price} - {hotel.max_price} VND</span>
+                        )}
+                      </Card.Text>
+                      <div className="d-flex gap-2 mt-2">
+                        <Button variant={selectedHotel?.id === hotel.id ? "primary" : "outline-primary"} size="sm" onClick={e => { e.stopPropagation(); setSelectedHotel(hotel); }}>
+                          {selectedHotel?.id === hotel.id ? "Đã chọn" : "Chọn"}
+                        </Button>
+                        <Button variant="success" size="sm" className="ms-2" onClick={e => { e.stopPropagation(); setBookingHotel(hotel); setShowBookingModal(true); setBookingCheckIn(""); setBookingCheckOut(""); setBookingStatus(null); }}>
+                          Booking now
+                        </Button>
+                        <Link to={`/hotels/${hotel.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline-info btn-sm" onClick={e => e.stopPropagation()}>
+                          Xem chi tiết
+                        </Link>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Booking now button */}
-      <div className="mb-4">
-        <Button variant="success" size="lg" type="submit">
-          Booking now
-        </Button>
-      </div>
-
-      {/* Check-in/out date pickers */}
+      {/* Check-in/out date pickers
       <div className="mb-3 d-flex gap-3 align-items-end">
         <div>
           <label className="form-label">Ngày nhận phòng</label>
@@ -986,9 +1057,9 @@ function ManualPlanner({ noLayout }) {
           <label className="form-label">Ngày trả phòng</label>
           <input type="date" className="form-control" value={hotelCheckOut} onChange={e => setHotelCheckOut(e.target.value)} />
         </div>
-      </div>
+      </div> */}
 
-      {/* In trip summary, show selected hotel as a card */}
+      In trip summary, show selected hotel as a card
       {selectedHotel && (
         <div className="mt-4">
           <h6>Khách sạn đã chọn</h6>
@@ -1025,6 +1096,48 @@ function ManualPlanner({ noLayout }) {
           )}
         </button>
       </div>
+
+      {/* Booking Modal */}
+      <Modal show={showBookingModal} onHide={() => setShowBookingModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Đặt phòng khách sạn</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Ngày nhận phòng</Form.Label>
+              <Form.Control type="date" value={bookingCheckIn} onChange={e => setBookingCheckIn(e.target.value)} />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Ngày trả phòng</Form.Label>
+              <Form.Control type="date" value={bookingCheckOut} onChange={e => setBookingCheckOut(e.target.value)} />
+            </Form.Group>
+            {bookingStatus === 'success' && <div className="alert alert-success">Đặt phòng thành công!</div>}
+            {bookingStatus === 'error' && <div className="alert alert-danger">Đặt phòng thất bại. Vui lòng thử lại.</div>}
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowBookingModal(false)}>
+            Đóng
+          </Button>
+          <Button variant="success" onClick={async () => {
+            setBookingStatus(null);
+            try {
+              await hotelApi.bookHotel({
+                user_id: user?.id,
+                hotel_id: bookingHotel?.id,
+                check_in: bookingCheckIn,
+                check_out: bookingCheckOut,
+              });
+              setBookingStatus('success');
+            } catch {
+              setBookingStatus('error');
+            }
+          }} disabled={!bookingCheckIn || !bookingCheckOut}>
+            Xác nhận đặt phòng
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 

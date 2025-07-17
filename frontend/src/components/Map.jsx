@@ -308,7 +308,7 @@ function Map({ locations = [], hotels = [], restaurants = [], className, selecte
   }
 
   return (
-    <div className={className} style={{ height: "24rem", width: "100%", background: "#e9ecef", borderRadius: "1.5rem", overflow: "hidden" }}>
+    <div className={className} style={{ height: "24rem", width: "100%", background: "#e9ecef", overflow: "hidden" }}>
       {/* Location Alert */}
       {showLocationAlert && (
         <div className="alert alert-warning alert-dismissible fade show position-absolute top-0 start-0 m-3" style={{zIndex: 1000}} role="alert">
@@ -322,7 +322,7 @@ function Map({ locations = [], hotels = [], restaurants = [], className, selecte
           Không có địa điểm hợp lệ để hiển thị
         </div>
       ) : (
-        <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%", borderRadius: "1.5rem" }} scrollWheelZoom={false}>
+        <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }} scrollWheelZoom={false}>
           <TileLayer
             attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -106,7 +106,7 @@ function HomePage() {
         setLoading(true);
         const [placesRes, toursRes, articlesRes, hotelsRes, restaurantsRes] = await Promise.all([
           axios.get("http://localhost:3000/api/places"),
-          axios.get("http://localhost:3000/api/tours"),
+          axios.get("http://localhost:3000/api/tours?adminOnly=true"),
           axios.get("http://localhost:3000/api/articles"),
           axios.get("http://localhost:3000/api/hotels"),
           axios.get("http://localhost:3000/api/restaurants"),
@@ -367,8 +367,6 @@ function HomePage() {
                               style={{
                                 height: 220,
                                 objectFit: "cover",
-                                borderTopLeftRadius: "1.5rem",
-                                borderTopRightRadius: "1.5rem",
                               }}
                               onError={(e) => {
                                 e.target.src = "/default-place.jpg";
@@ -431,8 +429,6 @@ function HomePage() {
                                       style={{
                                         height: 220,
                                         objectFit: "cover",
-                                        borderTopLeftRadius: "1.5rem",
-                                        borderTopRightRadius: "1.5rem",
                                       }}
                                       onError={(e) => {
                                         e.target.src = "/default-place.jpg";
@@ -513,13 +509,13 @@ function HomePage() {
                                 src={tour.image_url.startsWith("http") ? tour.image_url : `http://localhost:3000${tour.image_url}`}
                                 alt={tour.name}
                                 className="card-img-top luxury-img-top"
-                                style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                style={{ height: 220, objectFit: "cover"}}
                                 onError={(e) => { e.target.style.display = 'none'; }}
                               />
                             ) : (
                               <div 
                                 className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                                style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                                style={{ height: 220, background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
                               >
                                 <i className="bi bi-map"></i>
                               </div>
@@ -575,7 +571,7 @@ function HomePage() {
                                         src={tour.image_url.startsWith("http") ? tour.image_url : `http://localhost:3000${tour.image_url}`}
                                         alt={tour.name}
                                         className="card-img-top luxury-img-top"
-                                        style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                        style={{ height: 220, objectFit: "cover" }}
                                         onError={(e) => { e.target.style.display = 'none'; }}
                                       />
                                     ) : (
@@ -667,7 +663,7 @@ function HomePage() {
                                           src={getImageUrl(image.image_url)}
                                           alt={image.caption || hotel.name}
                                           className="card-img-top luxury-img-top"
-                                          style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                          style={{ height: 220, objectFit: "cover"}}
                                           onError={(e) => { e.target.src = "/default-hotel.jpg"; }}
                                         />
                                       </div>
@@ -687,7 +683,7 @@ function HomePage() {
                               ) : (
                                 <div 
                                   className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                                  style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                                  style={{ height: 220, background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
                                 >
                                   <i className="bi bi-building"></i>
                                 </div>
@@ -763,7 +759,7 @@ function HomePage() {
                                                   src={getImageUrl(image.image_url)}
                                                   alt={image.caption || hotel.name}
                                                   className="card-img-top luxury-img-top"
-                                                  style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                                  style={{ height: 220, objectFit: "cover" }}
                                                   onError={(e) => { e.target.src = "/default-hotel.jpg"; }}
                                                 />
                                               </div>
@@ -783,7 +779,7 @@ function HomePage() {
                                       ) : (
                                         <div 
                                           className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                                          style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
+                                          style={{ height: 220, background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}
                                         >
                                           <i className="bi bi-building"></i>
                                         </div>
@@ -882,7 +878,7 @@ function HomePage() {
                                           src={getImageUrl(image.image_url)}
                                           alt={image.caption || restaurant.name}
                                           className="card-img-top luxury-img-top"
-                                          style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                          style={{ height: 220, objectFit: "cover" }}
                                           onError={(e) => { e.target.src = "/default-restaurant.jpg"; }}
                                         />
                                       </div>
@@ -902,7 +898,7 @@ function HomePage() {
                               ) : (
                                 <div 
                                   className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                                  style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}
+                                  style={{ height: 220, background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}
                                 >
                                   <i className="bi bi-cup-hot"></i>
                                 </div>
@@ -975,7 +971,7 @@ function HomePage() {
                                                   src={getImageUrl(image.image_url)}
                                                   alt={image.caption || restaurant.name}
                                                   className="card-img-top luxury-img-top"
-                                                  style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                                  style={{ height: 220, objectFit: "cover" }}
                                                   onError={(e) => { e.target.src = "/default-restaurant.jpg"; }}
                                                 />
                                               </div>
@@ -1135,7 +1131,7 @@ function HomePage() {
                                       src={a.image_url.startsWith("http") ? a.image_url : `http://localhost:3000${a.image_url}`}
                               alt="Ảnh"
                               className="card-img-top luxury-img-top"
-                                      style={{ height: 220, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                                      style={{ height: 220, objectFit: "cover"}}
                             />
                           )}
                           <div className="card-body luxury-card-body">
