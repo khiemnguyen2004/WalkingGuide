@@ -7,6 +7,7 @@ import Footer from '../../components/Footer';
 import hotelApi from '../../api/hotelApi';
 import { Modal, Button, Form } from 'react-bootstrap';
 import { AuthContext } from '../../contexts/AuthContext';
+import RatingStars from '../../components/RatingStars';
 
 const HotelDetail = () => {
   const { id } = useParams();
@@ -51,6 +52,7 @@ const HotelDetail = () => {
           {/* Info Left */}
           <div className="col-md-7 col-12">
             <h2 className="fw-bold mb-2" style={{color: '#1a5bb8'}}>{hotel.name}</h2>
+            <RatingStars id={hotel.id} type="hotel" />
             <div className="mb-2"><i className="bi bi-geo-alt me-2 text-primary"></i><b>Địa chỉ:</b> <span className="text-dark">{hotel.address || '---'}</span></div>
             <div className="mb-2"><i className="bi bi-building me-2 text-secondary"></i><b>Thành phố:</b> <span className="text-dark">{hotel.city || '---'}</span></div>
             <div className="mb-2"><i className="bi bi-telephone me-2 text-success"></i><b>Liên hệ:</b> <span className="text-dark">{hotel.phone || '---'}</span></div>

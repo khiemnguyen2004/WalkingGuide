@@ -15,6 +15,7 @@ import RatingStars from '../components/RatingStars.jsx';
 import CustomAlertModal from '../components/CustomAlertModal.jsx';
 import CustomConfirmModal from '../components/CustomConfirmModal.jsx';
 import LocationAutocomplete from "../components/LocationAutocomplete.jsx";
+import hotelApi from '../api/hotelApi';
 
 function MyTours() {
   const { user } = useContext(AuthContext);
@@ -56,6 +57,7 @@ function MyTours() {
   const [selectedBookingIds, setSelectedBookingIds] = useState([]);
   const [selectAllTours, setSelectAllTours] = useState(false);
   const [selectAllBookings, setSelectAllBookings] = useState(false);
+  const [hotelBookings, setHotelBookings] = useState([]);
 
   // Handle select all for tours
   const handleSelectAllTours = (e) => {
@@ -115,6 +117,10 @@ function MyTours() {
     tourApi.getUserBookedTours(user.id)
       .then(res => setBookedTours(res.data))
       .catch(() => setBookedTours([]));
+    // Fetch hotel bookings
+    hotelApi.getUserHotelBookings(user.id)
+      .then(res => setHotelBookings(res.data))
+      .catch(() => setHotelBookings([]));
   }, [user]);
 
   useEffect(() => {
@@ -655,6 +661,144 @@ function MyTours() {
             ))}
           </div>
         </div>
+                {/* Booked Tours Section */}
+                <section className="mb-5">
+          <div className="d-flex align-items-center mb-3 gap-2">
+            {/* <h4 className="fw-bold mb-0 luxury-section-title">Tour bạn đã đặt</h4> */}
+          </div>
+          {bookedTours.length === 0 ? (
+            <div className="text-center text-muted py-5">
+              <i className="bi bi-calendar-x" style={{fontSize: '3rem'}}></i>
+              <div className="fw-bold mb-1">Bạn chưa đặt tour nào.</div>
+            </div>
+          ) : (
+            <div className="row g-4">
+              {bookedTours.map(tour => (
+                <div className="col-12 col-md-6 col-lg-4" key={tour.id}>
+                  <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                    <Link to={`/tours/${tour.id}`} className="text-decoration-none" style={{display:'block'}}>
+                      {tour.image_url ? (
+                        <img
+                          src={tour.image_url.startsWith('http') ? tour.image_url : `http://localhost:3000${tour.image_url}`}
+                          alt={tour.name}
+                          className="card-img-top luxury-img-top"
+                          style={{ height: 220, objectFit: "cover" }}
+                        />
+                      ) : (
+                        <div className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                          style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}>
+                          <i className="bi bi-map"></i>
+                        </div>
+                      )}
+                      <div className="card-body luxury-card-body">
+                        <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{tour.name}</h3>
+                        <p className="card-text text-muted mb-2 luxury-desc">
+                          {tour.description ? `${tour.description.replace(/<[^>]+>/g, '').substring(0, 100)}...` : ''}
+                        </p>
+                        <div className="mb-2">
+                          <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
+                          <span style={{ fontWeight: 600, marginLeft: 4 }}>{tour.rating ? tour.rating.toFixed(1) : '0.0'}</span>
+                          <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
+                        </div>
+                        {tour.total_cost && (
+                          <p className="card-text text-muted small mb-0 luxury-rating">
+                            <span className="luxury-money">💰</span> {tour.total_cost} VND
+                          </p>
+                        )}
+                        {/* Show spots and total_price if available */}
+                        {tour.booking && (
+                          <>
+                            <div className="text-muted small mb-1">Số lượng khách: <b>{tour.booking.spots}</b></div>
+                            <div className="text-muted small mb-2">Tổng giá: <b>{tour.booking.total_price?.toLocaleString('vi-VN')} VND</b></div>
+                          </>
+                        )}
+                      </div>
+                    </Link>
+                    <div className="px-3 pb-3 d-flex gap-2">
+                      {tour.booking?.status === 'rejected' ? (
+                        <>
+                          <span className="text-danger small fw-bold flex-fill align-self-center">Đặt tour thất bại</span>
+                          <button
+                            className="btn btn-outline-primary btn-sm flex-fill"
+                            onClick={e => {
+                              e.stopPropagation();
+                              // TODO: Trigger booking modal/flow again for this tour
+                              alert('Chức năng Đặt lại sẽ được triển khai ở đây!');
+                            }}
+                          >
+                            Đặt lại
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="btn btn-outline-danger btn-sm flex-fill"
+                          disabled={!tour.booking?.id}
+                          onClick={e => {
+                            e.stopPropagation();
+                            if (tour.booking?.id) {
+                              setConfirmModal({ show: true, message: 'Bạn có chắc muốn hủy đặt tour này?', onConfirm: () => handleDeleteBooking(tour.booking.id) });
+                            }
+                          }}
+                        >
+                          Hủy đặt
+                        </button>
+                      )}
+                    </div>
+                  </div>
+              </div>
+              ))}
+            </div>
+          )}
+        </section>
+        {/* Hotel Bookings Section */}
+        <div className="mb-4">
+          <h5 className="fw-bold" style={{color:'rgb(26, 91, 184)'}}>Khách sạn đã đặt</h5>
+          {hotelBookings.length === 0 ? (
+            <div className="text-center text-muted py-3">
+              <i className="bi bi-building" style={{fontSize: '2rem'}}></i>
+              <div className="fw-bold mb-1">Bạn chưa đặt khách sạn nào.</div>
+            </div>
+          ) : (
+            <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+              {hotelBookings.map(booking => (
+                <div className="col" key={booking.id}>
+                  <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                    <Link to={`/hotels/${booking.hotel_id}`} className="text-decoration-none" style={{display:'block', height:'100%'}}>
+                      <div className="position-relative">
+                        <img
+                          src={booking.hotel_image_url ? (booking.hotel_image_url.startsWith('http') ? booking.hotel_image_url : `http://localhost:3000${booking.hotel_image_url}`) : "/default-hotel.jpg"}
+                          alt={booking.hotel_name || 'Khách sạn'}
+                          className="card-img-top luxury-img-top"
+                          style={{ height: 180, objectFit: "cover", borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem" }}
+                          onError={e => { e.target.src = "/default-hotel.jpg"; }}
+                        />
+                        <div className="position-absolute top-0 end-0 m-2">
+                          <span className="badge bg-warning text-dark">
+                            <i className="bi bi-star-fill"></i>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="card-body luxury-card-body">
+                        <h5 className="card-title mb-2" style={{ fontWeight: 600 }}>{booking.hotel_name || booking.hotel_id}</h5>
+                        <div className="mb-2">
+                          <span className="badge bg-info me-2">{booking.room_type || 'N/A'}</span>
+                        </div>
+                        <div className="mb-2 text-muted small">
+                          <i className="bi bi-calendar-event me-1"></i>
+                          Nhận phòng: <b>{booking.check_in}</b>
+                        </div>
+                        <div className="mb-2 text-muted small">
+                          <i className="bi bi-calendar-check me-1"></i>
+                          Trả phòng: <b>{booking.check_out}</b>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         {/* Created/Cloned Tours Section */}
         {/* <section className="mb-5">
                 {loading ? (
@@ -744,95 +888,6 @@ function MyTours() {
             </div>
           )}
         </section> */}
-        {/* Booked Tours Section */}
-        <section className="mb-5">
-          <div className="d-flex align-items-center mb-3 gap-2">
-            {/* <h4 className="fw-bold mb-0 luxury-section-title">Tour bạn đã đặt</h4> */}
-          </div>
-          {bookedTours.length === 0 ? (
-            <div className="text-center text-muted py-5">
-              <i className="bi bi-calendar-x" style={{fontSize: '3rem'}}></i>
-              <div className="fw-bold mb-1">Bạn chưa đặt tour nào.</div>
-            </div>
-          ) : (
-            <div className="row g-4">
-              {bookedTours.map(tour => (
-                <div className="col-12 col-md-6 col-lg-4" key={tour.id}>
-                  <div className="card h-100 shadow border-0 rounded-4 luxury-card">
-                    <Link to={`/tours/${tour.id}`} className="text-decoration-none" style={{display:'block'}}>
-                      {tour.image_url ? (
-                        <img
-                          src={tour.image_url.startsWith('http') ? tour.image_url : `http://localhost:3000${tour.image_url}`}
-                          alt={tour.name}
-                          className="card-img-top luxury-img-top"
-                          style={{ height: 220, objectFit: "cover" }}
-                        />
-                      ) : (
-                        <div className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                          style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}>
-                          <i className="bi bi-map"></i>
-                        </div>
-                      )}
-                      <div className="card-body luxury-card-body">
-                        <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{tour.name}</h3>
-                        <p className="card-text text-muted mb-2 luxury-desc">
-                          {tour.description ? `${tour.description.replace(/<[^>]+>/g, '').substring(0, 100)}...` : ''}
-                        </p>
-                        <div className="mb-2">
-                          <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                          <span style={{ fontWeight: 600, marginLeft: 4 }}>{tour.rating ? tour.rating.toFixed(1) : '0.0'}</span>
-                          <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
-                        </div>
-                        {tour.total_cost && (
-                          <p className="card-text text-muted small mb-0 luxury-rating">
-                            <span className="luxury-money">💰</span> {tour.total_cost} VND
-                          </p>
-                        )}
-                        {/* Show spots and total_price if available */}
-                        {tour.booking && (
-                          <>
-                            <div className="text-muted small mb-1">Số lượng khách: <b>{tour.booking.spots}</b></div>
-                            <div className="text-muted small mb-2">Tổng giá: <b>{tour.booking.total_price?.toLocaleString('vi-VN')} VND</b></div>
-                          </>
-                        )}
-                      </div>
-                    </Link>
-                    <div className="px-3 pb-3 d-flex gap-2">
-                      {tour.booking?.status === 'rejected' ? (
-                        <>
-                          <span className="text-danger small fw-bold flex-fill align-self-center">Đặt tour thất bại</span>
-                          <button
-                            className="btn btn-outline-primary btn-sm flex-fill"
-                            onClick={e => {
-                              e.stopPropagation();
-                              // TODO: Trigger booking modal/flow again for this tour
-                              alert('Chức năng Đặt lại sẽ được triển khai ở đây!');
-                            }}
-                          >
-                            Đặt lại
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          className="btn btn-outline-danger btn-sm flex-fill"
-                          disabled={!tour.booking?.id}
-                          onClick={e => {
-                            e.stopPropagation();
-                            if (tour.booking?.id) {
-                              setConfirmModal({ show: true, message: 'Bạn có chắc muốn hủy đặt tour này?', onConfirm: () => handleDeleteBooking(tour.booking.id) });
-                            }
-                          }}
-                        >
-                          Hủy đặt
-                        </button>
-                      )}
-                    </div>
-                  </div>
-              </div>
-              ))}
-            </div>
-          )}
-        </section>
       </main>
       <Footer />
       <Modal show={showTourModal} onHide={() => setShowTourModal(false)} centered>

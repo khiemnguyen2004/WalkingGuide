@@ -18,6 +18,7 @@ const ArticleLike = require("./models/ArticleLike");
 const ArticleComment = require("./models/ArticleComment");
 const Booking = require("./models/Booking");
 const Hotel = require("./models/Hotel");
+const HotelBooking = require("./models/HotelBooking");
 const Restaurant = require("./models/Restaurant");
 const HotelImage = require("./models/HotelImage");
 const RestaurantImage = require("./models/RestaurantImage");
@@ -26,6 +27,8 @@ const SiteSetting = require("./models/SiteSetting");
 const RestaurantBooking = require("./models/RestaurantBooking");
 const Menu = require("./models/Menu");
 const MenuItem = require("./models/MenuItem");
+const HotelRating = require("./models/HotelRating");
+const RestaurantRating = require("./models/RestaurantRating");
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -56,6 +59,7 @@ const AppDataSource = new DataSource({
     ArticleComment,
     Booking,
     Hotel,
+    HotelBooking,
     Restaurant,
     HotelImage,
     RestaurantImage,
@@ -63,9 +67,13 @@ const AppDataSource = new DataSource({
     RestaurantBooking,
     Menu,
     MenuItem,
+    HotelRating,
+    RestaurantRating,
   ],
   migrations: [
-    "src/migrations/1758000000002-create-menu-items.js",
+    "src/migrations/1752500000000-create-hotel-bookings.js",
+    "src/migrations/1759000000001-create-hotel-ratings.js",
+    "src/migrations/1759000000002-create-restaurant-ratings.js",
   ],
   subscribers: [],
 });

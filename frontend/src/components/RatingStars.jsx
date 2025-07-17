@@ -10,9 +10,16 @@ const RatingStars = ({ id, type = 'place' }) => {
   const [hover, setHover] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const getRatingApi = (type) => {
+    if (type === 'tour') return 'tour-ratings';
+    if (type === 'hotel') return 'hotel-ratings';
+    if (type === 'restaurant') return 'restaurant-ratings';
+    return 'place-ratings';
+  };
+
   useEffect(() => {
     if (!id) return;
-    const ratingApi = type === 'tour' ? 'tour-ratings' : 'place-ratings';
+    const ratingApi = getRatingApi(type);
     axiosClient.get(`${ratingApi}/average`, { params: { [`${type}_id`]: id } })
       .then(res => setAverage(res.data.average))
       .catch(err => {
@@ -30,7 +37,7 @@ const RatingStars = ({ id, type = 'place' }) => {
   const handleRate = async (rating) => {
     if (!user) return alert('Bạn cần đăng nhập để đánh giá!');
     setLoading(true);
-    const ratingApi = type === 'tour' ? 'tour-ratings' : 'place-ratings';
+    const ratingApi = getRatingApi(type);
     try {
       await axiosClient.post(`${ratingApi}/rate`, { [`${type}_id`]: id, rating });
       setUserRating(rating);

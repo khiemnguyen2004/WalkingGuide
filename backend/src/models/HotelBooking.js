@@ -10,6 +10,7 @@ module.exports = new EntitySchema({
     tour_id: { type: "int", nullable: true },
     check_in: { type: "date", nullable: false },
     check_out: { type: "date", nullable: false },
+    room_type: { type: "varchar", length: 100, nullable: true },
     created_at: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" },
   }
 }); 

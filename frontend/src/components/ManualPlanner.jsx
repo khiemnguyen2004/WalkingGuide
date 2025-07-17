@@ -48,6 +48,7 @@ function ManualPlanner({ noLayout }) {
   const [bookingCheckIn, setBookingCheckIn] = useState("");
   const [bookingCheckOut, setBookingCheckOut] = useState("");
   const [bookingStatus, setBookingStatus] = useState(null);
+  const [selectedRoomType, setSelectedRoomType] = useState("");
 
   useEffect(() => {
     axios.get("http://localhost:3000/api/places").then((res) => {
@@ -1112,6 +1113,21 @@ function ManualPlanner({ noLayout }) {
               <Form.Label>Ngày trả phòng</Form.Label>
               <Form.Control type="date" value={bookingCheckOut} onChange={e => setBookingCheckOut(e.target.value)} />
             </Form.Group>
+            {bookingHotel && bookingHotel.room_types && (
+              <Form.Group className="mb-3">
+                <Form.Label>Loại phòng</Form.Label>
+                <Form.Select value={selectedRoomType} onChange={e => setSelectedRoomType(e.target.value)}>
+                  <option value="">Chọn loại phòng</option>
+                  {Array.isArray(bookingHotel.room_types)
+                    ? bookingHotel.room_types.map((type, idx) => (
+                        <option key={idx} value={type}>{type}</option>
+                      ))
+                    : (JSON.parse(bookingHotel.room_types || '[]')).map((type, idx) => (
+                        <option key={idx} value={type}>{type}</option>
+                      ))}
+                </Form.Select>
+              </Form.Group>
+            )}
             {bookingStatus === 'success' && <div className="alert alert-success">Đặt phòng thành công!</div>}
             {bookingStatus === 'error' && <div className="alert alert-danger">Đặt phòng thất bại. Vui lòng thử lại.</div>}
           </Form>
@@ -1128,6 +1144,7 @@ function ManualPlanner({ noLayout }) {
                 hotel_id: bookingHotel?.id,
                 check_in: bookingCheckIn,
                 check_out: bookingCheckOut,
+                room_type: selectedRoomType,
               });
               setBookingStatus('success');
             } catch {

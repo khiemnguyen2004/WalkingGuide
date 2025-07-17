@@ -10,16 +10,18 @@ module.exports = class CreateHotelBookings1752500000000 {
     name = 'CreateHotelBookings1752500000000'
 
     async up(queryRunner) {
-        await queryRunner.query(`CREATE TABLE "hotel_bookings" (
-          "id" SERIAL NOT NULL,
-          "user_id" integer NOT NULL,
-          "hotel_id" integer NOT NULL,
-          "tour_id" integer,
-          "check_in" date NOT NULL,
-          "check_out" date NOT NULL,
-          "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-          CONSTRAINT "PK_hotel_bookings_id" PRIMARY KEY ("id")
-        )`);
+        await queryRunner.query(`
+      CREATE TABLE "hotel_bookings" (
+        "id" SERIAL PRIMARY KEY,
+        "user_id" integer NOT NULL,
+        "hotel_id" integer NOT NULL,
+        "tour_id" integer,
+        "check_in" date NOT NULL,
+        "check_out" date NOT NULL,
+        "room_type" varchar(100),
+        "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     }
 
     async down(queryRunner) {

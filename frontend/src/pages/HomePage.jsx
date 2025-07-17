@@ -65,6 +65,7 @@ function HomePage() {
   const [bookingCheckIn, setBookingCheckIn] = useState("");
   const [bookingCheckOut, setBookingCheckOut] = useState("");
   const [bookingStatus, setBookingStatus] = useState(null);
+  const [selectedRoomType, setSelectedRoomType] = useState("");
   const { user } = useContext(AuthContext);
 
   // Helper function to get proper image URL
@@ -707,11 +708,7 @@ function HomePage() {
                                   ? `${hotel.description.substring(0, 100)}...`
                                   : t("No description available")}
                               </p>
-                              <div className="mb-2">
-                                <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                                <span style={{ fontWeight: 600, marginLeft: 4 }}>{hotel.rating ? hotel.rating.toFixed(1) : '0.0'}</span>
-                                <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
-                              </div>
+                              <RatingStars id={hotel.id} type="hotel" />
                               {hotel.price_range && (
                                 <p className="card-text text-muted small mb-0">
                                   <span className="luxury-money">💰</span> {hotel.price_range}
@@ -803,11 +800,7 @@ function HomePage() {
                                           ? `${hotel.description.substring(0, 100)}...`
                                           : t("No description available")}
                                       </p>
-                                      <div className="mb-2">
-                                        <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                                        <span style={{ fontWeight: 600, marginLeft: 4 }}>{hotel.rating ? hotel.rating.toFixed(1) : '0.0'}</span>
-                                        <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
-                                      </div>
+                                      <RatingStars id={hotel.id} type="hotel" />
                                       {hotel.price_range && (
                                         <p className="card-text text-muted small mb-0">
                                           <span className="luxury-money">💰</span> {hotel.price_range}
@@ -924,11 +917,7 @@ function HomePage() {
                                   ? `${restaurant.description.substring(0, 100)}...`
                                   : t("No description available")}
                               </p>
-                              <div className="mb-2">
-                                <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                                <span style={{ fontWeight: 600, marginLeft: 4 }}>{restaurant.rating ? restaurant.rating.toFixed(1) : '0.0'}</span>
-                                <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
-                              </div>
+                              <RatingStars id={restaurant.id} type="restaurant" />
                               {restaurant.price_range && (
                                 <p className="card-text text-muted small mb-0">
                                   <span className="luxury-money">💰</span> {restaurant.price_range}
@@ -1017,11 +1006,7 @@ function HomePage() {
                                           ? `${restaurant.description.substring(0, 100)}...`
                                           : t("No description available")}
                                       </p>
-                                      <div className="mb-2">
-                                        <span className="luxury-star" style={{ color: '#f1c40f', fontSize: 18 }}>★</span>
-                                        <span style={{ fontWeight: 600, marginLeft: 4 }}>{restaurant.rating ? restaurant.rating.toFixed(1) : '0.0'}</span>
-                                        <span style={{ color: '#888', marginLeft: 2 }}>/ 5</span>
-                                      </div>
+                                      <RatingStars id={restaurant.id} type="restaurant" />
                                       {restaurant.price_range && (
                                         <p className="card-text text-muted small mb-0">
                                           <span className="luxury-money">💰</span> {restaurant.price_range}
@@ -1240,6 +1225,21 @@ function HomePage() {
                 <Form.Label>Ngày trả phòng</Form.Label>
                 <Form.Control type="date" value={bookingCheckOut} onChange={e => setBookingCheckOut(e.target.value)} />
               </Form.Group>
+              {bookingHotel && bookingHotel.room_types && (
+                <Form.Group className="mb-3">
+                  <Form.Label>Loại phòng</Form.Label>
+                  <Form.Select value={selectedRoomType} onChange={e => setSelectedRoomType(e.target.value)}>
+                    <option value="">Chọn loại phòng</option>
+                    {Array.isArray(bookingHotel.room_types)
+                      ? bookingHotel.room_types.map((type, idx) => (
+                          <option key={idx} value={type}>{type}</option>
+                        ))
+                      : (JSON.parse(bookingHotel.room_types || '[]')).map((type, idx) => (
+                          <option key={idx} value={type}>{type}</option>
+                        ))}
+                  </Form.Select>
+                </Form.Group>
+              )}
               {bookingStatus === 'success' && <div className="alert alert-success">Đặt phòng thành công!</div>}
               {bookingStatus === 'error' && <div className="alert alert-danger">Đặt phòng thất bại. Vui lòng thử lại.</div>}
             </Form>
@@ -1256,12 +1256,13 @@ function HomePage() {
                   hotel_id: bookingHotel?.id,
                   check_in: bookingCheckIn,
                   check_out: bookingCheckOut,
+                  room_type: selectedRoomType,
                 });
                 setBookingStatus('success');
               } catch {
                 setBookingStatus('error');
               }
-            }} disabled={!bookingCheckIn || !bookingCheckOut}>
+            }} disabled={!bookingCheckIn || !bookingCheckOut || !selectedRoomType}>
               Xác nhận đặt phòng
             </Button>
           </Modal.Footer>

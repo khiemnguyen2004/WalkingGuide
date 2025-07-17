@@ -6,6 +6,7 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { useAuth } from '../../contexts/AuthContext';
 import { Modal, Button, Form } from 'react-bootstrap';
+import RatingStars from '../../components/RatingStars';
 
 const RestaurantDetail = () => {
   const { id } = useParams();
@@ -83,11 +84,11 @@ const RestaurantDetail = () => {
           {/* Info Left */}
           <div className="col-md-7 col-12">
             <h2 className="fw-bold mb-2" style={{color: '#1a5bb8'}}>{restaurant.name}</h2>
+            <RatingStars id={restaurant.id} type="restaurant" />
             <div className="mb-2"><i className="bi bi-geo-alt me-2 text-primary"></i><b>Địa chỉ:</b> <span className="text-dark">{restaurant.address || '---'}</span></div>
             <div className="mb-2"><i className="bi bi-building me-2 text-secondary"></i><b>Thành phố:</b> <span className="text-dark">{restaurant.city || '---'}</span></div>
             <div className="mb-2"><i className="bi bi-telephone me-2 text-success"></i><b>Liên hệ:</b> <span className="text-dark">{restaurant.phone || '---'}</span></div>
             <div className="mb-2"><i className="bi bi-star me-2 text-warning"></i><b>Đánh giá:</b> <span className="text-dark">{restaurant.rating || '---'}</span></div>
-            <div className="mb-2"><i className="bi bi-currency-dollar me-2 text-success"></i><b>Giá trung bình:</b> <span className="text-dark">{restaurant.price ? restaurant.price.toLocaleString('vi-VN') + ' VND' : '---'}</span></div>
             <div className="mb-2"><i className="bi bi-info-circle me-2 text-info"></i><b>Mô tả:</b> <span className="text-muted">{restaurant.description || '---'}</span></div>
             {restaurant.cuisine_type && (
               <div className="mb-2"><i className="bi bi-egg-fried me-2 text-danger"></i><b>Loại ẩm thực:</b> <span className="text-dark">{restaurant.cuisine_type}</span></div>
