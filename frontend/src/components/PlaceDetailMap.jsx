@@ -396,6 +396,22 @@ function PlaceDetailMap({ place, onClose }) {
     }
   };
 
+  // Find if selectedPlace is a hotel or restaurant (by id, then by coordinates)
+  const findByIdOrCoords = (arr, place) => {
+    if (!place) return undefined;
+    let found = arr.find(x => x.id === place.id);
+    if (found) return found;
+    // Fallback: match by coordinates (rounded to 5 decimals)
+    return arr.find(x =>
+      x.latitude && x.longitude &&
+      place.latitude && place.longitude &&
+      Math.abs(Number(x.latitude) - Number(place.latitude)) < 0.0001 &&
+      Math.abs(Number(x.longitude) - Number(place.longitude)) < 0.0001
+    );
+  };
+  const selectedHotel = findByIdOrCoords(hotels, selectedPlace);
+  const selectedRestaurant = findByIdOrCoords(restaurants, selectedPlace);
+
   // Show loading state
   if (loading || !selectedPlace) {
     return (
@@ -493,7 +509,11 @@ function PlaceDetailMap({ place, onClose }) {
           ))}
           {/* Hotel markers */}
           {hotels.filter(h => h.latitude && h.longitude).map((hotel) => (
-            <Marker key={`hotel-${hotel.id}`} position={[hotel.latitude, hotel.longitude]} icon={hotelIcon}>
+            <Marker key={`hotel-${hotel.id}`} position={[hotel.latitude, hotel.longitude]} icon={hotelIcon}
+              eventHandlers={{
+                click: () => setSelectedPlace(hotel)
+              }}
+            >
               <Popup>
                 <div>
                   <strong>{hotel.name}</strong><br/>
@@ -507,7 +527,11 @@ function PlaceDetailMap({ place, onClose }) {
           ))}
           {/* Restaurant markers */}
           {restaurants.filter(r => r.latitude && r.longitude).map((restaurant) => (
-            <Marker key={`restaurant-${restaurant.id}`} position={[restaurant.latitude, restaurant.longitude]} icon={restaurantIcon}>
+            <Marker key={`restaurant-${restaurant.id}`} position={[restaurant.latitude, restaurant.longitude]} icon={restaurantIcon}
+              eventHandlers={{
+                click: () => setSelectedPlace(restaurant)
+              }}
+            >
               <Popup>
                 <div>
                   <strong>{restaurant.name}</strong><br/>
@@ -531,12 +555,24 @@ function PlaceDetailMap({ place, onClose }) {
         <div className="overlay-content">
           <div className="tab-content">
             <div className="place-basic-info">
-              {/* Hero Image */}
-              {selectedPlace && selectedPlace.image_url && (
+              {/* Hero Image for Place/Hotel/Restaurant */}
+              {((selectedPlace && selectedPlace.image_url) || (selectedHotel && (selectedHotel.image_url || (selectedHotel.images && selectedHotel.images[0]?.image_url))) || (selectedRestaurant && (selectedRestaurant.image_url || (selectedRestaurant.images && selectedRestaurant.images[0]?.image_url)))) && (
                 <div className="position-relative" style={{ height: '250px' }}>
                   <img
-                    src={selectedPlace.image_url.startsWith("http") ? selectedPlace.image_url : `http://localhost:3000${selectedPlace.image_url}`}
-                    alt={selectedPlace.name}
+                    src={
+                      selectedPlace?.image_url
+                        ? (selectedPlace.image_url.startsWith('http') ? selectedPlace.image_url : `http://localhost:3000${selectedPlace.image_url}`)
+                        : selectedHotel?.image_url
+                        ? (selectedHotel.image_url.startsWith('http') ? selectedHotel.image_url : `http://localhost:3000${selectedHotel.image_url}`)
+                        : selectedHotel?.images && selectedHotel.images[0]?.image_url
+                        ? (selectedHotel.images[0].image_url.startsWith('http') ? selectedHotel.images[0].image_url : `http://localhost:3000${selectedHotel.images[0].image_url}`)
+                        : selectedRestaurant?.image_url
+                        ? (selectedRestaurant.image_url.startsWith('http') ? selectedRestaurant.image_url : `http://localhost:3000${selectedRestaurant.image_url}`)
+                        : selectedRestaurant?.images && selectedRestaurant.images[0]?.image_url
+                        ? (selectedRestaurant.images[0].image_url.startsWith('http') ? selectedRestaurant.images[0].image_url : `http://localhost:3000${selectedRestaurant.images[0].image_url}`)
+                        : '/default-place.jpg'
+                    }
+                    alt={selectedPlace?.name || selectedHotel?.name || selectedRestaurant?.name}
                     className="w-100 h-100"
                     style={{ objectFit: 'cover' }}
                     onError={(e) => {
@@ -548,18 +584,18 @@ function PlaceDetailMap({ place, onClose }) {
                   </div>
                   <div className="position-absolute bottom-0 start-0 w-100 p-3">
                     <h2 className="text-white fw-bold mb-2 text-shadow" style={{ fontSize: '1.8rem' }}>
-                      {selectedPlace.name}
+                      {selectedPlace?.name || selectedHotel?.name || selectedRestaurant?.name}
                     </h2>
                     <div className="d-flex flex-wrap gap-2 align-items-center">
-                      {selectedPlace.city && (
+                      {(selectedPlace?.city || selectedHotel?.city || selectedRestaurant?.city) && (
                         <span className="badge bg-primary bg-opacity-75 px-3 py-2 rounded-pill">
                           <i className="bi bi-geo-alt-fill me-1"></i>
-                          {selectedPlace.city}
+                          {selectedPlace?.city || selectedHotel?.city || selectedRestaurant?.city}
                         </span>
                       )}
                       <span className="badge bg-warning bg-opacity-75 px-3 py-2 rounded-pill">
                         <i className="bi bi-star-fill me-1"></i>
-                        {selectedPlace.rating?.toFixed ? selectedPlace.rating.toFixed(1) : selectedPlace.rating}/5
+                        {(selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating)?.toFixed ? (selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating).toFixed(1) : (selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating)}/5
                       </span>
                     </div>
                   </div>
@@ -579,11 +615,12 @@ function PlaceDetailMap({ place, onClose }) {
                 </button>
               </div>
 
-              {/* Place Info */}
+              {/* Place/Hotel/Restaurant Info */}
               <div className="p-4">
                 {/* Info Cards */}
                 <div className="row g-3 mb-4">
-                  {selectedPlace && selectedPlace.address && (
+                  {/* Address */}
+                  {(selectedPlace?.address || selectedHotel?.address || selectedRestaurant?.address) && (
                     <div className="col-12">
                       <div className="d-flex align-items-center p-3 bg-light rounded-3">
                         <div className="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
@@ -591,12 +628,55 @@ function PlaceDetailMap({ place, onClose }) {
                         </div>
                         <div>
                           <small className="text-muted d-block">Địa chỉ</small>
-                          <strong className="text-dark">{selectedPlace.address}</strong>
+                          <strong className="text-dark">{selectedPlace?.address || selectedHotel?.address || selectedRestaurant?.address}</strong>
                         </div>
                       </div>
                     </div>
                   )}
-                  {selectedPlace && selectedPlace.opening_hours && (
+                  {/* City */}
+                  {(selectedPlace?.city || selectedHotel?.city || selectedRestaurant?.city) && (
+                    <div className="col-12">
+                      <div className="d-flex align-items-center p-3 bg-light rounded-3">
+                        <div className="bg-info bg-opacity-10 p-2 rounded-circle me-3">
+                          <i className="bi bi-geo-alt text-info"></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Thành phố</small>
+                          <strong className="text-dark">{selectedPlace?.city || selectedHotel?.city || selectedRestaurant?.city}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Price/Price Range */}
+                  {(selectedHotel?.price_range || selectedRestaurant?.price_range) && (
+                    <div className="col-12">
+                      <div className="d-flex align-items-center p-3 bg-light rounded-3">
+                        <div className="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                          <i className="bi bi-currency-dollar text-warning"></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Mức giá</small>
+                          <strong className="text-dark">{selectedHotel?.price_range || selectedRestaurant?.price_range}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Rating */}
+                  {(selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating) && (
+                    <div className="col-12">
+                      <div className="d-flex align-items-center p-3 bg-light rounded-3">
+                        <div className="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                          <i className="bi bi-star-fill text-warning"></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Đánh giá</small>
+                          <strong className="text-dark">{(selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating)?.toFixed ? (selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating).toFixed(1) : (selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating)}/5</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Opening Hours */}
+                  {(selectedPlace?.opening_hours || selectedHotel?.opening_hours || selectedRestaurant?.opening_hours) && (
                     <div className="col-12">
                       <div className="d-flex align-items-center p-3 bg-light rounded-3">
                         <div className="bg-success bg-opacity-10 p-2 rounded-circle me-3">
@@ -604,7 +684,7 @@ function PlaceDetailMap({ place, onClose }) {
                         </div>
                         <div>
                           <small className="text-muted d-block">Giờ mở cửa</small>
-                          <strong className="text-dark">{selectedPlace.opening_hours}</strong>
+                          <strong className="text-dark">{selectedPlace?.opening_hours || selectedHotel?.opening_hours || selectedRestaurant?.opening_hours}</strong>
                         </div>
                       </div>
                     </div>
@@ -618,11 +698,11 @@ function PlaceDetailMap({ place, onClose }) {
                     Mô tả
                   </h5>
                   <div className="p-3 bg-light rounded-3 description-text" style={{ fontSize: '0.95rem', maxHeight: '150px', overflowY: 'auto' }}>
-                    <div>{convertHtmlToText(selectedPlace.description)}</div>
+                    <div>{convertHtmlToText(selectedPlace?.description || selectedHotel?.description || selectedRestaurant?.description)}</div>
                   </div>
                 </div>
 
-                {/* Services */}
+                {/* Services (for place only) */}
                 {selectedPlace && selectedPlace.service && (
                   <div className="mb-4">
                     <h5 className="text-primary mb-3">

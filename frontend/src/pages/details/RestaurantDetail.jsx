@@ -102,7 +102,7 @@ const RestaurantDetail = () => {
                 </div>
               </div>
             )}
-            <Button variant="primary" className="mt-3" onClick={() => setShowBookingModal(true)}>
+            <Button className="mt-3 btn btn-main" onClick={() => setShowBookingModal(true)}>
               Đặt bàn ngay
             </Button>
             {bookingStatus && (
@@ -123,7 +123,7 @@ const RestaurantDetail = () => {
                       <Button
                         key={section.id}
                         variant={selectedMenu && selectedMenu.id === section.id ? 'primary' : 'outline-primary'}
-                        className="me-2"
+                        className="me-2 btn btn-main"
                         onClick={() => setSelectedMenu(section)}
                         style={{whiteSpace: 'nowrap'}}
                       >

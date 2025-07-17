@@ -7,7 +7,7 @@ import CityAutocomplete from "./CityAutocomplete.jsx";
 import LocationAutocomplete from "./LocationAutocomplete.jsx";
 import placeApi from "../api/placeApi.js";
 import "../css/luxury-home.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const AutoPlanner = ({ noLayout }) => {
   const [interests, setInterests] = useState("");
@@ -265,6 +265,17 @@ const AutoPlanner = ({ noLayout }) => {
     tempDiv.innerHTML = html;
     // Get the text content (strips HTML tags)
     return tempDiv.textContent || tempDiv.innerText || "";
+  }
+
+  // Helper to group steps by day
+  function groupStepsByDay(steps) {
+    const grouped = {};
+    steps.forEach(step => {
+      const day = step.day || 1;
+      if (!grouped[day]) grouped[day] = [];
+      grouped[day].push(step);
+    });
+    return grouped;
   }
 
   if (!user) {
@@ -658,72 +669,34 @@ const AutoPlanner = ({ noLayout }) => {
               </div>
             </div>
 
-            <h5 className="mb-3">Lộ trình chi tiết</h5>
-            <div className="tour-steps-timeline">
-              {tourData.steps.map((step, index) => {
-                const place = step.place;
-                return (
-                  <div key={index} className="timeline-step">
-                    <div className="timeline-marker">
-                      <div className="step-number">{index + 1}</div>
-                    </div>
-                    <div className="timeline-content">
-                      <div className="place-card">
-                        {/* Place image */}
-                        {place?.image_url && (
-                          <img
-                            src={place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`}
-                            alt={place.name}
-                            className="mb-2 rounded"
-                            style={{ width: '100%', maxHeight: '160px', objectFit: 'cover' }}
-                          />
-                        )}
-                        <div className="place-header">
-                          <h6 className="place-name mb-1">
-                            <i className="bi bi-map-marker-alt me-2 text-primary"></i>
-                            {place?.name}
-                          </h6>
-                          <div className="place-details">
-                            <span className="badge bg-primary me-2">
-                              <i className="bi bi-clock me-1"></i>
-                              {step.stay_duration} phút
-                            </span>
-                            {step.start_time && (
-                              <span className="badge bg-success me-2">
-                                <i className="bi bi-play me-1"></i>
-                                {step.start_time}
-                              </span>
-                            )}
-                            {step.end_time && (
-                              <span className="badge bg-info">
-                                <i className="bi bi-stop me-1"></i>
-                                {step.end_time}
-                              </span>
-                            )}
-                          </div>
+            {/* Tour Steps Preview */}
+            {tourData && tourData.steps && tourData.steps.length > 0 && (
+              <div className="mt-4">
+                <h4 className="fw-bold mb-3">Hành trình gợi ý</h4>
+                {Object.entries(groupStepsByDay(tourData.steps)).map(([day, steps]) => (
+                  <div key={day} className="mb-4">
+                    <h5 className="mb-3" style={{color: '#1a5bb8'}}>Ngày {day}</h5>
+                    <div className="row g-3">
+                      {steps.map((step, idx) => (
+                        <div className="col-md-6 col-lg-4" key={step.place_id || idx}>
+                          <Link to={step.place ? `/places/${step.place.id}` : '#'} className="text-decoration-none">
+                            <div className="card h-100 shadow-sm">
+                              {step.place && step.place.image_url && (
+                                <img src={step.place.image_url.startsWith('http') ? step.place.image_url : `http://localhost:3000${step.place.image_url}`} alt={step.place.name} className="card-img-top" style={{height: 140, objectFit: 'cover'}} />
+                              )}
+                              <div className="card-body">
+                                <h6 className="card-title mb-1 fw-bold">{step.place?.name}</h6>
+                                <div className="card-text text-muted" style={{fontSize: '0.95em'}}>{htmlToPlainText(step.place?.description)}</div>
+                              </div>
+                            </div>
+                          </Link>
                         </div>
-                        {place?.address && (
-                          <p className="place-address mb-2">
-                            <i className="bi bi-geo-alt me-1 text-muted"></i>
-                            <small className="text-muted">{place.address}</small>
-                          </p>
-                        )}
-                        {place?.description && (
-                          <p className="place-description">
-                            <small className="text-muted">
-                              {(() => {
-                                const plain = htmlToPlainText(place.description);
-                                return plain.length > 100 ? plain.slice(0, 100) + '...' : plain;
-                              })()}
-                            </small>
-                          </p>
-                        )}
-                      </div>
+                      ))}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

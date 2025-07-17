@@ -52,6 +52,55 @@ function MyTours() {
   // Add state for custom modals
   const [alertModal, setAlertModal] = useState({ show: false, message: '', title: '' });
   const [confirmModal, setConfirmModal] = useState({ show: false, message: '', onConfirm: null });
+  const [selectedTourIds, setSelectedTourIds] = useState([]);
+  const [selectedBookingIds, setSelectedBookingIds] = useState([]);
+  const [selectAllTours, setSelectAllTours] = useState(false);
+  const [selectAllBookings, setSelectAllBookings] = useState(false);
+
+  // Handle select all for tours
+  const handleSelectAllTours = (e) => {
+    setSelectAllTours(e.target.checked);
+    setSelectedTourIds(e.target.checked ? tours.map(t => t.id) : []);
+  };
+  // Handle select all for bookings
+  const handleSelectAllBookings = (e) => {
+    setSelectAllBookings(e.target.checked);
+    setSelectedBookingIds(e.target.checked ? bookedTours.map(t => t.booking?.id).filter(Boolean) : []);
+  };
+  // Handle individual select
+  const handleSelectTour = (id) => {
+    setSelectedTourIds(prev => prev.includes(id) ? prev.filter(tid => tid !== id) : [...prev, id]);
+  };
+  const handleSelectBooking = (id) => {
+    setSelectedBookingIds(prev => prev.includes(id) ? prev.filter(bid => bid !== id) : [...prev, id]);
+  };
+  // Batch delete
+  const handleDeleteSelectedTours = async () => {
+    if (selectedTourIds.length === 0) return;
+    if (!window.confirm('Bạn có chắc chắn muốn xóa các tour đã chọn?')) return;
+    try {
+      await Promise.all(selectedTourIds.map(id => axios.delete(`http://localhost:3000/api/tours/${id}`)));
+      setTours(prev => prev.filter(t => !selectedTourIds.includes(t.id)));
+      setSelectedTourIds([]);
+      setSelectAllTours(false);
+      setAlertModal({ show: true, message: 'Đã xóa các tour thành công!', title: 'Thành công' });
+    } catch {
+      setAlertModal({ show: true, message: 'Không thể xóa một số tour.', title: 'Lỗi' });
+    }
+  };
+  const handleDeleteSelectedBookings = async () => {
+    if (selectedBookingIds.length === 0) return;
+    if (!window.confirm('Bạn có chắc chắn muốn hủy các booking đã chọn?')) return;
+    try {
+      await Promise.all(selectedBookingIds.map(id => axios.delete(`http://localhost:3000/api/bookings/${id}`)));
+      setBookedTours(prev => prev.filter(t => !selectedBookingIds.includes(t.booking?.id)));
+      setSelectedBookingIds([]);
+      setSelectAllBookings(false);
+      setAlertModal({ show: true, message: 'Đã hủy các booking thành công!', title: 'Thành công' });
+    } catch {
+      setAlertModal({ show: true, message: 'Không thể hủy một số booking.', title: 'Lỗi' });
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -557,6 +606,55 @@ function MyTours() {
             </div>
           </div>
         )}
+        {/* User-created tours section */}
+        <div className="mb-4">
+          <h5 className="fw-bold" style={{color:'rgb(26, 91, 184)'}}>Danh sách tour bạn đã tạo </h5>
+          <div className="d-flex align-items-center mb-2">
+            <input type="checkbox" checked={selectAllTours} onChange={handleSelectAllTours} />
+            <span className="ms-2">Chọn tất cả</span>
+            <Button variant="danger" size="sm" className="ms-3" disabled={selectedTourIds.length === 0} onClick={handleDeleteSelectedTours}>
+              Xóa các tour đã chọn
+            </Button>
+          </div>
+          <div className="list-group">
+            {tours.map(tour => (
+              <div key={tour.id} className="list-group-item d-flex align-items-center">
+                <input type="checkbox" className="me-2" checked={selectedTourIds.includes(tour.id)} onChange={() => handleSelectTour(tour.id)} />
+                <div className="flex-grow-1">
+                  <Link to={`/tours/${tour.id}`}>{tour.name}</Link>
+                </div>
+                <div className="d-flex gap-2">
+                  <button className="btn btn-sm btn-outline-primary" onClick={e => { e.stopPropagation(); setSelected(tour); setShowEditModal(true); }}>Sửa</button>
+                  <button className="btn btn-sm btn-outline-danger" onClick={e => { e.stopPropagation(); setConfirmModal({ show: true, message: 'Bạn có chắc muốn xóa tour này?', onConfirm: () => handleDeleteTour(tour.id) }); }}>Xóa</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Booked tours section */}
+        <div className="mb-4">
+          <h5 className="fw-bold" style={{color:'rgb(26, 91, 184)'}}>Tour đã đặt</h5>
+          <div className="d-flex align-items-center mb-2">
+            <input type="checkbox" checked={selectAllBookings} onChange={handleSelectAllBookings} />
+            <span className="ms-2">Chọn tất cả</span>
+            <Button variant="danger" size="sm" className="ms-3" disabled={selectedBookingIds.length === 0} onClick={handleDeleteSelectedBookings}>
+              Hủy các booking đã chọn
+            </Button>
+          </div>
+          <div className="list-group">
+            {bookedTours.map(tour => (
+              <div key={tour.booking?.id || tour.id} className="list-group-item d-flex align-items-center">
+                <input type="checkbox" className="me-2" checked={selectedBookingIds.includes(tour.booking?.id)} onChange={() => handleSelectBooking(tour.booking?.id)} />
+                <div className="flex-grow-1">
+                  <Link to={`/tours/${tour.id}`} className="text-decoration-none">{tour.name}</Link>
+                </div>
+                <div className="d-flex gap-2">
+                  <button className="btn btn-sm btn-outline-danger" onClick={e => { e.stopPropagation(); setConfirmModal({ show: true, message: 'Bạn có chắc muốn hủy đặt tour này?', onConfirm: () => handleDeleteBooking(tour.booking.id) }); }}>Hủy đặt</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
         {/* Created/Cloned Tours Section */}
         {/* <section className="mb-5">
                 {loading ? (
