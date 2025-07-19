@@ -311,6 +311,24 @@ function MyTours() {
     }
   };
 
+  const handleCancelHotelBooking = async (bookingId) => {
+    if (!bookingId) {
+      setAlertModal({ show: true, message: 'Không tìm thấy booking để hủy.', title: 'Lỗi' });
+      return;
+    }
+    try {
+      const res = await axios.delete(`http://localhost:3000/api/bookings/${bookingId}`);
+      if (res.status === 200 && res.data?.message) {
+        setHotelBookings(prev => prev.filter(b => b.id !== bookingId));
+        setAlertModal({ show: true, message: 'Đã hủy đặt khách sạn thành công!', title: 'Thành công' });
+      } else {
+        setAlertModal({ show: true, message: 'Không thể hủy đặt khách sạn.', title: 'Lỗi' });
+      }
+    } catch {
+      setAlertModal({ show: true, message: 'Không thể hủy đặt khách sạn.', title: 'Lỗi' });
+    }
+  };
+
   return (
     <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
       <Header />
@@ -793,6 +811,13 @@ function MyTours() {
                         </div>
                       </div>
                     </Link>
+                    <div className="px-3 pb-3">
+                      <button className="btn btn-outline-danger btn-sm w-100" onClick={() => {
+                        if(window.confirm('Bạn có chắc muốn hủy đặt khách sạn này?')) handleCancelHotelBooking(booking.id);
+                      }}>
+                        <i className="bi bi-x-circle me-1"></i>Hủy đặt
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
