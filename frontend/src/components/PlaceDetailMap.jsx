@@ -206,6 +206,8 @@ function PlaceDetailMap({ place, onClose }) {
   const [locationAlertMessage, setLocationAlertMessage] = useState('');
   const [hotels, setHotels] = useState([]);
   const [restaurants, setRestaurants] = useState([]);
+  // Add state for selectedType
+  const [selectedType, setSelectedType] = useState(place?.type || 'place');
 
   // Initialize selectedPlace with the passed place prop
   useEffect(() => {
@@ -328,8 +330,10 @@ function PlaceDetailMap({ place, onClose }) {
     setIsExpanded(!isExpanded);
   };
 
-  const handlePlaceClick = (clickedPlace) => {
+  // Update handlePlaceClick to accept type
+  const handlePlaceClick = (clickedPlace, type = 'place') => {
     setSelectedPlace(clickedPlace);
+    setSelectedType(type);
   };
 
   const handleLocationClick = (location) => {
@@ -396,18 +400,10 @@ function PlaceDetailMap({ place, onClose }) {
     }
   };
 
-  // Find if selectedPlace is a hotel or restaurant (by id, then by coordinates)
+  // Find if selectedPlace is a hotel or restaurant (by id only)
   const findByIdOrCoords = (arr, place) => {
     if (!place) return undefined;
-    let found = arr.find(x => x.id === place.id);
-    if (found) return found;
-    // Fallback: match by coordinates (rounded to 5 decimals)
-    return arr.find(x =>
-      x.latitude && x.longitude &&
-      place.latitude && place.longitude &&
-      Math.abs(Number(x.latitude) - Number(place.latitude)) < 0.0001 &&
-      Math.abs(Number(x.longitude) - Number(place.longitude)) < 0.0001
-    );
+    return arr.find(x => x.id === place.id);
   };
   const selectedHotel = findByIdOrCoords(hotels, selectedPlace);
   const selectedRestaurant = findByIdOrCoords(restaurants, selectedPlace);
@@ -495,7 +491,7 @@ function PlaceDetailMap({ place, onClose }) {
               position={[parseFloat(place.latitude), parseFloat(place.longitude)]}
               icon={createCustomIcon(place)}
               eventHandlers={{
-                click: () => handlePlaceClick(place)
+                click: () => handlePlaceClick(place, 'place')
               }}
             >
               <Popup>
@@ -511,7 +507,7 @@ function PlaceDetailMap({ place, onClose }) {
           {hotels.filter(h => h.latitude && h.longitude).map((hotel) => (
             <Marker key={`hotel-${hotel.id}`} position={[hotel.latitude, hotel.longitude]} icon={hotelIcon}
               eventHandlers={{
-                click: () => setSelectedPlace(hotel)
+                click: () => handlePlaceClick(hotel, 'hotel')
               }}
             >
               <Popup>
@@ -529,7 +525,7 @@ function PlaceDetailMap({ place, onClose }) {
           {restaurants.filter(r => r.latitude && r.longitude).map((restaurant) => (
             <Marker key={`restaurant-${restaurant.id}`} position={[restaurant.latitude, restaurant.longitude]} icon={restaurantIcon}
               eventHandlers={{
-                click: () => setSelectedPlace(restaurant)
+                click: () => handlePlaceClick(restaurant, 'restaurant')
               }}
             >
               <Popup>
@@ -555,181 +551,267 @@ function PlaceDetailMap({ place, onClose }) {
         <div className="overlay-content">
           <div className="tab-content">
             <div className="place-basic-info">
-              {/* Hero Image for Place/Hotel/Restaurant */}
-              {((selectedPlace && selectedPlace.image_url) || (selectedHotel && (selectedHotel.image_url || (selectedHotel.images && selectedHotel.images[0]?.image_url))) || (selectedRestaurant && (selectedRestaurant.image_url || (selectedRestaurant.images && selectedRestaurant.images[0]?.image_url)))) && (
-                <div className="position-relative" style={{ height: '250px' }}>
-                  <img
-                    src={
-                      selectedPlace?.image_url
-                        ? (selectedPlace.image_url.startsWith('http') ? selectedPlace.image_url : `http://localhost:3000${selectedPlace.image_url}`)
-                        : selectedHotel?.image_url
-                        ? (selectedHotel.image_url.startsWith('http') ? selectedHotel.image_url : `http://localhost:3000${selectedHotel.image_url}`)
-                        : selectedHotel?.images && selectedHotel.images[0]?.image_url
-                        ? (selectedHotel.images[0].image_url.startsWith('http') ? selectedHotel.images[0].image_url : `http://localhost:3000${selectedHotel.images[0].image_url}`)
-                        : selectedRestaurant?.image_url
-                        ? (selectedRestaurant.image_url.startsWith('http') ? selectedRestaurant.image_url : `http://localhost:3000${selectedRestaurant.image_url}`)
-                        : selectedRestaurant?.images && selectedRestaurant.images[0]?.image_url
-                        ? (selectedRestaurant.images[0].image_url.startsWith('http') ? selectedRestaurant.images[0].image_url : `http://localhost:3000${selectedRestaurant.images[0].image_url}`)
-                        : '/default-place.jpg'
-                    }
-                    alt={selectedPlace?.name || selectedHotel?.name || selectedRestaurant?.name}
-                    className="w-100 h-100"
-                    style={{ objectFit: 'cover' }}
-                    onError={(e) => {
-                      e.target.src = "/default-place.jpg";
-                    }}
-                  />
-                  <div className="position-absolute top-0 start-0 w-100 h-100" 
-                       style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)' }}>
-                  </div>
-                  <div className="position-absolute bottom-0 start-0 w-100 p-3">
-                    <h2 className="text-white fw-bold mb-2 text-shadow" style={{ fontSize: '1.8rem' }}>
-                      {selectedPlace?.name || selectedHotel?.name || selectedRestaurant?.name}
-                    </h2>
-                    <div className="d-flex flex-wrap gap-2 align-items-center">
-                      {(selectedPlace?.city || selectedHotel?.city || selectedRestaurant?.city) && (
-                        <span className="badge bg-primary bg-opacity-75 px-3 py-2 rounded-pill">
-                          <i className="bi bi-geo-alt-fill me-1"></i>
-                          {selectedPlace?.city || selectedHotel?.city || selectedRestaurant?.city}
-                        </span>
-                      )}
-                      <span className="badge bg-warning bg-opacity-75 px-3 py-2 rounded-pill">
-                        <i className="bi bi-star-fill me-1"></i>
-                        {(selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating)?.toFixed ? (selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating).toFixed(1) : (selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating)}/5
-                      </span>
+              {/* Overlay Info Section: Show only hotel info if matched, else restaurant, else place */}
+              {selectedType === 'hotel' ? (
+                // Hotel Info Only (use selectedPlace as hotel)
+                <>
+                  <div className="position-relative" style={{ height: '250px' }}>
+                    <img
+                      src={(() => {
+                        if (selectedHotel.image_url) {
+                          return selectedHotel.image_url.startsWith('http') ? selectedHotel.image_url : `http://localhost:3000${selectedHotel.image_url}`;
+                        }
+                        if (selectedHotel.images && selectedHotel.images[0]?.image_url) {
+                          return selectedHotel.images[0].image_url.startsWith('http') ? selectedHotel.images[0].image_url : `http://localhost:3000${selectedHotel.images[0].image_url}`;
+                        }
+                        return '/default-place.jpg';
+                      })()}
+                      alt={selectedHotel.name}
+                      className="w-100 h-100"
+                      style={{ objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.target.src = "/default-place.jpg";
+                      }}
+                    />
+                    <div className="position-absolute top-0 start-0 w-100 h-100" 
+                         style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)' }}>
+                    </div>
+                    <div className="position-absolute bottom-0 start-0 w-100 p-3">
+                      <h2 className="text-white fw-bold mb-2 text-shadow" style={{ fontSize: '1.8rem' }}>
+                        {selectedHotel.name}
+                      </h2>
+                      <div className="d-flex flex-wrap gap-2 align-items-center">
+                        {selectedHotel.city && (
+                          <span className="badge bg-primary bg-opacity-75 px-3 py-2 rounded-pill">
+                            <i className="bi bi-geo-alt-fill me-1"></i>
+                            {selectedHotel.city}
+                          </span>
+                        )}
+                        {selectedHotel.rating && (
+                          <span className="badge bg-warning bg-opacity-75 px-3 py-2 rounded-pill">
+                            <i className="bi bi-star-fill me-1"></i>
+                            {selectedHotel.rating?.toFixed ? selectedHotel.rating.toFixed(1) : selectedHotel.rating}/5
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                  {/* Gallery if available */}
+                  {selectedHotel.images && selectedHotel.images.length > 1 && (
+                    <div className="mb-3">
+                      <div className="d-flex flex-wrap gap-2">
+                        {selectedHotel.images.map((img, idx) => (
+                          img?.image_url && <img key={idx} src={img.image_url.startsWith('http') ? img.image_url : `http://localhost:3000${img.image_url}`} alt="Gallery" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8 }} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="mb-4">
+                    {selectedHotel.address && (<div className="mb-2"><i className="bi bi-house me-2 text-primary"></i><span className="fw-medium">Địa chỉ:</span> {selectedHotel.address}</div>)}
+                    {selectedHotel.city && (<div className="mb-2"><i className="bi bi-geo-alt me-2 text-info"></i><span className="fw-medium">Thành phố:</span> {selectedHotel.city}</div>)}
+                    {selectedHotel.stars && (<div className="mb-2"><i className="bi bi-star-fill me-2 text-warning"></i><span className="fw-medium">Hạng sao:</span> {selectedHotel.stars} / 5</div>)}
+                    {selectedHotel.price_range && (<div className="mb-2"><i className="bi bi-currency-dollar me-2 text-warning"></i><span className="fw-medium">Mức giá:</span> {selectedHotel.price_range}</div>)}
+                    {(selectedHotel.min_price || selectedHotel.max_price) && (<div className="mb-2"><i className="bi bi-cash-coin me-2 text-success"></i><span className="fw-medium">Giá:</span> {selectedHotel.min_price ? formatPrice(selectedHotel.min_price) : ''}{selectedHotel.min_price && selectedHotel.max_price ? ' - ' : ''}{selectedHotel.max_price ? formatPrice(selectedHotel.max_price) : ''}</div>)}
+                    {selectedHotel.phone && (<div className="mb-2"><i className="bi bi-telephone me-2 text-info"></i><span className="fw-medium">Điện thoại:</span> {selectedHotel.phone}</div>)}
+                    {selectedHotel.email && (<div className="mb-2"><i className="bi bi-envelope me-2 text-info"></i><span className="fw-medium">Email:</span> {selectedHotel.email}</div>)}
+                    {selectedHotel.website && (<div className="mb-2"><i className="bi bi-globe me-2 text-info"></i><span className="fw-medium">Website:</span> <a href={selectedHotel.website} target="_blank" rel="noopener noreferrer">{selectedHotel.website}</a></div>)}
+                    {(selectedHotel.check_in_time || selectedHotel.check_out_time) && (<div className="mb-2"><i className="bi bi-clock me-2 text-success"></i>{selectedHotel.check_in_time && (<span className="fw-medium me-3">Nhận phòng: <span className="text-dark">{selectedHotel.check_in_time}</span></span>)}{selectedHotel.check_out_time && (<span className="fw-medium">Trả phòng: <span className="text-dark">{selectedHotel.check_out_time}</span></span>)}</div>)}
+                    {selectedHotel.amenities && (() => {let ams = selectedHotel.amenities;try {const parsed = JSON.parse(ams);if (Array.isArray(parsed)) {return (<div className="mb-2"><span className="fw-medium">Tiện nghi:</span> {parsed.join(', ')}</div>);}} catch (e) {}return <div className="mb-2"><span className="fw-medium">Tiện nghi:</span> {ams}</div>;})()}
+                    {selectedHotel.room_types && (() => {let rms = selectedHotel.room_types;try {const parsed = JSON.parse(rms);if (Array.isArray(parsed)) {return (<div className="mb-2"><span className="fw-medium">Loại phòng:</span> {parsed.join(', ')}</div>);}} catch (e) {}return <div className="mb-2"><span className="fw-medium">Loại phòng:</span> {rms}</div>;})()}
+                  </div>
+                  {selectedHotel.description && (
+                    <div className="mb-4">
+                      <h5 className="text-primary mb-3">
+                        <i className="bi bi-info-circle me-2"></i>
+                        Mô tả
+                      </h5>
+                      <div className="p-3 bg-light rounded-3 description-text" style={{ fontSize: '0.95rem', maxHeight: '150px', overflowY: 'auto' }}>
+                        <div>{convertHtmlToText(selectedHotel.description)}</div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : selectedType === 'restaurant' ? (
+                // Restaurant Info Only (use selectedPlace as restaurant)
+                <>
+                  <div className="position-relative" style={{ height: '250px' }}>
+                    <img
+                      src={(() => {
+                        if (selectedRestaurant.image_url) {
+                          return selectedRestaurant.image_url.startsWith('http') ? selectedRestaurant.image_url : `http://localhost:3000${selectedRestaurant.image_url}`;
+                        }
+                        if (selectedRestaurant.images && selectedRestaurant.images[0]?.image_url) {
+                          return selectedRestaurant.images[0].image_url.startsWith('http') ? selectedRestaurant.images[0].image_url : `http://localhost:3000${selectedRestaurant.images[0].image_url}`;
+                        }
+                        return '/default-place.jpg';
+                      })()}
+                      alt={selectedRestaurant.name}
+                      className="w-100 h-100"
+                      style={{ objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.target.src = "/default-place.jpg";
+                      }}
+                    />
+                    <div className="position-absolute top-0 start-0 w-100 h-100" 
+                         style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)' }}>
+                    </div>
+                    <div className="position-absolute bottom-0 start-0 w-100 p-3">
+                      <h2 className="text-white fw-bold mb-2 text-shadow" style={{ fontSize: '1.8rem' }}>
+                        {selectedRestaurant.name}
+                      </h2>
+                      <div className="d-flex flex-wrap gap-2 align-items-center">
+                        {selectedRestaurant.city && (
+                          <span className="badge bg-primary bg-opacity-75 px-3 py-2 rounded-pill">
+                            <i className="bi bi-geo-alt-fill me-1"></i>
+                            {selectedRestaurant.city}
+                          </span>
+                        )}
+                        {selectedRestaurant.rating && (
+                          <span className="badge bg-warning bg-opacity-75 px-3 py-2 rounded-pill">
+                            <i className="bi bi-star-fill me-1"></i>
+                            {selectedRestaurant.rating?.toFixed ? selectedRestaurant.rating.toFixed(1) : selectedRestaurant.rating}/5
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Gallery if available */}
+                  {selectedRestaurant.images && selectedRestaurant.images.length > 1 && (
+                    <div className="mb-3">
+                      <div className="d-flex flex-wrap gap-2">
+                        {selectedRestaurant.images.map((img, idx) => (
+                          img?.image_url && <img key={idx} src={img.image_url.startsWith('http') ? img.image_url : `http://localhost:3000${img.image_url}`} alt="Gallery" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8 }} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="mb-4">
+                    {selectedRestaurant.address && (<div className="mb-2"><i className="bi bi-house me-2 text-primary"></i><span className="fw-medium">Địa chỉ:</span> {selectedRestaurant.address}</div>)}
+                    {selectedRestaurant.city && (<div className="mb-2"><i className="bi bi-geo-alt me-2 text-info"></i><span className="fw-medium">Thành phố:</span> {selectedRestaurant.city}</div>)}
+                    {selectedRestaurant.cuisine_type && (<div className="mb-2"><i className="bi bi-egg-fried me-2 text-warning"></i><span className="fw-medium">Ẩm thực:</span> {selectedRestaurant.cuisine_type}</div>)}
+                    {selectedRestaurant.price_range && (<div className="mb-2"><i className="bi bi-currency-dollar me-2 text-warning"></i><span className="fw-medium">Mức giá:</span> {selectedRestaurant.price_range}</div>)}
+                    {(selectedRestaurant.min_price || selectedRestaurant.max_price) && (<div className="mb-2"><i className="bi bi-cash-coin me-2 text-success"></i><span className="fw-medium">Giá:</span> {selectedRestaurant.min_price ? formatPrice(selectedRestaurant.min_price) : ''}{selectedRestaurant.min_price && selectedRestaurant.max_price ? ' - ' : ''}{selectedRestaurant.max_price ? formatPrice(selectedRestaurant.max_price) : ''}</div>)}
+                    {selectedRestaurant.phone && (<div className="mb-2"><i className="bi bi-telephone me-2 text-info"></i><span className="fw-medium">Điện thoại:</span> {selectedRestaurant.phone}</div>)}
+                    {selectedRestaurant.email && (<div className="mb-2"><i className="bi bi-envelope me-2 text-info"></i><span className="fw-medium">Email:</span> {selectedRestaurant.email}</div>)}
+                    {selectedRestaurant.website && (<div className="mb-2"><i className="bi bi-globe me-2 text-info"></i><span className="fw-medium">Website:</span> <a href={selectedRestaurant.website} target="_blank" rel="noopener noreferrer">{selectedRestaurant.website}</a></div>)}
+                    {selectedRestaurant.opening_hours && (<div className="mb-2"><i className="bi bi-clock me-2 text-success"></i><span className="fw-medium">Giờ mở cửa:</span> {(() => {let hours = selectedRestaurant.opening_hours;try {const parsed = JSON.parse(hours);if (Array.isArray(parsed)) {return parsed.map((item, idx) => (<span key={idx} className="ms-2">{item.day}: {item.hours}</span>));}} catch (e) {}return hours;})()}</div>)}
+                    <div className="mb-2"><span className="fw-medium me-2">Dịch vụ:</span><span className="me-2"><i className={`bi bi-bag-check${selectedRestaurant.delivery_available ? '' : '-fill text-secondary'}`}></i> Giao hàng: {selectedRestaurant.delivery_available ? 'Có' : 'Không'}</span><span className="me-2"><i className={`bi bi-bag${selectedRestaurant.takeout_available ? '' : '-fill text-secondary'}`}></i> Mang đi: {selectedRestaurant.takeout_available ? 'Có' : 'Không'}</span><span><i className={`bi bi-people${selectedRestaurant.dine_in_available ? '' : '-fill text-secondary'}`}></i> Ăn tại chỗ: {selectedRestaurant.dine_in_available ? 'Có' : 'Không'}</span></div>
+                    {selectedRestaurant.dietary_options && (() => {let opts = selectedRestaurant.dietary_options;try {const parsed = JSON.parse(opts);if (Array.isArray(parsed)) {return (<div className="mb-2"><span className="fw-medium">Tùy chọn ăn kiêng:</span> {parsed.join(', ')}</div>);}} catch (e) {}return <div className="mb-2"><span className="fw-medium">Tùy chọn ăn kiêng:</span> {opts}</div>;})()}
+                    {selectedRestaurant.features && (() => {let feats = selectedRestaurant.features;try {const parsed = JSON.parse(feats);if (Array.isArray(parsed)) {return (<div className="mb-2"><span className="fw-medium">Tiện ích:</span> {parsed.join(', ')}</div>);}} catch (e) {}return <div className="mb-2"><span className="fw-medium">Tiện ích:</span> {feats}</div>;})()}
+                  </div>
+                  {selectedRestaurant.description && (
+                    <div className="mb-4">
+                      <h5 className="text-primary mb-3">
+                        <i className="bi bi-info-circle me-2"></i>
+                        Mô tả
+                      </h5>
+                      <div className="p-3 bg-light rounded-3 description-text" style={{ fontSize: '0.95rem', maxHeight: '150px', overflowY: 'auto' }}>
+                        <div>{convertHtmlToText(selectedRestaurant.description)}</div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                // Place Info Only (use selectedPlace)
+                <>
+                  <div className="position-relative" style={{ height: '250px' }}>
+                    <img
+                      src={(() => {
+                        if (selectedPlace?.image_url) {
+                          return selectedPlace.image_url.startsWith('http') ? selectedPlace.image_url : `http://localhost:3000${selectedPlace.image_url}`;
+                        }
+                        if (selectedPlace?.images && selectedPlace.images[0]?.image_url) {
+                          return selectedPlace.images[0].image_url.startsWith('http') ? selectedPlace.images[0].image_url : `http://localhost:3000${selectedPlace.images[0].image_url}`;
+                        }
+                        return '/default-place.jpg';
+                      })()}
+                      alt={selectedPlace?.name}
+                      className="w-100 h-100"
+                      style={{ objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.target.src = "/default-place.jpg";
+                      }}
+                    />
+                    <div className="position-absolute top-0 start-0 w-100 h-100" 
+                         style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)' }}>
+                    </div>
+                    <div className="position-absolute bottom-0 start-0 w-100 p-3">
+                      <h2 className="text-white fw-bold mb-2 text-shadow" style={{ fontSize: '1.8rem' }}>
+                        {selectedPlace?.name}
+                      </h2>
+                      <div className="d-flex flex-wrap gap-2 align-items-center">
+                        {selectedPlace?.city && (
+                          <span className="badge bg-primary bg-opacity-75 px-3 py-2 rounded-pill">
+                            <i className="bi bi-geo-alt-fill me-1"></i>
+                            {selectedPlace.city}
+                          </span>
+                        )}
+                        {selectedPlace?.rating && (
+                          <span className="badge bg-warning bg-opacity-75 px-3 py-2 rounded-pill">
+                            <i className="bi bi-star-fill me-1"></i>
+                            {selectedPlace.rating?.toFixed ? selectedPlace.rating.toFixed(1) : selectedPlace.rating}/5
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {selectedPlace?.images && selectedPlace.images.length > 1 && (
+                    <div className="mb-3">
+                      <div className="d-flex flex-wrap gap-2">
+                        {selectedPlace.images.map((img, idx) => (
+                          img?.image_url && <img key={idx} src={img.image_url.startsWith('http') ? img.image_url : `http://localhost:3000${img.image_url}`} alt="Gallery" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8 }} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="mb-4">
+                    {selectedPlace?.address && (<div className="mb-2"><i className="bi bi-house me-2 text-primary"></i><span className="fw-medium">Địa chỉ:</span> {selectedPlace.address}</div>)}
+                    {selectedPlace?.city && (<div className="mb-2"><i className="bi bi-geo-alt me-2 text-info"></i><span className="fw-medium">Thành phố:</span> {selectedPlace.city}</div>)}
+                    {selectedPlace?.opening_hours && (<div className="mb-2"><i className="bi bi-clock me-2 text-success"></i><span className="fw-medium">Giờ mở cửa:</span> {selectedPlace.opening_hours}</div>)}
+                    {selectedPlace?.service && (<div className="mb-2"><i className="bi bi-activity me-2 text-info"></i><span className="fw-medium">Dịch vụ:</span> {selectedPlace.service}</div>)}
+                    {selectedPlace?.phone && (<div className="mb-2"><i className="bi bi-telephone me-2 text-info"></i><span className="fw-medium">Điện thoại:</span> {selectedPlace.phone}</div>)}
+                    {selectedPlace?.email && (<div className="mb-2"><i className="bi bi-envelope me-2 text-info"></i><span className="fw-medium">Email:</span> {selectedPlace.email}</div>)}
+                    {selectedPlace?.website && (<div className="mb-2"><i className="bi bi-globe me-2 text-info"></i><span className="fw-medium">Website:</span> <a href={selectedPlace.website} target="_blank" rel="noopener noreferrer">{selectedPlace.website}</a></div>)}
+                  </div>
+                  {selectedPlace?.description && (
+                    <div className="mb-4">
+                      <h5 className="text-primary mb-3">
+                        <i className="bi bi-info-circle me-2"></i>
+                        Mô tả
+                      </h5>
+                      <div className="p-3 bg-light rounded-3 description-text" style={{ fontSize: '0.95rem', maxHeight: '150px', overflowY: 'auto' }}>
+                        <div>{convertHtmlToText(selectedPlace.description)}</div>
+                      </div>
+                    </div>
+                  )}
+                  {selectedPlace && selectedPlace.service && (
+                    <div className="mb-4">
+                      <h5 className="text-primary mb-3">
+                        <i className="bi bi-activity me-2"></i>
+                        Dịch vụ
+                      </h5>
+                      <div className="p-3 service-section">
+                        <p className="text-dark mb-0 fw-medium" style={{ fontSize: '0.95rem' }}>{selectedPlace.service}</p>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
-              {/* Open Button */}
-              <div className="d-flex justify-content-end pe-3">
+              {/* Action Buttons */}
+              <div className="d-flex gap-2 justify-content-center pt-3">
                 <button
-                  className="btn btn-primary btn-sm rounded-pill"
-                  style={{ fontSize: '0.8rem' }}
-                  title={isExpanded ? "Thu nhỏ thông tin" : "Mở rộng thông tin"}
-                  onClick={handleExpand}
+                  onClick={onClose}
+                  className="btn btn-outline-primary px-3 py-2 rounded-pill"
+                  style={{ fontSize: '0.9rem' }}
                 >
-                  <i className={`bi ${isExpanded ? 'bi-arrows-collapse' : 'bi-arrows-expand'} me-1`}></i>
-                  {isExpanded ? 'Xem bản đồ' : 'Xem thêm'}
+                  <i className="bi bi-arrow-left me-2"></i>
+                  Quay lại
                 </button>
-              </div>
-
-              {/* Place/Hotel/Restaurant Info */}
-              <div className="p-4">
-                {/* Info Cards */}
-                <div className="row g-3 mb-4">
-                  {/* Address */}
-                  {(selectedPlace?.address || selectedHotel?.address || selectedRestaurant?.address) && (
-                    <div className="col-12">
-                      <div className="d-flex align-items-center p-3 bg-light rounded-3">
-                        <div className="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
-                          <i className="bi bi-house text-primary"></i>
-                        </div>
-                        <div>
-                          <small className="text-muted d-block">Địa chỉ</small>
-                          <strong className="text-dark">{selectedPlace?.address || selectedHotel?.address || selectedRestaurant?.address}</strong>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {/* City */}
-                  {(selectedPlace?.city || selectedHotel?.city || selectedRestaurant?.city) && (
-                    <div className="col-12">
-                      <div className="d-flex align-items-center p-3 bg-light rounded-3">
-                        <div className="bg-info bg-opacity-10 p-2 rounded-circle me-3">
-                          <i className="bi bi-geo-alt text-info"></i>
-                        </div>
-                        <div>
-                          <small className="text-muted d-block">Thành phố</small>
-                          <strong className="text-dark">{selectedPlace?.city || selectedHotel?.city || selectedRestaurant?.city}</strong>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {/* Price/Price Range */}
-                  {(selectedHotel?.price_range || selectedRestaurant?.price_range) && (
-                    <div className="col-12">
-                      <div className="d-flex align-items-center p-3 bg-light rounded-3">
-                        <div className="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
-                          <i className="bi bi-currency-dollar text-warning"></i>
-                        </div>
-                        <div>
-                          <small className="text-muted d-block">Mức giá</small>
-                          <strong className="text-dark">{selectedHotel?.price_range || selectedRestaurant?.price_range}</strong>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {/* Rating */}
-                  {(selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating) && (
-                    <div className="col-12">
-                      <div className="d-flex align-items-center p-3 bg-light rounded-3">
-                        <div className="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
-                          <i className="bi bi-star-fill text-warning"></i>
-                        </div>
-                        <div>
-                          <small className="text-muted d-block">Đánh giá</small>
-                          <strong className="text-dark">{(selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating)?.toFixed ? (selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating).toFixed(1) : (selectedPlace?.rating || selectedHotel?.rating || selectedRestaurant?.rating)}/5</strong>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {/* Opening Hours */}
-                  {(selectedPlace?.opening_hours || selectedHotel?.opening_hours || selectedRestaurant?.opening_hours) && (
-                    <div className="col-12">
-                      <div className="d-flex align-items-center p-3 bg-light rounded-3">
-                        <div className="bg-success bg-opacity-10 p-2 rounded-circle me-3">
-                          <i className="bi bi-clock text-success"></i>
-                        </div>
-                        <div>
-                          <small className="text-muted d-block">Giờ mở cửa</small>
-                          <strong className="text-dark">{selectedPlace?.opening_hours || selectedHotel?.opening_hours || selectedRestaurant?.opening_hours}</strong>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Description */}
-                <div className="mb-4">
-                  <h5 className="text-primary mb-3">
-                    <i className="bi bi-info-circle me-2"></i>
-                    Mô tả
-                  </h5>
-                  <div className="p-3 bg-light rounded-3 description-text" style={{ fontSize: '0.95rem', maxHeight: '150px', overflowY: 'auto' }}>
-                    <div>{convertHtmlToText(selectedPlace?.description || selectedHotel?.description || selectedRestaurant?.description)}</div>
-                  </div>
-                </div>
-
-                {/* Services (for place only) */}
-                {selectedPlace && selectedPlace.service && (
-                  <div className="mb-4">
-                    <h5 className="text-primary mb-3">
-                      <i className="bi bi-activity me-2"></i>
-                      Dịch vụ
-                    </h5>
-                    <div className="p-3 service-section">
-                      <p className="text-dark mb-0 fw-medium" style={{ fontSize: '0.95rem' }}>{selectedPlace.service}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="d-flex gap-2 justify-content-center pt-3">
-                  <button
-                    onClick={onClose}
-                    className="btn btn-outline-primary px-3 py-2 rounded-pill"
-                    style={{ fontSize: '0.9rem' }}
-                  >
-                    <i className="bi bi-arrow-left me-2"></i>
-                    Quay lại
-                  </button>
-                  <button className="btn btn-primary px-3 py-2 rounded-pill" style={{ fontSize: '0.9rem' }}>
-                    <i className="bi bi-share me-2"></i>
-                    Chia sẻ
-                  </button>
-                </div>
+                <button className="btn btn-primary px-3 py-2 rounded-pill" style={{ fontSize: '0.9rem' }}>
+                  <i className="bi bi-share me-2"></i>
+                  Chia sẻ
+                </button>
               </div>
             </div>
           </div>
