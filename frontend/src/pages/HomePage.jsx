@@ -204,11 +204,11 @@ function HomePage() {
   };
 
   return (
-    <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
+    <>
       <Header />
-      <main className="container px-4 py-4 flex-grow-1">
-        <div className="container">
-          <div className="bg-planner-map" id="planner-section">
+      <div className="min-vh-100 d-flex flex-column bg-gradient-to-br from-gray-100 to-white luxury-home-container">
+      {/* <Header /> */}
+      <div className="bg-planner-map" id="planner-section">
             {/* Hero Section with shared background */}
             <section className="hero-with-bg">
               <h1>{t('Discover & Plan Your Smart Trip')}</h1>
@@ -219,7 +219,7 @@ function HomePage() {
             <div className="col-12 col-md-6 d-flex justify-content-center mb-4">
               <div
                 className="luxury-card luxury-planner-card manual-homepage p-4 d-flex flex-column align-items-center justify-content-center text-center hover-shadow"
-                style={{ maxWidth: '500px', cursor: 'pointer' }}
+                style={{ maxWidth: '550px', cursor: 'pointer' }}
                 onClick={() => setShowManualModal(true)}
               >
                 <div className="d-flex align-items-center gap-2 mb-2 justify-content-center">
@@ -232,7 +232,7 @@ function HomePage() {
             <div className="col-12 col-md-6 d-flex justify-content-center mb-4">
               <div
                 className="luxury-card luxury-planner-card p-4 d-flex flex-column align-items-center justify-content-center text-center hover-shadow"
-                style={{ maxWidth: '500px', cursor: 'pointer' }}
+                style={{ maxWidth: '550px', cursor: 'pointer' }}
                 onClick={() => setShowAutoModal(true)}
               >
                 <div className="d-flex align-items-center gap-2 mb-2 justify-content-center">
@@ -338,7 +338,7 @@ function HomePage() {
             </div>
           </section>
           </div>
-        </div>
+        <main className="container flex-grow-1 main-content-mobile" style={{ paddingTop: 80 }}>
         
         {/* </div> */}
         {/* <hr className="my-5 luxury-divider" /> */}
@@ -920,7 +920,7 @@ function HomePage() {
                               <RatingStars id={restaurant.id} type="restaurant" />
                               {restaurant.price_range && (
                                 <p className="card-text text-muted small mb-0">
-                                  <span className="luxury-money">💰</span> {restaurant.price_range}
+                                    <span className="luxury-money">��</span> {restaurant.price_range}
                                   {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
                                 </p>
                               )}
@@ -1269,6 +1269,7 @@ function HomePage() {
         </Modal>
       )}
     </div>
+  </>
   );
 }
 

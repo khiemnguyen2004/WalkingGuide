@@ -74,7 +74,6 @@ function App() {
         <Route path="/hotels/:id" element={<HotelDetail />} />
         <Route path="/restaurants/:id" element={<RestaurantDetail />} />
         <Route path="/place-ratings/rate/:id" element={<RatingStars />} />
-
       </Routes>
     </Router>
   );

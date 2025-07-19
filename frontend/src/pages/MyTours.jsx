@@ -316,9 +316,9 @@ function MyTours() {
       <Header />
       <main className="container px-4 py-4 flex-grow-1">
         <div className="mb-5 d-flex align-items-center gap-3 border-bottom pb-3">
-          <h2 className="fw-bold mb-0" style={{color: '#1a5bb8'}}>Tour của bạn</h2>
+          <h2 className="fw-bold mb-0" style={{color: '#1a5bb8'}}>Chuyến đi của bạn</h2>
           <button className="btn btn-main ms-auto d-flex align-items-center gap-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={() => setShowAddModal(true)}>
-            <FaPlusCircle /> Tạo tour mới
+            <FaPlusCircle /> Tạo chuyến đi mới
             </button>
           </div>
         {/* Add Tour Modal */}
@@ -614,12 +614,12 @@ function MyTours() {
         )}
         {/* User-created tours section */}
         <div className="mb-4">
-          <h5 className="fw-bold" style={{color:'rgb(26, 91, 184)'}}>Danh sách tour bạn đã tạo </h5>
+          <h5 className="fw-bold" style={{color:'rgb(26, 91, 184)'}}>Danh sách chuyến đi bạn đã tạo </h5>
           <div className="d-flex align-items-center mb-2">
             <input type="checkbox" checked={selectAllTours} onChange={handleSelectAllTours} />
             <span className="ms-2">Chọn tất cả</span>
             <Button variant="danger" size="sm" className="ms-3" disabled={selectedTourIds.length === 0} onClick={handleDeleteSelectedTours}>
-              Xóa các tour đã chọn
+              Xóa các chuyến đi đã chọn
             </Button>
           </div>
           <div className="list-group">
@@ -639,12 +639,12 @@ function MyTours() {
         </div>
         {/* Booked tours section */}
         <div className="mb-4">
-          <h5 className="fw-bold" style={{color:'rgb(26, 91, 184)'}}>Tour đã đặt</h5>
+          <h5 className="fw-bold" style={{color:'rgb(26, 91, 184)'}}>Chuyến đi yêu thích</h5>
           <div className="d-flex align-items-center mb-2">
             <input type="checkbox" checked={selectAllBookings} onChange={handleSelectAllBookings} />
             <span className="ms-2">Chọn tất cả</span>
             <Button variant="danger" size="sm" className="ms-3" disabled={selectedBookingIds.length === 0} onClick={handleDeleteSelectedBookings}>
-              Hủy các booking đã chọn
+              Bỏ các chuyến đi đã chọn
             </Button>
           </div>
           <div className="list-group">
@@ -740,7 +740,7 @@ function MyTours() {
                             }
                           }}
                         >
-                          Hủy đặt
+                          Bỏ chuyến đi
                         </button>
                       )}
                     </div>

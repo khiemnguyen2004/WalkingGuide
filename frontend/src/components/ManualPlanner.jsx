@@ -668,9 +668,9 @@ function ManualPlanner({ noLayout }) {
       <div className="luxury-card">
         <div className="luxury-card-body">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="mb-0">Các địa điểm trong tour</h4>
+            <h4 className="mb-0">Hành trình chuyến đi</h4>
             <div className="d-flex gap-2">
-              <button className="btn btn-main btn-sm" onClick={() => {
+              {/* <button className="btn btn-main btn-sm" onClick={() => {
                 const totalDays = calculateTotalDays();
                 
                 // Distribute steps evenly across calculated days
@@ -682,7 +682,7 @@ function ManualPlanner({ noLayout }) {
                 setSteps(newSteps);
               }}>
                 <i className="bi bi-magic me-1"></i>Tự động phân ngày
-              </button>
+              </button> */}
               <button className="btn btn-main btn-sm" onClick={handleAddStep}>
                 Thêm địa điểm
               </button>

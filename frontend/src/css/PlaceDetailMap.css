@@ -407,18 +407,53 @@
   .info-overlay {
     width: 100%;
     max-width: 100vw;
+    padding: 0.2rem !important;
+    font-size: 0.97em;
   }
-  
   .overlay-content {
-    padding: 0;
+    padding: 0.1rem !important;
   }
-  
   .tab-content {
-    padding: 0 0.5rem 0.5rem 0.5rem;
+    padding: 0 0.2rem 0.2rem 0.2rem;
   }
-  
   .content-tabs {
-    padding: 0.5rem 0.5rem 0 0.5rem;
+    padding: 0.2rem 0.2rem 0 0.2rem;
+  }
+  .leaflet-control.leaflet-bar button {
+    width: 38px;
+    height: 38px;
+    font-size: 15px;
+  }
+  .zoom-controls {
+    top: 10px !important;
+    right: 10px !important;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .info-overlay {
+    padding: 0.1rem !important;
+    font-size: 0.95em;
+  }
+  .overlay-header, .overlay-content {
+    padding: 0.1rem !important;
+  }
+  .tab-content {
+    padding: 0 0.1rem 0.1rem 0.1rem;
+  }
+  .content-tabs {
+    padding: 0.1rem 0.1rem 0 0.1rem;
+  }
+  .leaflet-control.leaflet-bar button {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+  .zoom-controls {
+    top: 6px !important;
+    right: 6px !important;
+    gap: 2px;
   }
 }
 

@@ -5,7 +5,7 @@ const API_LIKE = "/tour-likes";
 const API_RATING = "/tour-ratings";
 
 const tourApi = {
-  getAll: () => axiosClient.get(API_BASE),
+  getAll: (params = { role: 'ADMIN' }) => axiosClient.get(API_BASE, { params }),
   getById: (id) => axiosClient.get(`${API_BASE}/${id}`),
   getUserTours: (userId) => axiosClient.get(`${API_BASE}/user/${userId}`),
   cloneTour: (tourId, userId) => axiosClient.post(`${API_BASE}/${tourId}/clone`, { user_id: userId }),

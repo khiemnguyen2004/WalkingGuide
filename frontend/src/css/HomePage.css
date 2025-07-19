@@ -72,3 +72,78 @@
 .luxury-modal .btn-close {
   filter: invert(1) grayscale(1) brightness(2);
 }
+
+/* Responsive styles for tablets (<=1024px) */
+@media (max-width: 1024px) {
+  .home-container {
+    background: linear-gradient(120deg, #f8fafc 0%, #b6e0fe 100%);
+    min-height: 100vh;
+    padding: 0.5rem;
+  }
+  .cards-wrapper {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.7rem;
+  }
+  .card {
+    border-radius: 1.2rem;
+    box-shadow: 0 2px 12px rgba(60,72,100,0.10);
+    margin-bottom: 0.7rem;
+    padding: 0.7rem;
+  }
+  .card-img-top {
+    border-radius: 1rem;
+    height: 9rem;
+  }
+  .card-info {
+    padding: 0.7rem;
+  }
+}
+
+/* Responsive styles for phones (<=768px) */
+@media (max-width: 768px) {
+  .home-container {
+    background: linear-gradient(120deg, #f8fafc 0%, #b6e0fe 100%);
+    min-height: 100vh;
+    padding: 0.2rem;
+  }
+  .cards-wrapper {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .card {
+    border-radius: 1.2rem;
+    box-shadow: 0 2px 16px rgba(60,72,100,0.13);
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    transition: box-shadow 0.2s;
+  }
+  .card-img-top {
+    border-radius: 0.9rem;
+    height: 7rem;
+  }
+  .card-info {
+    padding: 0.5rem;
+    font-size: 0.98em;
+  }
+  .luxury-modal .modal-content {
+    border-radius: 1.1rem;
+    box-shadow: 0 4px 18px 0 rgba(60,72,100,0.13);
+    padding: 0.5rem;
+  }
+  .luxury-modal-header {
+    border-top-left-radius: 1.1rem;
+    border-top-right-radius: 1.1rem;
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+  }
+  .luxury-modal-title {
+    font-size: 1.1rem;
+  }
+  button, .btn, .edit-btn, .save-btn, .cancel-btn {
+    border-radius: 1.5rem;
+    font-size: 1.05em;
+    padding: 0.7em 1.2em;
+    box-shadow: 0 1px 6px rgba(60,72,100,0.10);
+    font-weight: 600;
+  }
+}

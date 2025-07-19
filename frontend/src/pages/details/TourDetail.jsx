@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import Header from '../../components/Header.jsx';
 import Footer from '../../components/Footer.jsx';
 import tourApi from '../../api/tourApi';
+import hotelApi from '../../api/hotelApi';
+import restaurantApi from '../../api/restaurantApi';
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -15,6 +17,8 @@ import RatingStars from '../../components/RatingStars.jsx';
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Modal, Button } from 'react-bootstrap';
+import hotelIconSvg from '../../assets/hotel-marker.svg';
+import restaurantIconSvg from '../../assets/restaurant-marker.svg';
 
 // Component to handle map centering
 const MapCenterHandler = ({ places }) => {
@@ -98,6 +102,38 @@ const createCustomIcon = (place) => {
   }
 };
 
+const createHotelIcon = () => {
+  return new L.Icon({
+    iconUrl: hotelIconSvg,
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36],
+  });
+};
+
+const createRestaurantIcon = () => {
+  return new L.Icon({
+    iconUrl: restaurantIconSvg,
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36],
+  });
+};
+
+// Utility to normalize city names (remove accents, lowercase, trim)
+function normalizeCity(city) {
+  return city
+    ? city
+        .normalize('NFD')
+        .replace(/\u0300-\u036f/g, '')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .trim()
+        .toLowerCase()
+    : '';
+}
+
 const TourDetail = () => {
   const [tour, setTour] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -116,6 +152,13 @@ const TourDetail = () => {
   const [dateError, setDateError] = useState("");
   const [spots, setSpots] = useState(1);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('journey');
+  const [tabHotels, setTabHotels] = useState([]);
+  const [tabRestaurants, setTabRestaurants] = useState([]);
+  const [loadingHotels, setLoadingHotels] = useState(false);
+  const [loadingRestaurants, setLoadingRestaurants] = useState(false);
+  const [allHotels, setAllHotels] = useState([]);
+  const [allRestaurants, setAllRestaurants] = useState([]);
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -142,10 +185,8 @@ const TourDetail = () => {
     // Fetch newest tours (excluding current)
     const fetchNewest = async () => {
       try {
-        const res = await tourApi.getAll();
+        const res = await tourApi.getAll({ role: 'ADMIN' });
         let tours = res.data || [];
-        tours = tours.filter(t => t.id !== Number(id));
-        tours.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         setNewestTours(tours);
       } catch (e) {
         setNewestTours([]);
@@ -183,6 +224,102 @@ const TourDetail = () => {
     };
     fetchPlacesAndAttach();
   }, [tour?.id, tour?.steps?.length]);
+
+  // Fetch all hotels and restaurants once when the component mounts
+  useEffect(() => {
+    const fetchAllHotels = async () => {
+      try {
+        const res = await hotelApi.getAll ? hotelApi.getAll() : hotelApi.searchByCity('');
+        setAllHotels(res.data.data || res.data || []);
+      } catch {
+        setAllHotels([]);
+      }
+    };
+    const fetchAllRestaurants = async () => {
+      try {
+        const res = await restaurantApi.getAll ? restaurantApi.getAll() : restaurantApi.searchByCity('');
+        setAllRestaurants(res.data.data || res.data || []);
+      } catch {
+        setAllRestaurants([]);
+      }
+    };
+    fetchAllHotels();
+    fetchAllRestaurants();
+  }, []);
+
+  // Fetch hotels and restaurants for tour cities when routePlaces are loaded
+  useEffect(() => {
+    if (routePlaces.length > 0) {
+      const fetchHotelsForCities = async () => {
+        setLoadingHotels(true);
+        const cities = getUniqueRouteCities();
+        console.log('Fetching hotels for cities:', cities);
+        let hotels = [];
+        for (const city of cities) {
+          try {
+            const res = await hotelApi.searchByCity(city);
+            console.log(`Hotels for ${city}:`, res.data);
+            if (res.data && res.data.data) {
+              hotels = hotels.concat(res.data.data);
+            }
+          } catch (error) {
+            console.error(`Error fetching hotels for ${city}:`, error);
+          }
+        }
+        console.log('All fetched hotels:', hotels);
+        setAllHotels(hotels);
+        setLoadingHotels(false);
+      };
+
+      const fetchRestaurantsForCities = async () => {
+        setLoadingRestaurants(true);
+        const cities = getUniqueRouteCities();
+        console.log('Fetching restaurants for cities:', cities);
+        let restaurants = [];
+        for (const city of cities) {
+          try {
+            const res = await restaurantApi.searchByCity(city);
+            console.log(`Restaurants for ${city}:`, res.data);
+            if (res.data && res.data.data) {
+              restaurants = restaurants.concat(res.data.data);
+            }
+          } catch (error) {
+            console.error(`Error fetching restaurants for ${city}:`, error);
+          }
+        }
+        console.log('All fetched restaurants:', restaurants);
+        setAllRestaurants(restaurants);
+        setLoadingRestaurants(false);
+      };
+
+      fetchHotelsForCities();
+      fetchRestaurantsForCities();
+    }
+  }, [routePlaces]);
+
+  // Filter hotels/restaurants by city match with routePlaces
+  useEffect(() => {
+    if (activeTab === 'hotels' && routePlaces.length > 0 && allHotels) {
+      setLoadingHotels(true);
+      const routeCities = routePlaces.map(p => normalizeCity(p.city)).filter(Boolean);
+      const filtered = allHotels.filter(hotel => {
+        const hotelCity = normalizeCity(hotel.city);
+        return routeCities.includes(hotelCity);
+      });
+      setTabHotels(filtered);
+      setLoadingHotels(false);
+    }
+    if (activeTab === 'restaurants' && routePlaces.length > 0 && allRestaurants) {
+      setLoadingRestaurants(true);
+      const routeCities = routePlaces.map(p => normalizeCity(p.city)).filter(Boolean);
+      const filtered = allRestaurants.filter(restaurant => {
+        const restCity = normalizeCity(restaurant.city);
+        return routeCities.includes(restCity);
+      });
+      setTabRestaurants(filtered);
+      setLoadingRestaurants(false);
+    }
+  }, [activeTab, routePlaces, allHotels, allRestaurants]);
 
   // Helper to chunk array into groups of 3
   function chunkArray(arr, size) {
@@ -241,6 +378,32 @@ const TourDetail = () => {
     }
   };
 
+  // Helper to get unique cities from routePlaces
+  const getUniqueCities = () => {
+    if (!routePlaces || routePlaces.length === 0) return [];
+    const cities = routePlaces.map(p => p.city).filter(Boolean);
+    return [...new Set(cities)];
+  };
+
+  // Helper to get all unique cities from routePlaces
+  function getUniqueRouteCities() {
+    console.log('Route places:', routePlaces); // Debug log
+    const cities = routePlaces.map(p => p.city && p.city.trim()).filter(Boolean);
+    console.log('Extracted cities:', cities); // Debug log
+    // Remove duplicates (case-insensitive, normalized)
+    const seen = new Set();
+    const uniqueCities = cities.filter(city => {
+      const norm = normalizeCity(city);
+      if (seen.has(norm)) return false;
+      seen.add(norm);
+      return true;
+    });
+    console.log('Unique normalized cities:', uniqueCities); // Debug log
+    return uniqueCities;
+  }
+
+
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -282,7 +445,6 @@ const TourDetail = () => {
                   objectFit: 'cover',
                   objectPosition: 'center',
                   filter: 'brightness(0.6)',
-                  borderRadius: '1.5rem',
                   position: 'absolute',
                   top: 0,
                   left: 0,
@@ -318,7 +480,7 @@ const TourDetail = () => {
             </div>
             {/* DESCRIPTION SECTION */}
             <div className="mb-5 p-4" style={{ background: '#fafdff', borderRadius: '1.25rem', boxShadow: '0 2px 12px #b6e0fe22' }}>
-              <h2 className="h5 fw-bold mb-3" style={{ color: '#3c69b0', letterSpacing: '-0.5px' }}>Giới thiệu về tour</h2>
+              <h2 className="h5 fw-bold mb-3" style={{ color: '#3c69b0', letterSpacing: '-0.5px' }}>Giới thiệu về chuyến đi</h2>
               <hr style={{ margin: '0 0 1.5rem 0', borderColor: '#e3f0ff' }} />
               <div className="prose prose-lg" style={{ color: '#223a5f', fontSize: '1.15rem', lineHeight: 1.7 }}>
               <div dangerouslySetInnerHTML={{ __html: tour.description }} />
@@ -344,8 +506,9 @@ const TourDetail = () => {
                       pathOptions={{ color: '#1a5bb8', weight: 4, opacity: 0.8 }} 
                     />
                   )}
+                  {/* Tour Places Markers */}
                   {routePlaces.map((p, idx) => (
-                    <Marker key={p.id} position={[parseFloat(p.latitude), parseFloat(p.longitude)]} icon={createCustomIcon(p)}>
+                    <Marker key={`place-${p.id}`} position={[parseFloat(p.latitude), parseFloat(p.longitude)]} icon={createCustomIcon(p)}>
                       <Popup>
                         <div className="text-center">
                           <h5 className="text-primary mb-2">{p.name}</h5>
@@ -355,49 +518,312 @@ const TourDetail = () => {
                       </Popup>
                     </Marker>
                   ))}
+                  {/* Hotel Markers */}
+                  {allHotels.map((hotel, idx) => (
+                    <Marker key={`hotel-${hotel.id}`} position={[parseFloat(hotel.latitude), parseFloat(hotel.longitude)]} icon={createHotelIcon()}>
+                      <Popup>
+                        <div className="text-center">
+                          <h6 className="text-danger mb-2">
+                            <i className="bi bi-building me-1"></i>
+                            {hotel.name}
+                          </h6>
+                          {hotel.city && <p className="mb-1 small">{hotel.city}</p>}
+                          {hotel.price_range && <p className="mb-1 text-muted small">{hotel.price_range}</p>}
+                          <Link to={`/hotels/${hotel.id}`} className="btn btn-sm btn-outline-danger mt-2">
+                            <i className="bi bi-arrow-right me-1"></i>
+                            Xem chi tiết
+                          </Link>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                  {/* Restaurant Markers */}
+                  {allRestaurants.map((restaurant, idx) => (
+                    <Marker key={`restaurant-${restaurant.id}`} position={[parseFloat(restaurant.latitude), parseFloat(restaurant.longitude)]} icon={createRestaurantIcon()}>
+                      <Popup>
+                        <div className="text-center">
+                          <h6 className="text-warning mb-2">
+                            <i className="bi bi-cup-hot me-1"></i>
+                            {restaurant.name}
+                          </h6>
+                          {restaurant.city && <p className="mb-1 small">{restaurant.city}</p>}
+                          {restaurant.cuisine_type && <p className="mb-1 small text-muted">{restaurant.cuisine_type}</p>}
+                          {restaurant.price_range && <p className="mb-1 text-muted small">{restaurant.price_range}</p>}
+                          <Link to={`/restaurants/${restaurant.id}`} className="btn btn-sm btn-outline-warning mt-2">
+                            <i className="bi bi-arrow-right me-1"></i>
+                            Xem chi tiết
+                          </Link>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
                 </MapContainer>
               </div>
-            {tour.steps && tour.steps.length > 0 && (
-              <div>
-                <h2 className="text-xl fw-bold mb-3 mt-4" style={{ color: '#3c69b0' }}>Các điểm đến:</h2>
-                {(() => {
-                  const stepsByDay = tour.steps.reduce((acc, step) => {
-                    const day = step.day || 1;
-                    if (!acc[day]) acc[day] = [];
-                    acc[day].push(step);
-                    return acc;
-                  }, {});
-                  const sortedDays = Object.keys(stepsByDay).sort((a, b) => a - b);
-                  return (
+            {/* Tab Bar Below Map */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24, marginBottom: 16 }}>
+              <button
+                className={`tab-btn${activeTab === 'journey' ? ' active' : ''}`}
+                style={{
+                  padding: '10px 24px',
+                  border: 'none',
+                  borderRadius: '1.5rem 0 0 1.5rem',
+                  background: activeTab === 'journey' ? '#b6e0fe' : '#e3f0ff',
+                  color: activeTab === 'journey' ? '#1a5bb8' : '#3c69b0',
+                  fontWeight: 600,
+                  fontSize: 16,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s, color 0.2s',
+                  outline: 'none',
+                }}
+                onClick={() => setActiveTab('journey')}
+              >
+                Hành trình
+              </button>
+              <button
+                className={`tab-btn${activeTab === 'hotels' ? ' active' : ''}`}
+                style={{
+                  padding: '10px 24px',
+                  border: 'none',
+                  borderRadius: 0,
+                  background: activeTab === 'hotels' ? '#b6e0fe' : '#e3f0ff',
+                  color: activeTab === 'hotels' ? '#1a5bb8' : '#3c69b0',
+                  fontWeight: 600,
+                  fontSize: 16,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s, color 0.2s',
+                  outline: 'none',
+                }}
+                onClick={() => setActiveTab('hotels')}
+              >
+                Khách sạn
+              </button>
+              <button
+                className={`tab-btn${activeTab === 'restaurants' ? ' active' : ''}`}
+                style={{
+                  padding: '10px 24px',
+                  border: 'none',
+                  borderRadius: '0 1.5rem 1.5rem 0',
+                  background: activeTab === 'restaurants' ? '#b6e0fe' : '#e3f0ff',
+                  color: activeTab === 'restaurants' ? '#1a5bb8' : '#3c69b0',
+                  fontWeight: 600,
+                  fontSize: 16,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s, color 0.2s',
+                  outline: 'none',
+                }}
+                onClick={() => setActiveTab('restaurants')}
+              >
+                Nhà hàng
+              </button>
+            </div>
+            {/* Tab Content */}
+            <div style={{ marginTop: 16 }}>
+              {activeTab === 'journey' && (
+                <div>
+                  {/* Existing journey/steps content here */}
+                  {tour.steps && tour.steps.length > 0 && (
                     <div>
-                      {sortedDays.map(dayNum => (
-                        <div key={dayNum} className="mb-3">
-                          <h4 className="fw-bold mb-2" style={{ color: '#3c69b0' }}>Ngày {dayNum}</h4>
+                      <h2 className="text-xl fw-bold mb-3 mt-4" style={{ color: '#3c69b0' }}>Hành trình:</h2>
+                      {(() => {
+                        const stepsByDay = tour.steps.reduce((acc, step) => {
+                          const day = step.day || 1;
+                          if (!acc[day]) acc[day] = [];
+                          acc[day].push(step);
+                          return acc;
+                        }, {});
+                        const sortedDays = Object.keys(stepsByDay).sort((a, b) => a - b);
+                        return (
                           <div>
-                            {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step, idx) => (
-                              <div key={idx} className="mb-4" style={{ position: 'relative', paddingLeft: 0 }}>
-                                <div style={{ fontWeight: 700, color: '#3c69b0', fontSize: '1.12rem', marginBottom: 4 }}>
-                                  {step.place_name || (step.place && step.place.name)}
+                            {sortedDays.map(dayNum => (
+                              <div key={dayNum} className="mb-3">
+                                <h4 className="fw-bold mb-2" style={{ color: '#3c69b0' }}>Ngày {dayNum}</h4>
+                                <div>
+                                  {stepsByDay[dayNum].sort((a, b) => a.step_order - b.step_order).map((step) => (
+                                    <div key={step.id} className="mb-4" style={{ position: 'relative', paddingLeft: 0 }}>
+                                      <div style={{ fontWeight: 700, color: '#3c69b0', fontSize: '1.12rem', marginBottom: 4 }}>
+                                        {step.place_name || (step.place && step.place.name)}
+                                      </div>
+                                      {step.place && step.place.description && (
+                                        <div style={{ color: '#223a5f', fontSize: '1.01rem', background: '#fafdff', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 6px #e3f0ff33' }}>
+                                          {step.place.description.replace(/<[^>]+>/g, '').slice(0, 180)}{step.place.description.length > 180 ? '...' : ''}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
                                 </div>
-                                {step.place && step.place.description && (
-                                  <div style={{ color: '#223a5f', fontSize: '1.01rem', background: '#fafdff', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 6px #e3f0ff33' }}>
-                                    {step.place.description.replace(/<[^>]+>/g, '').slice(0, 180)}{step.place.description.length > 180 ? '...' : ''}
-                                  </div>
-                                )}
                               </div>
                             ))}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })()}
                     </div>
-                  );
-                })()}
-              </div>
-            )}
-            <div className="d-flex justify-content-center">
-              <button className="btn btn-main" onClick={() => setShowBookModal(true)} disabled={addLoading}>
-                {addLoading ? 'Đang thêm...' : 'Thêm vào chuyến đi của tôi'}
-              </button>
+                  )}
+                </div>
+              )}
+              {activeTab === 'hotels' && (
+  <div>
+    <h2 className="text-xl fw-bold mb-3 mt-4" style={{ color: '#3c69b0' }}>Khách sạn dọc hành trình</h2>
+    {loadingHotels ? (
+      <div className="text-muted">Đang tải khách sạn...</div>
+    ) : getUniqueRouteCities().length === 0 ? (
+      <div className="text-muted">Không tìm thấy thành phố nào trong hành trình.</div>
+    ) : (
+      getUniqueRouteCities().map(city => {
+        const cityHotels = allHotels.filter(hotel => normalizeCity(hotel.city) === normalizeCity(city));
+        return (
+          <div key={city} className="mb-4">
+            <h5 className="fw-bold mb-3">Khách sạn tại {city}</h5>
+            <div className="row g-4">
+              {cityHotels.length === 0 ? (
+                <div className="col-12 text-muted">Không tìm thấy khách sạn phù hợp.</div>
+              ) : (
+                cityHotels.map((hotel, idx) => (
+                  <div className="col-12 col-md-6 col-lg-4" key={hotel.id || idx}>
+                    <Link to={`/hotels/${hotel.id}`} className="text-decoration-none">
+                      <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                        <div className="position-relative">
+                          {hotel.images && hotel.images.length > 0 && hotel.images[0].image_url ? (
+                            <img 
+                              src={hotel.images[0].image_url.startsWith('http') ? hotel.images[0].image_url : `http://localhost:3000${hotel.images[0].image_url}`} 
+                              alt={hotel.name} 
+                              className="card-img-top luxury-img-top" 
+                              style={{ height: 220, objectFit: 'cover' }} 
+                            />
+                          ) : (
+                            <div 
+                              className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                              style={{ height: 220, background: "linear-gradient(135deg, #3498db 0%, #2980b9 100%)", color: "white", fontSize: "3rem" }}
+                            >
+                              <i className="bi bi-building"></i>
+                            </div>
+                          )}
+                          {hotel.stars && (
+                            <div className="position-absolute top-0 end-0 m-2">
+                              <span className="badge bg-warning text-dark">
+                                <i className="bi bi-star-fill me-1"></i>
+                                {hotel.stars}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="card-body luxury-card-body">
+                          <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{hotel.name}</h3>
+                          {hotel.city && (
+                            <p className="card-text text-primary mb-1 small">
+                              <i className="bi bi-geo-alt-fill me-1"></i>
+                              {hotel.city}
+                            </p>
+                          )}
+                          <p className="card-text text-muted mb-2 luxury-desc">
+                            {hotel.description
+                              ? `${hotel.description.substring(0, 100)}...`
+                              : "Không có mô tả"}
+                          </p>
+                          <RatingStars id={hotel.id} type="hotel" />
+                          {hotel.price_range && (
+                            <p className="card-text text-muted small mb-0">
+                              <span className="luxury-money">💰</span> {hotel.price_range}
+                              {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        );
+      })
+    )}
+  </div>
+)}
+              {activeTab === 'restaurants' && (
+  <div>
+    <h2 className="text-xl fw-bold mb-3 mt-4" style={{ color: '#3c69b0' }}>Nhà hàng dọc hành trình</h2>
+    {loadingRestaurants ? (
+      <div className="text-muted">Đang tải nhà hàng...</div>
+    ) : getUniqueRouteCities().length === 0 ? (
+      <div className="text-muted">Không tìm thấy thành phố nào trong hành trình.</div>
+    ) : (
+      getUniqueRouteCities().map(city => {
+        const cityRestaurants = allRestaurants.filter(restaurant => normalizeCity(restaurant.city) === normalizeCity(city));
+        return (
+          <div key={city} className="mb-4">
+            <h5 className="fw-bold mb-3">Nhà hàng tại {city}</h5>
+            <div className="row g-4">
+              {cityRestaurants.length === 0 ? (
+                <div className="col-12 text-muted">Không tìm thấy nhà hàng phù hợp.</div>
+              ) : (
+                cityRestaurants.map((restaurant, idx) => (
+                  <div className="col-12 col-md-6 col-lg-4" key={restaurant.id || idx}>
+                    <Link to={`/restaurants/${restaurant.id}`} className="text-decoration-none">
+                      <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                        <div className="position-relative">
+                          {restaurant.images && restaurant.images.length > 0 && restaurant.images[0].image_url ? (
+                            <img 
+                              src={restaurant.images[0].image_url.startsWith('http') ? restaurant.images[0].image_url : `http://localhost:3000${restaurant.images[0].image_url}`} 
+                              alt={restaurant.name} 
+                              className="card-img-top luxury-img-top" 
+                              style={{ height: 220, objectFit: 'cover' }} 
+                            />
+                          ) : (
+                            <div 
+                              className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                              style={{ height: 220, background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}
+                            >
+                              <i className="bi bi-cup-hot"></i>
+                            </div>
+                          )}
+                          {restaurant.cuisine_type && (
+                            <div className="position-absolute top-0 start-0 m-2">
+                              <span className="badge bg-primary">
+                                {restaurant.cuisine_type}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="card-body luxury-card-body">
+                          <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{restaurant.name}</h3>
+                          {restaurant.city && (
+                            <p className="card-text text-primary mb-1 small">
+                              <i className="bi bi-geo-alt-fill me-1"></i>
+                              {restaurant.city}
+                            </p>
+                          )}
+                          <p className="card-text text-muted mb-2 luxury-desc">
+                            {restaurant.description
+                              ? `${restaurant.description.substring(0, 100)}...`
+                              : "Không có mô tả"}
+                          </p>
+                          <RatingStars id={restaurant.id} type="restaurant" />
+                          {restaurant.price_range && (
+                            <p className="card-text text-muted small mb-0">
+                              <span className="luxury-money">💰</span> {restaurant.price_range}
+                              {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        );
+      })
+    )}
+  </div>
+)}
+            </div>
+            <div className="d-flex justify-content-center mt-3">
+              {tour && user && tour.user_id !== user.id && (
+                <button className="btn btn-main" onClick={() => setShowBookModal(true)} disabled={addLoading}>
+                  {addLoading ? 'Đang thêm...' : 'Thêm vào chuyến đi của tôi'}
+                </button>
+              )}
             </div>
             {/* Pretty success modal */}
             <AuthModal open={!!addSuccess} onClose={() => setAddSuccess(null)}>
@@ -417,59 +843,77 @@ const TourDetail = () => {
       {/* Newest Tours Carousel */}
       <div className="container my-5">
         <h2 className="h4 mb-4 fw-bold luxury-section-title">Chuyến đi khác</h2>
-        {newestTours.length === 0 ? (
-          <p className="text-muted text-center">Không có chuyến đi nào để hiển thị.</p>
-        ) : (
-          <div id="toursCarousel" className="carousel slide" data-bs-ride="carousel">
-            <div className="carousel-inner">
-              {chunkArray(newestTours, 3).map((group, idx) => (
-                <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(t => t.id).join('-')}>
-                  <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
-                    {group.map((t) => (
-                      <div className="col" key={t.id}>
-                        <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+        {(() => {
+          // Only show tours that are not the current one
+          const otherTours = (Array.isArray(newestTours) ? newestTours : []).filter(t => t.id !== Number(id));
+          if (otherTours.length === 0) {
+            return <p className="text-muted text-center">Không có chuyến đi nào để hiển thị.</p>;
+          }
+          return (
+            <div id="toursCarousel" className="carousel slide" data-bs-ride="carousel">
+              <div className="carousel-inner">
+                {chunkArray(otherTours, 3).map((group, idx) => (
+                  <div className={`carousel-item${idx === 0 ? ' active' : ''}`} key={group.map(t => t.id).join('-')}>
+                    <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 justify-content-center">
+                      {group.map((t) => (
+                        <div className="col" key={t.id}>
                           <Link to={`/tours/${t.id}`} className="text-decoration-none">
-                            {t.image_url && (
-                              <img
-                                src={t.image_url.startsWith('http') ? t.image_url : `http://localhost:3000${t.image_url}`}
-                                alt={t.name}
-                                className="card-img-top luxury-img-top"
-                                style={{ height: 220, objectFit: 'cover', borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem' }}
-                              />
-                            )}
-                            <div className="card-body luxury-card-body">
-                              <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{t.name}</h3>
-                              <p className="card-text text-muted mb-2 luxury-desc">
-                                {t.description ? `${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...` : 'Chưa có mô tả'}
-                              </p>
-                              <p className="card-text text-muted small mb-0 luxury-rating">
-                                <span className="luxury-money">💰</span> {t.total_cost} VND
-                              </p>
+                            <div className="card h-100 shadow border-0 rounded-4 luxury-card">
+                              <div className="position-relative">
+                                {t.image_url ? (
+                                  <img
+                                    src={t.image_url.startsWith('http') ? t.image_url : `http://localhost:3000${t.image_url}`}
+                                    alt={t.name}
+                                    className="card-img-top luxury-img-top"
+                                    style={{ height: 220, objectFit: 'cover' }}
+                                  />
+                                ) : (
+                                  <div 
+                                    className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                    style={{ height: 220, background: 'linear-gradient(135deg, #1a5bb8 0%, #3c69b0 100%)', color: 'white', fontSize: '3rem', borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem' }}
+                                  >
+                                    <i className="bi bi-map"></i>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="card-body luxury-card-body">
+                                <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{t.name}</h3>
+                                <p className="card-text text-muted mb-2 luxury-desc">
+                                  {t.description ? `${t.description.replace(/<[^>]+>/g, '').substring(0, 100)}...` : 'Chưa có mô tả'}
+                                </p>
+                                <div className="d-flex align-items-center justify-content-between">
+                                  <span className="card-text text-muted small mb-0 luxury-rating">
+                                    <span className="luxury-money">💰</span> {t.total_cost ? t.total_cost.toLocaleString('vi-VN') : '0'} VND
+                                  </span>
+                                  {/* Optionally add rating stars if available */}
+                                  {t.rating && <RatingStars id={t.id} type="tour" />}
+                                </div>
+                              </div>
                             </div>
                           </Link>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              {chunkArray(otherTours, 3).length > 1 && (
+                <>
+                  <button className="carousel-control-prev" type="button" data-bs-target="#toursCarousel" data-bs-slide="prev"
+                    style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                    <span className="visually-hidden">Previous</span>
+                  </button>
+                  <button className="carousel-control-next" type="button" data-bs-target="#toursCarousel" data-bs-slide="next"
+                    style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
+                    <span className="visually-hidden">Next</span>
+                  </button>
+                </>
+              )}
             </div>
-            {newestTours.length > 3 && (
-              <>
-                <button className="carousel-control-prev" type="button" data-bs-target="#toursCarousel" data-bs-slide="prev"
-                  style={{ width: '5rem', height: '5rem', top: '50%', left: '-4rem', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span className="carousel-control-prev-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
-                  <span className="visually-hidden">Previous</span>
-                </button>
-                <button className="carousel-control-next" type="button" data-bs-target="#toursCarousel" data-bs-slide="next"
-                  style={{ width: '5rem', height: '5rem', top: '50%', right: '-4rem', left: 'auto', transform: 'translateY(-50%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span className="carousel-control-next-icon" aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem' }}></span>
-                  <span className="visually-hidden">Next</span>
-                </button>
-              </>
-            )}
-          </div>
-        )}
+          );
+        })()}
       </div>
       {showBookModal && (
         <Modal show={showBookModal} onHide={() => setShowBookModal(false)} centered>

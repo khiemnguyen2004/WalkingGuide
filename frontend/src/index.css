@@ -6,7 +6,6 @@
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -64,5 +63,69 @@ button:focus-visible {
   }
   button {
     background-color: #f9f9f9;
+  }
+}
+
+/* Responsive styles for tablets (<=1024px) */
+@media (max-width: 1024px) {
+  body {
+    font-size: 15px;
+    padding: 0 8px;
+  }
+  h1 {
+    font-size: 2.2em;
+  }
+}
+
+/* Responsive styles for phones (<=768px) */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+    padding: 0 4px;
+  }
+  h1 {
+    font-size: 1.5em;
+  }
+  button {
+    padding: 0.8em 1.2em;
+    font-size: 1em;
+  }
+  .header-logo-mobile {
+    width: 80px !important;
+    height: 50px !important;
+    max-width: 80px !important;
+    max-height: 32px !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin-right: 6px !important;
+  }
+  .app-header-mobile {
+    overflow: hidden !important;
+  }
+  .luxury-header, .luxury-navbar {
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    padding: 0 !important;
+    font-size: 1rem !important;
+    line-height: 1.2 !important;
+    box-shadow: 0 2px 8px rgba(60,72,100,0.10) !important;
+    background: #fff !important;
+  }
+  .header-content-mobile {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.2rem !important;
+    min-height: 48px !important;
+    padding: 0 !important;
+    width: 100%;
+    overflow: visible !important;
+  }
+  .app-header-mobile .d-flex.align-items-center {
+    min-width: 0;
+    width:100%;
+  }
+  .main-content-mobile {
+    padding-top: 52px !important;
   }
 }
