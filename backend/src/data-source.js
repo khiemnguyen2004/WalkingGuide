@@ -32,12 +32,8 @@ const RestaurantRating = require("./models/RestaurantRating");
 
 const AppDataSource = new DataSource({
   type: "postgres",
-  host: "localhost",
-  port: 5432,
-  username: "postgres",
-  password: "123456",
-  database: "walking_guide",
-  synchronize: true,
+  url: process.env.DATABASE_URL, // Sử dụng chuỗi kết nối từ Render
+  synchronize: false, // Đặt false trong production
   logging: false,
   entities: [
     User,
@@ -76,6 +72,7 @@ const AppDataSource = new DataSource({
     "src/migrations/1759000000002-create-restaurant-ratings.js",
   ],
   subscribers: [],
+  ssl: { rejectUnauthorized: false }, // Bật SSL cho Render
 });
 
 module.exports = { AppDataSource };
