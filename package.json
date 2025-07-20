@@ -47,8 +47,8 @@
     "react-leaflet-markercluster": "^5.0.0-rc.0",
     "react-responsive": "^10.0.1",
     "react-router-dom": "^7.6.2",
+    "react-scripts": "^5.0.1",
     "react-sortablejs": "^6.1.4",
-    "react-scripts": "5.0.1",
     "sortablejs": "^1.15.6"
   },
   "devDependencies": {
