@@ -1,11 +1,12 @@
-const { AppDataSource } = require("../data-source");
-
-const tourStepRepo = AppDataSource.getRepository("TourStep");
+const AppDataSource = require("../data-source");
+function getTourStepRepo() {
+  return AppDataSource.getRepository("TourStep");
+}
 
 module.exports = {
-  findAll: () => tourStepRepo.find(),
-  findById: (id) => tourStepRepo.findOneBy({ id }),
-  create: (data) => tourStepRepo.save(tourStepRepo.create(data)),
-  update: async (id, data) => { await tourStepRepo.update(id, data); return tourStepRepo.findOneBy({ id }); },
-  remove: (id) => tourStepRepo.delete(id),
+  findAll: () => getTourStepRepo().find(),
+  findById: (id) => getTourStepRepo().findOneBy({ id }),
+  create: (data) => getTourStepRepo().save(getTourStepRepo().create(data)),
+  update: async (id, data) => { await getTourStepRepo().update(id, data); return getTourStepRepo().findOneBy({ id }); },
+  remove: (id) => getTourStepRepo().delete(id),
 };

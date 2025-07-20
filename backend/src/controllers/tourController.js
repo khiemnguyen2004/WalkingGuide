@@ -1,17 +1,23 @@
-const { AppDataSource } = require("../data-source");
+const AppDataSource = require("../data-source");
 const notiService = require("../services/notificationService");
 const tourRatingService = require("../services/tourRatingService");
 
-const tourRepo = AppDataSource.getRepository("Tour");
-const tourStepRepo = AppDataSource.getRepository("TourStep");
-const bookingRepo = AppDataSource.getRepository("Booking");
+function getTourRepo() {
+  return AppDataSource.getRepository("Tour");
+}
+function getTourStepRepo() {
+  return AppDataSource.getRepository("TourStep");
+}
+function getBookingRepo() {
+  return AppDataSource.getRepository("Booking");
+}
 
 module.exports = {
   getAllTours: async (req, res) => {
     try {
       // If adminOnly=true, only show tours created by admin
       if (req.query.adminOnly === 'true') {
-        const tours = await tourRepo
+        const tours = await getTourRepo()
           .createQueryBuilder("tour")
           .innerJoin("users", "user", "tour.user_id = user.id")
           .where("user.role = :role", { role: "ADMIN" })
@@ -26,7 +32,7 @@ module.exports = {
       }
       // If admin, show all tours; if user, show only approved tours
       const userRole = req.query.role || "USER";
-      let query = tourRepo.createQueryBuilder("tour").innerJoin("users", "user", "tour.user_id = user.id");
+      let query = getTourRepo().createQueryBuilder("tour").innerJoin("users", "user", "tour.user_id = user.id");
       if (userRole === "ADMIN") {
         // Show all tours
       } else {
@@ -50,7 +56,7 @@ module.exports = {
   getUserTours: async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      const tours = await tourRepo.find({
+      const tours = await getTourRepo().find({
         where: {
           user_id: userId,
         },
@@ -68,10 +74,10 @@ module.exports = {
       const { id } = req.params;
       const userId = req.body.user_id;
 
-      const tour = await tourRepo.findOneBy({ id: parseInt(id) });
+      const tour = await getTourRepo().findOneBy({ id: parseInt(id) });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
 
-      const newTour = await tourRepo.save({
+      const newTour = await getTourRepo().save({
         name: tour.name,
         description: tour.description,
         image_url: tour.image_url,
@@ -80,10 +86,10 @@ module.exports = {
       });
 
       // Clone steps from the original tour
-      const originalSteps = await tourStepRepo.find({ where: { tour_id: tour.id } });
+      const originalSteps = await getTourStepRepo().find({ where: { tour_id: tour.id } });
       const newSteps = [];
       for (const step of originalSteps) {
-        const newStep = await tourStepRepo.save({
+        const newStep = await getTourStepRepo().save({
           tour_id: newTour.id,
           place_id: step.place_id,
           step_order: step.step_order,
@@ -121,12 +127,12 @@ module.exports = {
       }
 
       // 1. Tạo tour
-      const newTour = await tourRepo.save({ name, description, image_url, total_cost, user_id, start_time, end_time, start_from, status });
+      const newTour = await getTourRepo().save({ name, description, image_url, total_cost, user_id, start_time, end_time, start_from, status });
 
       // 2. Lưu các bước của tour nếu có
       const savedSteps = [];
       for (const step of steps) {
-        const saved = await tourStepRepo.save({
+        const saved = await getTourStepRepo().save({
           tour_id: newTour.id,
           place_id: step.place_id,
           step_order: step.step_order,
@@ -169,7 +175,7 @@ module.exports = {
       // 5. Create booking for the creator
       let booking = null;
       if (start_time && end_time) {
-        booking = await bookingRepo.save({
+        booking = await getBookingRepo().save({
           user_id,
           tour_id: newTour.id,
           start_date: start_time,
@@ -191,20 +197,20 @@ module.exports = {
     try {
       const { id } = req.params;
       const { name, description, image_url, total_cost, steps } = req.body;
-      const tour = await tourRepo.findOneBy({ id: parseInt(id) });
+      const tour = await getTourRepo().findOneBy({ id: parseInt(id) });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
       if (name !== undefined) tour.name = name;
       if (description !== undefined) tour.description = description;
       if (image_url !== undefined) tour.image_url = image_url;
       if (total_cost !== undefined) tour.total_cost = parseFloat(total_cost) || 0;
-      await tourRepo.save(tour);
+      await getTourRepo().save(tour);
       // Update steps if provided
       if (Array.isArray(steps)) {
         // Delete old steps
-        await tourStepRepo.delete({ tour_id: tour.id });
+        await getTourStepRepo().delete({ tour_id: tour.id });
         // Insert new steps
         for (const step of steps) {
-          await tourStepRepo.save({
+          await getTourStepRepo().save({
             tour_id: tour.id,
             place_id: step.place_id,
             step_order: step.step_order,
@@ -225,9 +231,9 @@ module.exports = {
   deleteTour: async (req, res) => {
     try {
       const { id } = req.params;
-      const tour = await tourRepo.findOneBy({ id: parseInt(id) });
+      const tour = await getTourRepo().findOneBy({ id: parseInt(id) });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
-      await tourRepo.remove(tour);
+      await getTourRepo().remove(tour);
       res.json({ message: "Đã xóa tour" });
     } catch (err) {
       console.error("Lỗi khi xóa tour:", err);
@@ -238,10 +244,10 @@ module.exports = {
   getById: async (req, res) => {
     try {
       const { id } = req.params;
-      const tour = await tourRepo.findOneBy({ id: parseInt(id) });
+      const tour = await getTourRepo().findOneBy({ id: parseInt(id) });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
       // Fetch steps for this tour
-      const steps = await tourStepRepo.find({ where: { tour_id: tour.id } });
+      const steps = await getTourStepRepo().find({ where: { tour_id: tour.id } });
       res.json({ ...tour, start_from: tour.start_from, steps });
     } catch (err) {
       console.error("Lỗi khi lấy chi tiết tour:", err);
@@ -261,12 +267,12 @@ module.exports = {
         return res.status(400).json({ error: "Ngày kết thúc phải sau ngày bắt đầu" });
       }
       // Optionally: check if tour exists
-      const tour = await tourRepo.findOneBy({ id: tourId });
+      const tour = await getTourRepo().findOneBy({ id: tourId });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
       const safeSpots = spots > 0 ? spots : 1;
       const total_price = safeSpots * (tour.total_cost || 0);
       // Create booking
-      const booking = await bookingRepo.save({
+      const booking = await getBookingRepo().save({
         user_id: userId,
         tour_id: tourId,
         start_date,
@@ -293,11 +299,11 @@ module.exports = {
   getUserBookedTours: async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      const bookings = await bookingRepo.find({ where: { user_id: userId } });
+      const bookings = await getBookingRepo().find({ where: { user_id: userId } });
       const tourIds = bookings.map(b => b.tour_id);
       let tours = [];
       if (tourIds.length > 0) {
-        tours = await tourRepo.findByIds(tourIds);
+        tours = await getTourRepo().findByIds(tourIds);
       }
       // Attach booking info to each tour
       const toursWithBooking = tours.map(tour => {
@@ -314,7 +320,7 @@ module.exports = {
   // Admin: Get all user-created tours pending approval
   getPendingUserTours: async (req, res) => {
     try {
-      const tours = await tourRepo
+      const tours = await getTourRepo()
         .createQueryBuilder("tour")
         .innerJoin("users", "user", "tour.user_id = user.id")
         .where("user.role != :role AND tour.status = :status", { role: "ADMIN", status: "pending" })
@@ -330,10 +336,10 @@ module.exports = {
   approveTour: async (req, res) => {
     try {
       const { id } = req.params;
-      const tour = await tourRepo.findOneBy({ id: parseInt(id) });
+      const tour = await getTourRepo().findOneBy({ id: parseInt(id) });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
       tour.status = "approved";
-      await tourRepo.save(tour);
+      await getTourRepo().save(tour);
       res.json({ message: "Tour đã được duyệt", tour });
     } catch (err) {
       console.error("Lỗi khi duyệt tour:", err);
@@ -345,10 +351,10 @@ module.exports = {
   rejectTour: async (req, res) => {
     try {
       const { id } = req.params;
-      const tour = await tourRepo.findOneBy({ id: parseInt(id) });
+      const tour = await getTourRepo().findOneBy({ id: parseInt(id) });
       if (!tour) return res.status(404).json({ error: "Không tìm thấy tour" });
       tour.status = "rejected";
-      await tourRepo.save(tour);
+      await getTourRepo().save(tour);
       // Send notification to user about tour refusal
       await notiService.create({
         user_id: tour.user_id,

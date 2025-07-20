@@ -1,11 +1,13 @@
-const { AppDataSource } = require("../data-source");
+const AppDataSource = require("../data-source");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendVerificationEmail, isEmailConfigured } = require("../utils/email");
 const { isValidEmailFormat } = require("../utils/emailValidator");
 
-const userRepository = AppDataSource.getRepository("User");
+function getUserRepository() {
+  return AppDataSource.getRepository("User");
+}
 
 exports.register = async (req, res) => {
   try {
@@ -29,6 +31,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "Email format không hợp lệ." });
     }
 
+    const userRepository = getUserRepository();
     const existingUser = await userRepository.findOne({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ 
@@ -74,7 +77,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    const userRepository = getUserRepository();
     const user = await userRepository.findOne({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: "Sai email hoặc mật khẩu." });
@@ -128,6 +131,7 @@ exports.verifyEmail = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Invalid or missing token." });
     }
+    const userRepository = getUserRepository();
     const user = await userRepository.findOne({
       where: { emailVerificationToken: token },
     });
@@ -155,7 +159,7 @@ exports.resendVerificationEmail = async (req, res) => {
     if (!email) {
       return res.status(400).json({ message: "Email là bắt buộc." });
     }
-
+    const userRepository = getUserRepository();
     const user = await userRepository.findOne({ where: { email } });
     if (!user) {
       return res.status(404).json({ message: "Email không tồn tại trong hệ thống." });
@@ -187,6 +191,7 @@ exports.forgotPassword = async (req, res) => {
     if (!email || !isValidEmailFormat(email)) {
       return res.status(400).json({ message: "Email không hợp lệ." });
     }
+    const userRepository = getUserRepository();
     const user = await userRepository.findOne({ where: { email } });
     if (!user) {
       // For security, always respond with success
@@ -219,6 +224,7 @@ exports.resetPassword = async (req, res) => {
     if (password !== confirmPassword) {
       return res.status(400).json({ message: "Mật khẩu xác nhận không khớp." });
     }
+    const userRepository = getUserRepository();
     const user = await userRepository.findOne({ where: { passwordResetToken: token } });
     if (!user || !user.passwordResetExpires || user.passwordResetExpires < new Date()) {
       return res.status(400).json({ message: "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn." });

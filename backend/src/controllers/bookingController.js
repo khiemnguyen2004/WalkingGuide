@@ -1,21 +1,28 @@
-const { AppDataSource } = require("../data-source");
-const bookingRepo = AppDataSource.getRepository("Booking");
-const tourRepo = AppDataSource.getRepository("Tour");
-const userRepo = AppDataSource.getRepository("User");
+const AppDataSource = require("../data-source");
 const notiService = require("../services/notificationService");
+
+function getBookingRepo() {
+  return AppDataSource.getRepository("Booking");
+}
+function getTourRepo() {
+  return AppDataSource.getRepository("Tour");
+}
+function getUserRepo() {
+  return AppDataSource.getRepository("User");
+}
 
 // Get all bookings for admin management
 exports.getAllBookings = async (req, res) => {
   try {
-    const bookings = await bookingRepo.find({
+    const bookings = await getBookingRepo().find({
       order: { created_at: 'DESC' }
     });
 
     // Get related tour and user information
     const bookingsWithDetails = await Promise.all(
       bookings.map(async (booking) => {
-        const tour = await tourRepo.findOneBy({ id: booking.tour_id });
-        const user = await userRepo.findOneBy({ id: booking.user_id });
+        const tour = await getTourRepo().findOneBy({ id: booking.tour_id });
+        const user = await getUserRepo().findOneBy({ id: booking.user_id });
         
         return {
           ...booking,
@@ -55,7 +62,7 @@ exports.getBookingsByStatus = async (req, res) => {
       });
     }
 
-    const bookings = await bookingRepo.find({
+    const bookings = await getBookingRepo().find({
       where: { status },
       order: { created_at: 'DESC' }
     });
@@ -63,8 +70,8 @@ exports.getBookingsByStatus = async (req, res) => {
     // Get related tour and user information
     const bookingsWithDetails = await Promise.all(
       bookings.map(async (booking) => {
-        const tour = await tourRepo.findOneBy({ id: booking.tour_id });
-        const user = await userRepo.findOneBy({ id: booking.user_id });
+        const tour = await getTourRepo().findOneBy({ id: booking.tour_id });
+        const user = await getUserRepo().findOneBy({ id: booking.user_id });
         
         return {
           ...booking,
@@ -97,7 +104,7 @@ exports.approveBooking = async (req, res) => {
     const { id } = req.params;
     const { admin_notes } = req.body;
 
-    const booking = await bookingRepo.findOneBy({ id: parseInt(id) });
+    const booking = await getBookingRepo().findOneBy({ id: parseInt(id) });
     if (!booking) {
       return res.status(404).json({
         success: false,
@@ -116,7 +123,7 @@ exports.approveBooking = async (req, res) => {
     booking.admin_notes = admin_notes || null;
     booking.updated_at = new Date();
 
-    await bookingRepo.save(booking);
+    await getBookingRepo().save(booking);
 
     res.json({
       success: true,
@@ -145,7 +152,7 @@ exports.rejectBooking = async (req, res) => {
       });
     }
 
-    const booking = await bookingRepo.findOneBy({ id: parseInt(id) });
+    const booking = await getBookingRepo().findOneBy({ id: parseInt(id) });
     if (!booking) {
       return res.status(404).json({
         success: false,
@@ -164,10 +171,10 @@ exports.rejectBooking = async (req, res) => {
     booking.admin_notes = admin_notes;
     booking.updated_at = new Date();
 
-    await bookingRepo.save(booking);
+    await getBookingRepo().save(booking);
 
     // Send notification to user about booking refusal
-    const tour = await tourRepo.findOneBy({ id: booking.tour_id });
+    const tour = await getTourRepo().findOneBy({ id: booking.tour_id });
     await notiService.create({
       user_id: booking.user_id,
       type: 'booking_failed',
@@ -196,7 +203,7 @@ exports.cancelBooking = async (req, res) => {
     const { id } = req.params;
     const { admin_notes } = req.body;
 
-    const booking = await bookingRepo.findOneBy({ id: parseInt(id) });
+    const booking = await getBookingRepo().findOneBy({ id: parseInt(id) });
     if (!booking) {
       return res.status(404).json({
         success: false,
@@ -215,7 +222,7 @@ exports.cancelBooking = async (req, res) => {
     booking.admin_notes = admin_notes || null;
     booking.updated_at = new Date();
 
-    await bookingRepo.save(booking);
+    await getBookingRepo().save(booking);
 
     res.json({
       success: true,
@@ -234,11 +241,11 @@ exports.cancelBooking = async (req, res) => {
 // Get booking statistics
 exports.getBookingStats = async (req, res) => {
   try {
-    const totalBookings = await bookingRepo.count();
-    const pendingBookings = await bookingRepo.count({ where: { status: 'pending' } });
-    const approvedBookings = await bookingRepo.count({ where: { status: 'approved' } });
-    const rejectedBookings = await bookingRepo.count({ where: { status: 'rejected' } });
-    const cancelledBookings = await bookingRepo.count({ where: { status: 'cancelled' } });
+    const totalBookings = await getBookingRepo().count();
+    const pendingBookings = await getBookingRepo().count({ where: { status: 'pending' } });
+    const approvedBookings = await getBookingRepo().count({ where: { status: 'approved' } });
+    const rejectedBookings = await getBookingRepo().count({ where: { status: 'rejected' } });
+    const cancelledBookings = await getBookingRepo().count({ where: { status: 'cancelled' } });
 
     res.json({
       success: true,
@@ -262,9 +269,9 @@ exports.getBookingStats = async (req, res) => {
 exports.deleteBooking = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const booking = await bookingRepo.findOneBy({ id });
+    const booking = await getBookingRepo().findOneBy({ id });
     if (!booking) return res.status(404).json({ error: "Không tìm thấy booking" });
-    await bookingRepo.remove(booking);
+    await getBookingRepo().remove(booking);
     res.json({ message: "Đã hủy đặt tour thành công!" });
   } catch (err) {
     res.status(500).json({ error: "Lỗi server khi hủy đặt tour" });

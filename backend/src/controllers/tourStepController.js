@@ -1,9 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const tourStepService = require("../services/tourStepService");
-const { AppDataSource } = require("../data-source");
+const AppDataSource = require("../data-source");
 
-const tourStepRepo = AppDataSource.getRepository("TourStep");
+function getTourStepRepo() {
+  return AppDataSource.getRepository("TourStep");
+}
 
 router.get("/", async (req, res) => res.json(await tourStepService.findAll()));
 router.get("/:id", async (req, res) => {
@@ -16,7 +18,7 @@ router.delete("/:id", async (req, res) => { await tourStepService.remove(req.par
 router.get("/by-tour/:tourId", async (req, res) => {
   try {
     const tourId = parseInt(req.params.tourId);
-    const steps = await tourStepRepo.find({ where: { tour_id: tourId } });
+    const steps = await getTourStepRepo().find({ where: { tour_id: tourId } });
     res.json(steps);
   } catch (err) {
     console.error("Lỗi khi lấy các bước tour:", err);

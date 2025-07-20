@@ -1,10 +1,14 @@
-const { AppDataSource } = require('../data-source');
+const AppDataSource = require('../data-source');
 const notificationService = require('../services/notificationService');
+
+function getArticleRepo() {
+  return AppDataSource.getRepository('Article');
+}
 
 module.exports = {
   getAllArticles: async (req, res) => {
     try {
-      const articleRepo = AppDataSource.getRepository('Article');
+      const articleRepo = getArticleRepo();
       const articles = await articleRepo.find();
       res.json(articles);
     } catch (err) {
@@ -14,7 +18,7 @@ module.exports = {
   },
   getArticleById: async (req, res) => {
     try {
-      const articleRepo = AppDataSource.getRepository('Article');
+      const articleRepo = getArticleRepo();
       const { id } = req.params;
       const article = await articleRepo.findOneBy({ article_id: parseInt(id) });
       if (!article) {
@@ -28,7 +32,7 @@ module.exports = {
   },
   createArticle: async (req, res) => {
     try {
-      const articleRepo = AppDataSource.getRepository('Article');
+      const articleRepo = getArticleRepo();
       const { admin_id, title, content, image_url } = req.body;
       if (!admin_id || !title) {
         return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
@@ -51,7 +55,7 @@ module.exports = {
   },
   updateArticle: async (req, res) => {
     try {
-      const articleRepo = AppDataSource.getRepository('Article');
+      const articleRepo = getArticleRepo();
       const { id } = req.params;
       const { title, content, image_url } = req.body;
       const article = await articleRepo.findOneBy({ article_id: parseInt(id) });
@@ -68,7 +72,7 @@ module.exports = {
   },
   deleteArticle: async (req, res) => {
     try {
-      const articleRepo = AppDataSource.getRepository('Article');
+      const articleRepo = getArticleRepo();
       const { id } = req.params;
       const article = await articleRepo.findOneBy({ article_id: parseInt(id) });
       if (!article) return res.status(404).json({ message: 'Không tìm thấy bài viết' });

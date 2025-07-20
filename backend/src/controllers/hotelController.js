@@ -1,12 +1,16 @@
-const { AppDataSource } = require("../data-source");
+const AppDataSource = require("../data-source");
 
-const Hotel = AppDataSource.getRepository("Hotel");
-const HotelImage = AppDataSource.getRepository("HotelImage");
+function getHotelRepo() {
+  return AppDataSource.getRepository("Hotel");
+}
+function getHotelImageRepo() {
+  return AppDataSource.getRepository("HotelImage");
+}
 
 // Get all hotels with their images
 const getAllHotels = async (req, res) => {
   try {
-    const hotels = await Hotel.find({
+    const hotels = await getHotelRepo().find({
       relations: ["images"],
       where: { is_active: true },
       order: { created_at: "DESC" }
@@ -30,7 +34,7 @@ const getAllHotels = async (req, res) => {
 const getHotelById = async (req, res) => {
   try {
     const { id } = req.params;
-    const hotel = await Hotel.findOne({
+    const hotel = await getHotelRepo().findOne({
       where: { id: parseInt(id), is_active: true },
       relations: ["images"]
     });
@@ -81,7 +85,7 @@ const createHotel = async (req, res) => {
     } = req.body;
 
     // Create hotel
-    const hotel = Hotel.create({
+    const hotel = getHotelRepo().create({
       name,
       description,
       latitude: parseFloat(latitude),
@@ -101,12 +105,12 @@ const createHotel = async (req, res) => {
       stars: parseInt(stars) || 0
     });
 
-    const savedHotel = await Hotel.save(hotel);
+    const savedHotel = await getHotelRepo().save(hotel);
 
     // Add images if provided
     if (images && Array.isArray(images) && images.length > 0) {
       const hotelImages = images.map((image, index) => {
-        return HotelImage.create({
+        return getHotelImageRepo().create({
           hotel_id: savedHotel.id,
           image_url: image.url,
           caption: image.caption || "",
@@ -115,11 +119,11 @@ const createHotel = async (req, res) => {
         });
       });
 
-      await HotelImage.save(hotelImages);
+      await getHotelImageRepo().save(hotelImages);
     }
 
     // Fetch hotel with images
-    const hotelWithImages = await Hotel.findOne({
+    const hotelWithImages = await getHotelRepo().findOne({
       where: { id: savedHotel.id },
       relations: ["images"]
     });
@@ -148,7 +152,7 @@ const updateHotel = async (req, res) => {
     console.log('Update request for hotel ID:', id);
     console.log('Update data:', JSON.stringify(updateData, null, 2));
 
-    const hotel = await Hotel.findOne({
+    const hotel = await getHotelRepo().findOne({
       where: { id: parseInt(id) }
     });
 
@@ -166,14 +170,14 @@ const updateHotel = async (req, res) => {
     Object.assign(hotel, hotelUpdateData);
     hotel.updated_at = new Date();
     
-    await Hotel.save(hotel);
+    await getHotelRepo().save(hotel);
 
     // Update images if provided
     if (images && Array.isArray(images)) {
       console.log('Processing images:', images.length);
       
       // Delete existing images
-      await HotelImage.delete({ hotel_id: parseInt(id) });
+      await getHotelImageRepo().delete({ hotel_id: parseInt(id) });
       console.log('Deleted existing images for hotel:', id);
 
       // Add new images
@@ -185,7 +189,7 @@ const updateHotel = async (req, res) => {
             throw new Error(`Image at index ${index} is missing URL`);
           }
           
-          return HotelImage.create({
+          return getHotelImageRepo().create({
             hotel_id: parseInt(id),
             image_url: image.url,
             caption: image.caption || "",
@@ -195,13 +199,13 @@ const updateHotel = async (req, res) => {
         });
 
         console.log('Saving hotel images:', hotelImages.length);
-        await HotelImage.save(hotelImages);
+        await getHotelImageRepo().save(hotelImages);
         console.log('Successfully saved hotel images');
       }
     }
 
     // Fetch updated hotel with images
-    const updatedHotel = await Hotel.findOne({
+    const updatedHotel = await getHotelRepo().findOne({
       where: { id: parseInt(id) },
       relations: ["images"]
     });
@@ -227,7 +231,7 @@ const deleteHotel = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const hotel = await Hotel.findOne({
+    const hotel = await getHotelRepo().findOne({
       where: { id: parseInt(id) }
     });
 
@@ -240,7 +244,7 @@ const deleteHotel = async (req, res) => {
 
     hotel.is_active = false;
     hotel.updated_at = new Date();
-    await Hotel.save(hotel);
+    await getHotelRepo().save(hotel);
 
     res.json({
       success: true,
@@ -261,7 +265,7 @@ const searchHotels = async (req, res) => {
   try {
     const { latitude, longitude, radius = 10, city } = req.query;
     
-    let query = Hotel.createQueryBuilder("hotel")
+    let query = getHotelRepo().createQueryBuilder("hotel")
       .leftJoinAndSelect("hotel.images", "images")
       .where("hotel.is_active = :isActive", { isActive: true });
 

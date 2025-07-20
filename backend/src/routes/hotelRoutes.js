@@ -53,7 +53,7 @@ router.get("/hotel-bookings/user/:userId", async (req, res) => {
     // Fetch hotel names and images for each booking
     const Hotel = require("../models/Hotel");
     const HotelImage = require("../models/HotelImage");
-    const AppDataSource = require("../data-source").AppDataSource;
+    const AppDataSource = require("../data-source");
     const hotelRepo = AppDataSource.getRepository("Hotel");
     const hotelImageRepo = AppDataSource.getRepository("HotelImage");
     const hotelIds = [...new Set(bookings.map(b => b.hotel_id))];

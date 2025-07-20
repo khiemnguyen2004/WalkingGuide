@@ -1,12 +1,16 @@
-const { AppDataSource } = require("../data-source");
+const AppDataSource = require("../data-source");
 
-const Restaurant = AppDataSource.getRepository("Restaurant");
-const RestaurantImage = AppDataSource.getRepository("RestaurantImage");
+function getRestaurantRepo() {
+  return AppDataSource.getRepository("Restaurant");
+}
+function getRestaurantImageRepo() {
+  return AppDataSource.getRepository("RestaurantImage");
+}
 
 // Get all restaurants with their images
 const getAllRestaurants = async (req, res) => {
   try {
-    const restaurants = await Restaurant.find({
+    const restaurants = await getRestaurantRepo().find({
       relations: ["images"],
       where: { is_active: true },
       order: { created_at: "DESC" }
@@ -30,7 +34,7 @@ const getAllRestaurants = async (req, res) => {
 const getRestaurantById = async (req, res) => {
   try {
     const { id } = req.params;
-    const restaurant = await Restaurant.findOne({
+    const restaurant = await getRestaurantRepo().findOne({
       where: { id: parseInt(id), is_active: true },
       relations: ["images"]
     });
@@ -83,7 +87,7 @@ const createRestaurant = async (req, res) => {
     } = req.body;
 
     // Create restaurant
-    const restaurant = Restaurant.create({
+    const restaurant = getRestaurantRepo().create({
       name,
       description,
       latitude: parseFloat(latitude),
@@ -105,12 +109,12 @@ const createRestaurant = async (req, res) => {
       features
     });
 
-    const savedRestaurant = await Restaurant.save(restaurant);
+    const savedRestaurant = await getRestaurantRepo().save(restaurant);
 
     // Add images if provided
     if (images && Array.isArray(images) && images.length > 0) {
       const restaurantImages = images.map((image, index) => {
-        return RestaurantImage.create({
+        return getRestaurantImageRepo().create({
           restaurant_id: savedRestaurant.id,
           image_url: image.url,
           caption: image.caption || "",
@@ -119,11 +123,11 @@ const createRestaurant = async (req, res) => {
         });
       });
 
-      await RestaurantImage.save(restaurantImages);
+      await getRestaurantImageRepo().save(restaurantImages);
     }
 
     // Fetch restaurant with images
-    const restaurantWithImages = await Restaurant.findOne({
+    const restaurantWithImages = await getRestaurantRepo().findOne({
       where: { id: savedRestaurant.id },
       relations: ["images"]
     });
@@ -152,7 +156,7 @@ const updateRestaurant = async (req, res) => {
     console.log('Update request for restaurant ID:', id);
     console.log('Update data:', JSON.stringify(updateData, null, 2));
 
-    const restaurant = await Restaurant.findOne({
+    const restaurant = await getRestaurantRepo().findOne({
       where: { id: parseInt(id) }
     });
 
@@ -170,14 +174,14 @@ const updateRestaurant = async (req, res) => {
     Object.assign(restaurant, restaurantUpdateData);
     restaurant.updated_at = new Date();
     
-    await Restaurant.save(restaurant);
+    await getRestaurantRepo().save(restaurant);
 
     // Update images if provided
     if (images && Array.isArray(images)) {
       console.log('Processing images:', images.length);
       
       // Delete existing images
-      await RestaurantImage.delete({ restaurant_id: parseInt(id) });
+      await getRestaurantImageRepo().delete({ restaurant_id: parseInt(id) });
       console.log('Deleted existing images for restaurant:', id);
 
       // Add new images
@@ -189,7 +193,7 @@ const updateRestaurant = async (req, res) => {
             throw new Error(`Image at index ${index} is missing URL`);
           }
           
-          return RestaurantImage.create({
+          return getRestaurantImageRepo().create({
             restaurant_id: parseInt(id),
             image_url: image.url,
             caption: image.caption || "",
@@ -199,13 +203,13 @@ const updateRestaurant = async (req, res) => {
         });
 
         console.log('Saving restaurant images:', restaurantImages.length);
-        await RestaurantImage.save(restaurantImages);
+        await getRestaurantImageRepo().save(restaurantImages);
         console.log('Successfully saved restaurant images');
       }
     }
 
     // Fetch updated restaurant with images
-    const updatedRestaurant = await Restaurant.findOne({
+    const updatedRestaurant = await getRestaurantRepo().findOne({
       where: { id: parseInt(id) },
       relations: ["images"]
     });
@@ -231,7 +235,7 @@ const deleteRestaurant = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const restaurant = await Restaurant.findOne({
+    const restaurant = await getRestaurantRepo().findOne({
       where: { id: parseInt(id) }
     });
 
@@ -244,7 +248,7 @@ const deleteRestaurant = async (req, res) => {
 
     restaurant.is_active = false;
     restaurant.updated_at = new Date();
-    await Restaurant.save(restaurant);
+    await getRestaurantRepo().save(restaurant);
 
     res.json({
       success: true,
@@ -265,7 +269,7 @@ const searchRestaurants = async (req, res) => {
   try {
     const { latitude, longitude, radius = 10, city, cuisine_type } = req.query;
     
-    let query = Restaurant.createQueryBuilder("restaurant")
+    let query = getRestaurantRepo().createQueryBuilder("restaurant")
       .leftJoinAndSelect("restaurant.images", "images")
       .where("restaurant.is_active = :isActive", { isActive: true });
 

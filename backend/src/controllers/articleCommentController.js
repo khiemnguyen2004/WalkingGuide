@@ -1,5 +1,12 @@
-const { AppDataSource } = require('../data-source');
+const AppDataSource = require('../data-source');
 const notificationService = require('../services/notificationService');
+
+function getArticleCommentRepo() {
+  return AppDataSource.getRepository('ArticleComment');
+}
+function getArticleRepo() {
+  return AppDataSource.getRepository('Article');
+}
 
 module.exports = {
   addComment: async (req, res) => {
@@ -7,11 +14,11 @@ module.exports = {
       const { article_id, content } = req.body;
       const user_id = req.user?.id || req.body.user_id;
       if (!user_id || !article_id || !content) return res.status(400).json({ message: 'Thiếu thông tin' });
-      const repo = AppDataSource.getRepository('ArticleComment');
+      const repo = getArticleCommentRepo();
       const comment = repo.create({ user_id, article_id, content });
       await repo.save(comment);
       // Send notification to article author
-      const articleRepo = AppDataSource.getRepository('Article');
+      const articleRepo = getArticleRepo();
       const article = await articleRepo.findOneBy({ article_id: parseInt(article_id) });
       if (article && article.admin_id !== user_id) {
         const noti = await notificationService.create({
@@ -32,7 +39,7 @@ module.exports = {
   getComments: async (req, res) => {
     try {
       const { article_id } = req.params;
-      const repo = AppDataSource.getRepository('ArticleComment');
+      const repo = getArticleCommentRepo();
       const comments = await repo.find({ where: { article_id: parseInt(article_id) }, order: { created_at: 'DESC' } });
       res.json(comments);
     } catch (err) {

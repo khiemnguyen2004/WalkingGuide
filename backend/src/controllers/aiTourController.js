@@ -1,11 +1,19 @@
-const { AppDataSource } = require("../data-source");
-const placeRepo = AppDataSource.getRepository("Place");
-const tourRepo = AppDataSource.getRepository("Tour");
-const tourStepRepo = AppDataSource.getRepository("TourStep");
-const tagRepo = AppDataSource.getRepository("Tag");
+const AppDataSource = require("../data-source");
+
+function getPlaceRepo() {
+  return AppDataSource.getRepository("Place");
+}
+function getTourRepo() {
+  return AppDataSource.getRepository("Tour");
+}
+function getTourStepRepo() {
+  return AppDataSource.getRepository("TourStep");
+}
+function getTagRepo() {
+  return AppDataSource.getRepository("Tag");
+}
 
 module.exports = {
-  
   generateTour: async (req, res) => {
     try {
       const { interests, budget, days, user_id, tag_ids, start_time, end_time, city } = req.body;
@@ -31,7 +39,7 @@ module.exports = {
       if (interests && interests.length > 0) {
         for (const interest of interests) {
           // Find tags whose name contains the interest keyword (case-insensitive)
-          const foundTags = await tagRepo
+          const foundTags = await getTagRepo()
             .createQueryBuilder("tag")
             .where("LOWER(tag.name) LIKE :kw", { kw: `%${interest.toLowerCase()}%` })
             .getMany();
@@ -43,7 +51,7 @@ module.exports = {
 
       // 2. Filter places by both city and matchedTagIds
       let allPlaces;
-      let queryBuilder = placeRepo.createQueryBuilder("place");
+      let queryBuilder = getPlaceRepo().createQueryBuilder("place");
 
       // Add city filter if provided - use exact matching
       if (city && city.trim()) {
@@ -84,7 +92,7 @@ module.exports = {
       // Create tour description based on filters
       let tourDescription = "Tour được tạo tự động";
       if (city && matchedTagIds.length > 0) {
-        const tagNames = await tagRepo
+        const tagNames = await getTagRepo()
           .createQueryBuilder("tag")
           .where("tag.id IN (:...tagIds)", { tagIds: matchedTagIds })
           .getMany();
@@ -92,7 +100,7 @@ module.exports = {
       } else if (city) {
         tourDescription = `Tour khám phá ${city}`;
       } else if (matchedTagIds.length > 0) {
-        const tagNames = await tagRepo
+        const tagNames = await getTagRepo()
           .createQueryBuilder("tag")
           .where("tag.id IN (:...tagIds)", { tagIds: matchedTagIds })
           .getMany();

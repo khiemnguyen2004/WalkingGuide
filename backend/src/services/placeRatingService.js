@@ -1,8 +1,12 @@
-const { AppDataSource } = require("../data-source");
+const AppDataSource = require("../data-source");
 const PlaceRating = require("../models/PlaceRating");
 
+function getRepo() {
+  return AppDataSource.getRepository(PlaceRating);
+}
+
 const ratePlace = async (user_id, place_id, rating) => {
-  const repo = AppDataSource.getRepository(PlaceRating);
+  const repo = getRepo();
   let existing = await repo.findOne({ where: { user_id, place_id } });
   if (existing) {
     existing.rating = rating;
@@ -13,14 +17,14 @@ const ratePlace = async (user_id, place_id, rating) => {
 };
 
 const getPlaceAverageRating = async (place_id) => {
-  const repo = AppDataSource.getRepository(PlaceRating);
+  const repo = getRepo();
   const ratings = await repo.find({ where: { place_id } });
   if (!ratings.length) return 0;
   return ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
 };
 
 const getUserPlaceRating = async (user_id, place_id) => {
-  const repo = AppDataSource.getRepository(PlaceRating);
+  const repo = getRepo();
   const rating = await repo.findOne({ where: { user_id, place_id } });
   return rating ? rating.rating : null;
 };

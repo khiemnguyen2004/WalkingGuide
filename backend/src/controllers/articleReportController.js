@@ -1,5 +1,9 @@
-const { AppDataSource } = require('../data-source');
+const AppDataSource = require('../data-source');
 const ArticleReport = require('../models/ArticleReport');
+
+function getRepo() {
+  return AppDataSource.getRepository(ArticleReport);
+}
 
 // User reports an article
 const reportArticle = async (req, res) => {
@@ -10,7 +14,7 @@ const reportArticle = async (req, res) => {
     const user_id = req.user.id;
     console.log('Params:', article_id, 'Reason:', reason, 'User:', user_id);
     if (!reason) return res.status(400).json({ message: 'Reason is required.' });
-    const repo = AppDataSource.getRepository(ArticleReport);
+    const repo = getRepo();
     console.log('Got repo');
     const report = repo.create({ article_id, user_id, reason });
     console.log('Created report:', report);

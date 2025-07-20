@@ -1,11 +1,13 @@
-const { AppDataSource } = require("../data-source");
+const AppDataSource = require("../data-source");
+function getCommentRepo() {
+  return AppDataSource.getRepository("Comment");
+}
 
 module.exports = {
-  findAll: () => AppDataSource.getRepository("Comment").find(),
-  findById: (id) => AppDataSource.getRepository("Comment").findOneBy({ id }),
+  findAll: () => getCommentRepo().find(),
+  findById: (id) => getCommentRepo().findOneBy({ id }),
   findByPlaceId: async (place_id) => {
-    return await AppDataSource
-      .getRepository("Comment")
+    return await getCommentRepo()
       .createQueryBuilder("comment")
       .leftJoin("users", "user", "user.id = comment.user_id")
       .addSelect("user.full_name", "user_full_name")
@@ -21,7 +23,7 @@ module.exports = {
       ])
       .getRawMany();
   },
-  create: (data) => AppDataSource.getRepository("Comment").save(AppDataSource.getRepository("Comment").create(data)),
-  update: async (id, data) => { await AppDataSource.getRepository("Comment").update(id, data); return AppDataSource.getRepository("Comment").findOneBy({ id }); },
-  remove: (id) => AppDataSource.getRepository("Comment").delete(id),
+  create: (data) => getCommentRepo().save(getCommentRepo().create(data)),
+  update: async (id, data) => { await getCommentRepo().update(id, data); return getCommentRepo().findOneBy({ id }); },
+  remove: (id) => getCommentRepo().delete(id),
 };

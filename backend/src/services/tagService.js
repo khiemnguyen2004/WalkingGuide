@@ -1,6 +1,7 @@
-const { AppDataSource } = require("../data-source");
-
-const getTagRepo = () => AppDataSource.getRepository("Tag");
+const AppDataSource = require("../data-source");
+function getTagRepo() {
+  return AppDataSource.getRepository("Tag");
+}
 
 module.exports = {
   findAll: () => getTagRepo().find(),
