@@ -80,4 +80,3 @@ const AppDataSource = new DataSource({
 
 module.exports = { AppDataSource };
 console.log("Entities loaded:", AppDataSource.options.entities.map(e => e.name));
-
