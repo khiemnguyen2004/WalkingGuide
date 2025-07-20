@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext";
 
-function LoginForm({ onSuccess, onSwitch, onForgotPassword }) {
+function LoginForm({ onSuccess, onSwitch, onForgotPassword, onLoginSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -18,7 +18,8 @@ function LoginForm({ onSuccess, onSwitch, onForgotPassword }) {
       // Store the token in localStorage
       localStorage.setItem("token", res.data.token);
       login({ ...res.data.user, token: res.data.token });
-      if (onSuccess) onSuccess();
+      if (onLoginSuccess) onLoginSuccess(res.data.user);
+      if (onSuccess) onSuccess(); // Close the modal immediately
     } catch (err) {
       setError(err.response?.data?.message || "Đăng nhập thất bại");
     }

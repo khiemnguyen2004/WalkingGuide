@@ -535,7 +535,7 @@ function HomePage() {
                               </div>
                               {tour.total_cost && (
                                 <p className="card-text text-muted small mb-0 luxury-rating">
-                                  <span className="luxury-money"><i className="bi bi-currency-exchange" ></i></span> {tour.total_cost} VND
+                                  <span className="luxury-money"><i className="bi bi-coin"></i></span> {tour.total_cost} VND
                                 </p>
                               )}
                             </div>
@@ -597,7 +597,7 @@ function HomePage() {
                                       </div>
                                       {tour.total_cost && (
                                         <p className="card-text text-muted small mb-0 luxury-rating">
-                                          <span className="luxury-money">💰</span> {tour.total_cost} VND
+                                          <span className="luxury-money"><i className="bi bi-coin"></i></span> {tour.total_cost} VND
                                         </p>
                                       )}
                                     </div>
@@ -711,7 +711,7 @@ function HomePage() {
                               <RatingStars id={hotel.id} type="hotel" />
                               {hotel.price_range && (
                                 <p className="card-text text-muted small mb-0">
-                                  <span className="luxury-money">💰</span> {hotel.price_range}
+                                  <span className="luxury-money"><i className="bi bi-coin"></i></span> {hotel.price_range}
                                   {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
                                 </p>
                               )}
@@ -803,7 +803,7 @@ function HomePage() {
                                       <RatingStars id={hotel.id} type="hotel" />
                                       {hotel.price_range && (
                                         <p className="card-text text-muted small mb-0">
-                                          <span className="luxury-money">💰</span> {hotel.price_range}
+                                          <span className="luxury-money"><i className="bi bi-coin"></i></span> {hotel.price_range}
                                           {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
                                         </p>
                                       )}
@@ -920,7 +920,7 @@ function HomePage() {
                               <RatingStars id={restaurant.id} type="restaurant" />
                               {restaurant.price_range && (
                                 <p className="card-text text-muted small mb-0">
-                                    <span className="luxury-money">��</span> {restaurant.price_range}
+                                    <span className="luxury-money"><i className="bi bi-coin"></i></span> {restaurant.price_range}
                                   {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
                                 </p>
                               )}
@@ -1009,7 +1009,7 @@ function HomePage() {
                                       <RatingStars id={restaurant.id} type="restaurant" />
                                       {restaurant.price_range && (
                                         <p className="card-text text-muted small mb-0">
-                                          <span className="luxury-money">💰</span> {restaurant.price_range}
+                                          <span className="luxury-money"><i className="bi bi-coin"></i></span> {restaurant.price_range}
                                           {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
                                         </p>
                                       )}
@@ -1057,25 +1057,25 @@ function HomePage() {
                   {t('Plan Quickly with')} <span style={{color: '#fff'}}>{t('AutoPlanner')}</span>
                 </h2>
                 {/* Winding route line with random places */}
-                <div className="route-banner position-relative mb-4" style={{minHeight: 140, width: '100%', maxWidth: 900, margin: '0 auto'}}>
+                <div className="route-banner position-relative mb-4">
                   {/* SVG winding path */}
-                  <svg width="100%" height="100" viewBox="0 0 900 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{position: 'absolute', top: 30, left: 0, zIndex: 1}}>
+                  <svg width="100%" height="100" viewBox="0 0 1000 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{position: 'absolute', top: 30, left: 0, zIndex: 1}}>
                     <defs>
-                      <linearGradient id="routeGradient" x1="0" y1="0" x2="900" y2="0" gradientUnits="userSpaceOnUse">
+                      <linearGradient id="routeGradient" x1="0" y1="0" x2="1000" y2="0" gradientUnits="userSpaceOnUse">
                         <stop stopColor="#5b9df9" />
                         <stop offset="1" stopColor="#b6e0fe" />
                       </linearGradient>
                     </defs>
-                    <path d="M 40 50 Q 180 10, 320 50 T 600 50 T 860 50" stroke="url(#routeGradient)" strokeWidth="6" fill="none" strokeLinecap="round"/>
+                    <path d="M 50 50 Q 200 10, 350 50 T 650 50 T 950 50" stroke="url(#routeGradient)" strokeWidth="6" fill="none" strokeLinecap="round"/>
                   </svg>
                   {/* Place stops positioned along the path */}
                   {(() => {
                     const shuffled = [...sortedPlaces].sort(() => 0.5 - Math.random());
                     const picks = shuffled.slice(0, Math.min(5, shuffled.length));
-                    // Predefined positions for 5 stops along the SVG path
-                    const stopPositions = [40, 220, 450, 680, 860];
+                    // Adjusted positions for 5 stops along the SVG path with better spacing
+                    const stopPositions = [50, 250, 500, 750, 950];
                     return picks.map((place, idx) => (
-                      <Link to={`/places/${place.id}`} key={place.id} className="route-stop d-flex flex-column align-items-center position-absolute text-decoration-none route-stop-link" style={{zIndex: 2, left: `${stopPositions[idx] / 9}%`, top: idx % 2 === 0 ? 0 : 60, minWidth: 80, cursor: 'pointer'}}>
+                      <Link to={`/places/${place.id}`} key={place.id} className="route-stop d-flex flex-column align-items-center position-absolute text-decoration-none route-stop-link" style={{zIndex: 2, left: `${stopPositions[idx] / 10}%`, top: idx % 2 === 0 ? 0 : 60, minWidth: 80, cursor: 'pointer'}}>
                         <div className="route-img-wrapper mb-2 shadow-lg rounded-circle bg-white d-flex align-items-center justify-content-center" style={{width: 64, height: 64, overflow: 'hidden', border: '3px solid #fff', transition: 'box-shadow 0.2s, border-color 0.2s'}}>
                           {place.image_url ? (
                             <img src={place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`} alt={place.name} style={{width: '100%', height: '100%', objectFit: 'cover'}} />

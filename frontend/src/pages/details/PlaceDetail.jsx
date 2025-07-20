@@ -74,7 +74,7 @@ const createCustomIcon = (place) => {
           align-items: center;
           justify-content: center;
         ">
-          <i class="bi bi-geo-alt-fill" style="font-size: 24px; color: #3498db;"></i>
+                          <i className="bi bi-geo-alt-fill" style="fontSize: 24, color: '#3498db'"></i>
         </div>
       `,
       iconSize: [iconSize, iconSize],

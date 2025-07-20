@@ -722,7 +722,7 @@ const TourDetail = () => {
                           <RatingStars id={hotel.id} type="hotel" />
                           {hotel.price_range && (
                             <p className="card-text text-muted small mb-0">
-                              <span className="luxury-money">💰</span> {hotel.price_range}
+                              <span className="luxury-money"><i className="bi bi-coin"></i></span> {hotel.price_range}
                               {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
                             </p>
                           )}
@@ -800,7 +800,7 @@ const TourDetail = () => {
                           <RatingStars id={restaurant.id} type="restaurant" />
                           {restaurant.price_range && (
                             <p className="card-text text-muted small mb-0">
-                              <span className="luxury-money">💰</span> {restaurant.price_range}
+                              <span className="luxury-money"><i className="bi bi-coin"></i></span> {restaurant.price_range}
                               {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
                             </p>
                           )}
@@ -883,7 +883,7 @@ const TourDetail = () => {
                                 </p>
                                 <div className="d-flex align-items-center justify-content-between">
                                   <span className="card-text text-muted small mb-0 luxury-rating">
-                                    <span className="luxury-money">💰</span> {t.total_cost ? t.total_cost.toLocaleString('vi-VN') : '0'} VND
+                                    <span className="luxury-money"><i className="bi bi-coin"></i></span> {t.total_cost ? t.total_cost.toLocaleString('vi-VN') : '0'} VND
                                   </span>
                                   {/* Optionally add rating stars if available */}
                                   {t.rating && <RatingStars id={t.id} type="tour" />}

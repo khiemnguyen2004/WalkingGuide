@@ -16,6 +16,7 @@ import CustomAlertModal from '../components/CustomAlertModal.jsx';
 import CustomConfirmModal from '../components/CustomConfirmModal.jsx';
 import LocationAutocomplete from "../components/LocationAutocomplete.jsx";
 import hotelApi from '../api/hotelApi';
+import { useAlert } from '../hooks/useAlert';
 
 function MyTours() {
   const { user } = useContext(AuthContext);
@@ -50,9 +51,18 @@ function MyTours() {
   // Add state for modal steps and places
   const [modalSteps, setModalSteps] = useState([]);
   const [modalPlaces, setModalPlaces] = useState({});
-  // Add state for custom modals
-  const [alertModal, setAlertModal] = useState({ show: false, message: '', title: '' });
-  const [confirmModal, setConfirmModal] = useState({ show: false, message: '', onConfirm: null });
+  // Use custom alert hook
+  const {
+    alertModal,
+    confirmModal,
+    showSuccess,
+    showError,
+    showDeleteConfirm,
+    showCancelConfirm,
+    hideAlert,
+    hideConfirm,
+    handleConfirm
+  } = useAlert();
   const [selectedTourIds, setSelectedTourIds] = useState([]);
   const [selectedBookingIds, setSelectedBookingIds] = useState([]);
   const [selectAllTours, setSelectAllTours] = useState(false);
@@ -79,29 +89,39 @@ function MyTours() {
   // Batch delete
   const handleDeleteSelectedTours = async () => {
     if (selectedTourIds.length === 0) return;
-    if (!window.confirm('Bạn có chắc chắn muốn xóa các tour đã chọn?')) return;
-    try {
-      await Promise.all(selectedTourIds.map(id => axios.delete(`http://localhost:3000/api/tours/${id}`)));
-      setTours(prev => prev.filter(t => !selectedTourIds.includes(t.id)));
-      setSelectedTourIds([]);
-      setSelectAllTours(false);
-      setAlertModal({ show: true, message: 'Đã xóa các tour thành công!', title: 'Thành công' });
-    } catch {
-      setAlertModal({ show: true, message: 'Không thể xóa một số tour.', title: 'Lỗi' });
-    }
+    showDeleteConfirm(
+      'Bạn có chắc chắn muốn xóa các tour đã chọn?',
+      async () => {
+        try {
+          await Promise.all(selectedTourIds.map(id => axios.delete(`http://localhost:3000/api/tours/${id}`)));
+          setTours(prev => prev.filter(t => !selectedTourIds.includes(t.id)));
+          setSelectedTourIds([]);
+          setSelectAllTours(false);
+          showSuccess('Đã xóa các tour thành công!');
+        } catch {
+          showError('Không thể xóa một số tour.');
+        }
+      },
+      'Xác nhận xóa tour'
+    );
   };
   const handleDeleteSelectedBookings = async () => {
     if (selectedBookingIds.length === 0) return;
-    if (!window.confirm('Bạn có chắc chắn muốn hủy các booking đã chọn?')) return;
-    try {
-      await Promise.all(selectedBookingIds.map(id => axios.delete(`http://localhost:3000/api/bookings/${id}`)));
-      setBookedTours(prev => prev.filter(t => !selectedBookingIds.includes(t.booking?.id)));
-      setSelectedBookingIds([]);
-      setSelectAllBookings(false);
-      setAlertModal({ show: true, message: 'Đã hủy các booking thành công!', title: 'Thành công' });
-    } catch {
-      setAlertModal({ show: true, message: 'Không thể hủy một số booking.', title: 'Lỗi' });
-    }
+    showCancelConfirm(
+      'Bạn có chắc chắn muốn hủy các booking đã chọn?',
+      async () => {
+        try {
+          await Promise.all(selectedBookingIds.map(id => axios.delete(`http://localhost:3000/api/bookings/${id}`)));
+          setBookedTours(prev => prev.filter(t => !selectedBookingIds.includes(t.booking?.id)));
+          setSelectedBookingIds([]);
+          setSelectAllBookings(false);
+          showSuccess('Đã hủy các booking thành công!');
+        } catch {
+          showError('Không thể hủy một số booking.');
+        }
+      },
+      'Xác nhận hủy booking'
+    );
   };
 
   useEffect(() => {
@@ -285,16 +305,16 @@ function MyTours() {
       await axios.delete(`http://localhost:3000/api/tours/${tourId}`);
       setTours(prev => prev.filter(t => t.id !== tourId));
       setShowTourModal(false);
-      setAlertModal({ show: true, message: 'Đã xóa tour thành công!', title: 'Thành công' });
+      showSuccess('Đã xóa tour thành công!');
     } catch {
-      setAlertModal({ show: true, message: 'Không thể xóa tour.', title: 'Lỗi' });
+      showError('Không thể xóa tour.');
     }
   };
 
   // Add handleDeleteBooking function:
   const handleDeleteBooking = async (bookingId) => {
     if (!bookingId) {
-      setAlertModal({ show: true, message: 'Không tìm thấy booking để hủy.', title: 'Lỗi' });
+      showError('Không tìm thấy booking để hủy.');
       return;
     }
     try {
@@ -302,30 +322,30 @@ function MyTours() {
       if (res.status === 200 && res.data?.message) {
         setBookedTours(prev => prev.filter(t => t.booking?.id !== bookingId));
         setShowTourModal(false);
-        setAlertModal({ show: true, message: 'Đã hủy đặt tour thành công!', title: 'Thành công' });
+        showSuccess('Đã hủy đặt tour thành công!');
       } else {
-        setAlertModal({ show: true, message: 'Không thể hủy đặt tour.', title: 'Lỗi' });
+        showError('Không thể hủy đặt tour.');
       }
     } catch {
-      setAlertModal({ show: true, message: 'Không thể hủy đặt tour.', title: 'Lỗi' });
+      showError('Không thể hủy đặt tour.');
     }
   };
 
   const handleCancelHotelBooking = async (bookingId) => {
     if (!bookingId) {
-      setAlertModal({ show: true, message: 'Không tìm thấy booking để hủy.', title: 'Lỗi' });
+      showError('Không tìm thấy booking để hủy.');
       return;
     }
     try {
-      const res = await axios.delete(`http://localhost:3000/api/bookings/${bookingId}`);
+      const res = await axios.delete(`http://localhost:3000/api/hotels/hotel-bookings/${bookingId}`);
       if (res.status === 200 && res.data?.message) {
         setHotelBookings(prev => prev.filter(b => b.id !== bookingId));
-        setAlertModal({ show: true, message: 'Đã hủy đặt khách sạn thành công!', title: 'Thành công' });
+        showSuccess('Đã hủy đặt khách sạn thành công!');
       } else {
-        setAlertModal({ show: true, message: 'Không thể hủy đặt khách sạn.', title: 'Lỗi' });
+        showError('Không thể hủy đặt khách sạn.');
       }
     } catch {
-      setAlertModal({ show: true, message: 'Không thể hủy đặt khách sạn.', title: 'Lỗi' });
+      showError('Không thể hủy đặt khách sạn.');
     }
   };
 
@@ -649,7 +669,7 @@ function MyTours() {
                 </div>
                 <div className="d-flex gap-2">
                   <button className="btn btn-sm btn-outline-primary" onClick={e => { e.stopPropagation(); setSelected(tour); setShowEditModal(true); }}>Sửa</button>
-                  <button className="btn btn-sm btn-outline-danger" onClick={e => { e.stopPropagation(); setConfirmModal({ show: true, message: 'Bạn có chắc muốn xóa tour này?', onConfirm: () => handleDeleteTour(tour.id) }); }}>Xóa</button>
+                  <button className="btn btn-sm btn-outline-danger" onClick={e => { e.stopPropagation(); showDeleteConfirm('Bạn có chắc muốn xóa tour này?', () => handleDeleteTour(tour.id)); }}>Xóa</button>
                 </div>
               </div>
             ))}
@@ -673,7 +693,7 @@ function MyTours() {
                   <Link to={`/tours/${tour.id}`} className="text-decoration-none">{tour.name}</Link>
                 </div>
                 <div className="d-flex gap-2">
-                  <button className="btn btn-sm btn-outline-danger" onClick={e => { e.stopPropagation(); setConfirmModal({ show: true, message: 'Bạn có chắc muốn hủy đặt tour này?', onConfirm: () => handleDeleteBooking(tour.booking.id) }); }}>Hủy đặt</button>
+                  <button className="btn btn-sm btn-outline-danger" onClick={e => { e.stopPropagation(); showCancelConfirm('Bạn có chắc muốn hủy đặt tour này?', () => handleDeleteBooking(tour.booking.id)); }}>Hủy đặt</button>
                 </div>
               </div>
             ))}
@@ -720,7 +740,7 @@ function MyTours() {
                         </div>
                         {tour.total_cost && (
                           <p className="card-text text-muted small mb-0 luxury-rating">
-                            <span className="luxury-money">💰</span> {tour.total_cost} VND
+                            <span className="luxury-money"><i className="bi bi-coin"></i></span> {tour.total_cost} VND
                           </p>
                         )}
                         {/* Show spots and total_price if available */}
@@ -736,16 +756,16 @@ function MyTours() {
                       {tour.booking?.status === 'rejected' ? (
                         <>
                           <span className="text-danger small fw-bold flex-fill align-self-center">Đặt tour thất bại</span>
-                          <button
-                            className="btn btn-outline-primary btn-sm flex-fill"
-                            onClick={e => {
-                              e.stopPropagation();
-                              // TODO: Trigger booking modal/flow again for this tour
-                              alert('Chức năng Đặt lại sẽ được triển khai ở đây!');
-                            }}
-                          >
-                            Đặt lại
-                          </button>
+                                                  <button
+                          className="btn btn-outline-primary btn-sm flex-fill"
+                          onClick={e => {
+                            e.stopPropagation();
+                            // TODO: Trigger booking modal/flow again for this tour
+                            showInfo('Chức năng Đặt lại sẽ được triển khai ở đây!', 'Thông báo');
+                          }}
+                        >
+                          Đặt lại
+                        </button>
                         </>
                       ) : (
                         <button
@@ -754,7 +774,7 @@ function MyTours() {
                           onClick={e => {
                             e.stopPropagation();
                             if (tour.booking?.id) {
-                              setConfirmModal({ show: true, message: 'Bạn có chắc muốn hủy đặt tour này?', onConfirm: () => handleDeleteBooking(tour.booking.id) });
+                              showCancelConfirm('Bạn có chắc muốn hủy đặt tour này?', () => handleDeleteBooking(tour.booking.id));
                             }
                           }}
                         >
@@ -813,7 +833,7 @@ function MyTours() {
                     </Link>
                     <div className="px-3 pb-3">
                       <button className="btn btn-outline-danger btn-sm w-100" onClick={() => {
-                        if(window.confirm('Bạn có chắc muốn hủy đặt khách sạn này?')) handleCancelHotelBooking(booking.id);
+                        showCancelConfirm('Bạn có chắc muốn hủy đặt khách sạn này?', () => handleCancelHotelBooking(booking.id), 'Xác nhận hủy đặt phòng');
                       }}>
                         <i className="bi bi-x-circle me-1"></i>Hủy đặt
                       </button>
@@ -904,7 +924,7 @@ function MyTours() {
                           </p>
                         )}
                         <button className="btn btn-main btn-sm flex-fill me-2" onClick={e => { e.stopPropagation(); setSelected(tour); setShowEditModal(true); }}>Sửa</button>
-                        <button className="btn btn-danger btn-sm flex-fill" onClick={e => { e.stopPropagation(); setConfirmModal({ show: true, message: 'Bạn có chắc muốn xóa tour này?', onConfirm: () => handleDeleteTour(tour.id) }); }}>Xóa</button>
+                        <button className="btn btn-danger btn-sm flex-fill" onClick={e => { e.stopPropagation(); showDeleteConfirm('Bạn có chắc muốn xóa tour này?', () => handleDeleteTour(tour.id)); }}>Xóa</button>
                       </div>
                     </div>
                   </div>
@@ -977,8 +997,25 @@ function MyTours() {
           {/* Add more actions as needed */}
         </Modal.Footer>
       </Modal>
-      <CustomAlertModal show={alertModal.show} title={alertModal.title} message={alertModal.message} onClose={() => setAlertModal({ show: false, message: '', title: '' })} />
-      <CustomConfirmModal show={confirmModal.show} message={confirmModal.message} onClose={() => setConfirmModal({ show: false, message: '', onConfirm: null })} onConfirm={() => { if (confirmModal.onConfirm) confirmModal.onConfirm(); setConfirmModal({ show: false, message: '', onConfirm: null }); }} />
+              <CustomAlertModal 
+          show={alertModal.show} 
+          title={alertModal.title} 
+          message={alertModal.message} 
+          type={alertModal.type}
+          confirmText={alertModal.confirmText}
+          onClose={hideAlert} 
+        />
+        <CustomConfirmModal 
+          show={confirmModal.show} 
+          message={confirmModal.message} 
+          title={confirmModal.title}
+          confirmText={confirmModal.confirmText}
+          cancelText={confirmModal.cancelText}
+          type={confirmModal.type}
+          confirmVariant={confirmModal.confirmVariant}
+          onClose={hideConfirm} 
+          onConfirm={handleConfirm} 
+        />
     </div>
   );
 }

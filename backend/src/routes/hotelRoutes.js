@@ -79,4 +79,23 @@ router.get("/hotel-bookings/user/:userId", async (req, res) => {
   }
 });
 
+// Delete hotel booking (cancel booking)
+router.delete("/hotel-bookings/:id", async (req, res) => {
+  try {
+    const bookingId = parseInt(req.params.id);
+    const booking = await hotelBookingService.findById(bookingId);
+    
+    if (!booking) {
+      return res.status(404).json({ error: "Không tìm thấy đặt phòng khách sạn" });
+    }
+    
+    await hotelBookingService.delete(bookingId);
+    
+    res.json({ message: "Đã hủy đặt phòng khách sạn thành công!" });
+  } catch (err) {
+    console.error("Error deleting hotel booking:", err);
+    res.status(500).json({ error: "Lỗi server khi hủy đặt phòng khách sạn" });
+  }
+});
+
 module.exports = router; 

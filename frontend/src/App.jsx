@@ -35,11 +35,13 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import RatingStars from "./components/RatingStars";
 import HotelDetail from './pages/details/HotelDetail';
 import RestaurantDetail from './pages/details/RestaurantDetail';
+import ToastContainer from './components/ToastContainer';
 
 function App() {
   return (
     <Router>
       <ScrollToTop />
+      <ToastContainer />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
