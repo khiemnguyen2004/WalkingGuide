@@ -20,7 +20,13 @@ const geocodingRoutes = require('./routes/geocodingRoutes');
 const siteSettingRoutes = require("./routes/siteSettingRoutes");
 
 const cors = require("cors");
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://khiemnguyen2004.github.io',
+    'https://khiemnguyen2004.github.io/walking-guide/'
+  ],
+  credentials: true
+}));
 
 app.use(express.json());
 
