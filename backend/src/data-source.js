@@ -25,7 +25,8 @@ const AppDataSource = new DataSource({
   cli: {
     entitiesDir: "src/models",
     migrationsDir: "src/migrations"
-  }
+  },
+  ssl: { rejectUnauthorized: false } // Enable SSL for Render
 });
 
 module.exports = AppDataSource;
