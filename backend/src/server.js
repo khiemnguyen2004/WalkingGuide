@@ -24,7 +24,8 @@ app.use(cors({
   origin: [
     'https://khiemnguyen2004.github.io',
     'https://khiemnguyen2004.github.io/walking-guide/',
-    'https://walking-guide.vercel.app' // Allow Vercel frontend
+    'https://walking-guide.vercel.app',
+    'http://localhost:5173', // for local dev
   ],
   credentials: true
 }));
