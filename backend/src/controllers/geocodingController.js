@@ -1,5 +1,11 @@
 const axios = require('axios');
 
+const axiosConfig = {
+  headers: {
+    'User-Agent': 'WalkingGuideApp/1.0 (your-email@example.com)'
+  }
+};
+
 // Search for address suggestions
 const searchAddress = async (req, res) => {
   try {
@@ -13,16 +19,18 @@ const searchAddress = async (req, res) => {
     }
 
     const response = await axios.get(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=${limit}&addressdetails=${addressdetails}`
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=${limit}&addressdetails=${addressdetails}`,
+      axiosConfig
     );
 
     res.json(response.data);
   } catch (error) {
-    console.error("Error searching address:", error);
+    console.error("Error searching address:", error.message, error.response?.data);
     res.status(500).json({
       success: false,
       message: "Failed to search address",
-      error: error.message
+      error: error.message,
+      details: error.response?.data
     });
   }
 };
@@ -40,7 +48,8 @@ const getCoordinates = async (req, res) => {
     }
 
     const response = await axios.get(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=${limit}`
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=${limit}`,
+      axiosConfig
     );
 
     if (response.data && response.data.length > 0) {
@@ -61,11 +70,12 @@ const getCoordinates = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Error getting coordinates:", error);
+    console.error("Error getting coordinates:", error.message, error.response?.data);
     res.status(500).json({
       success: false,
       message: "Failed to get coordinates",
-      error: error.message
+      error: error.message,
+      details: error.response?.data
     });
   }
 };
@@ -83,16 +93,18 @@ const reverseGeocode = async (req, res) => {
     }
 
     const response = await axios.get(
-      `https://nominatim.openstreetmap.org/reverse?format=${format}&lat=${lat}&lon=${lon}&addressdetails=${addressdetails}`
+      `https://nominatim.openstreetmap.org/reverse?format=${format}&lat=${lat}&lon=${lon}&addressdetails=${addressdetails}`,
+      axiosConfig
     );
 
     res.json(response.data);
   } catch (error) {
-    console.error("Error reverse geocoding:", error);
+    console.error("Error reverse geocoding:", error.message, error.response?.data);
     res.status(500).json({
       success: false,
       message: "Failed to reverse geocode",
-      error: error.message
+      error: error.message,
+      details: error.response?.data
     });
   }
 };

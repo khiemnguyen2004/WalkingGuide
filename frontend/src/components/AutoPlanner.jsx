@@ -44,7 +44,7 @@ const AutoPlanner = ({ noLayout }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("http://localhost:3000/api/tags").then(res => setTags(res.data));
+    axios.get("https://walkingguide.onrender.com/api/tags").then(res => setTags(res.data));
   }, []);
 
   const searchPlacesByCity = async (city) => {
@@ -164,7 +164,7 @@ const AutoPlanner = ({ noLayout }) => {
         interests: requestData.interests
       });
 
-      const res = await axios.post("http://localhost:3000/api/ai/generate-tour", requestData);
+      const res = await axios.post("https://walkingguide.onrender.com/api/ai/generate-tour", requestData);
       setTourData(res.data);
     } catch (err) {
       console.error(err);
