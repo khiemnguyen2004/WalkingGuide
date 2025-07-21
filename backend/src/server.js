@@ -23,7 +23,8 @@ const cors = require("cors");
 app.use(cors({
   origin: [
     'https://khiemnguyen2004.github.io',
-    'https://khiemnguyen2004.github.io/walking-guide/'
+    'https://khiemnguyen2004.github.io/walking-guide/',
+    'https://walking-guide.vercel.app' // Allow Vercel frontend
   ],
   credentials: true
 }));

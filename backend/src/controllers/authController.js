@@ -60,7 +60,7 @@ exports.register = async (req, res) => {
 
     const message = isEmailConfigured() 
       ? "Đăng ký thành công! Vui lòng kiểm tra email của bạn và nhấp vào liên kết xác thực để kích hoạt tài khoản."
-      : "Đăng ký thành công! Lưu ý: Email xác thực không được gửi do cấu hình email chưa hoàn tất.";
+      : "Đăng ký thành công! Lưu ý! Email xác thực không được gửi do cấu hình email chưa hoàn tất.";
     
     res.status(201).json({ 
       message,
