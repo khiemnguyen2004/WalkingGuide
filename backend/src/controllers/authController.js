@@ -55,7 +55,7 @@ exports.register = async (req, res) => {
     await userRepository.save(newUser);
 
     // Send verification email
-    const verifyLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-email?token=${emailVerificationToken}`;
+    const verifyLink = `${process.env.FRONTEND_URL || "https://khiemnguyen2004.github.io/walking-guide"}/verify-email?token=${emailVerificationToken}`;
     await sendVerificationEmail(email, verifyLink);
 
     const message = isEmailConfigured() 
@@ -175,7 +175,7 @@ exports.resendVerificationEmail = async (req, res) => {
     await userRepository.save(user);
 
     // Send new verification email
-    const verifyLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-email?token=${emailVerificationToken}`;
+    const verifyLink = `${process.env.FRONTEND_URL || "https://khiemnguyen2004.github.io/walking-guide"}/verify-email?token=${emailVerificationToken}`;
     await sendVerificationEmail(email, verifyLink);
 
     res.json({ message: "Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư của bạn." });
@@ -203,7 +203,7 @@ exports.forgotPassword = async (req, res) => {
     user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
     await userRepository.save(user);
     // Send email
-    const resetLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_URL || "https://khiemnguyen2004.github.io/walking-guide"}/reset-password?token=${token}`;
     await sendVerificationEmail(email, resetLink, true);
     return res.json({ message: "Kiểm tra email của bạn để đặt lại mật khẩu!" });
   } catch (err) {

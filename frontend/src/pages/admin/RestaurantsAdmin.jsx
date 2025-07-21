@@ -315,7 +315,7 @@ function RestaurantsAdmin() {
       for (let i = 0; i < imageFiles.length; i++) {
         const formData = new FormData();
         formData.append("file", imageFiles[i]);
-        const uploadRes = await axios.post("http://localhost:3000/api/upload", formData, {
+        const uploadRes = await axios.post(`${BASE_URL}/api/upload`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         uploadedImages.push({
@@ -426,7 +426,7 @@ function RestaurantsAdmin() {
           console.log('Uploading image:', image.file.name);
           const formData = new FormData();
           formData.append("file", image.file);
-          const uploadRes = await axios.post("http://localhost:3000/api/upload", formData, {
+          const uploadRes = await axios.post(`${BASE_URL}/api/upload`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
           });
           uploadedImages.push({
@@ -1143,7 +1143,7 @@ function RestaurantsAdmin() {
                                   alt={`Nhà hàng ${index + 1}`}
                                   style={{ height: "200px", objectFit: "cover" }}
                                   onError={(e) => {
-                                    e.target.src = "/default-restaurant.jpg";
+                                    e.target.style.display = 'none';
                                   }}
                                 />
                                 <div className="position-absolute top-0 start-0 p-2">
@@ -1219,7 +1219,7 @@ function RestaurantsAdmin() {
                                     style={{ height: "100px", objectFit: "cover", cursor: 'pointer' }}
                                     onClick={() => setSelectedImage(image)}
                                     onError={(e) => {
-                                      e.target.src = "/default-restaurant.jpg";
+                                      e.target.style.display = 'none';
                                     }}
                                   />
                                   {image.is_primary && (

@@ -31,6 +31,7 @@ function Header() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLoginSuccessModal, setShowLoginSuccessModal] = useState(false);
   const [loginSuccessMessage, setLoginSuccessMessage] = useState("");
+  const BASE_URL = "https://walkingguide.onrender.com";
 
   const handleLogout = () => {
     logout();
@@ -89,7 +90,7 @@ function Header() {
         <div className="container d-flex align-items-center justify-content-between header-content-mobile">
           <div className="d-flex align-items-center">
             <Link to ="/">
-              <img src="/src/images/banner.png" alt="Walking Guide Banner" className="header-logo-mobile" style={{ height: isMobile ? 56 : 180, width: 'auto', objectFit: 'contain', display: 'block' }} />
+              <img src="/walking-guide/banner.png" alt="Walking Guide Banner" className="header-logo-mobile" style={{ height: isMobile ? 56 : 180, width: 'auto', objectFit: 'contain', display: 'block' }} />
             </Link>
           </div>
           {/* Hamburger menu for mobile */}
@@ -138,7 +139,7 @@ function Header() {
                     >
                       {user && user.image_url ? (
                         <img 
-                          src={user.image_url.startsWith("http") ? user.image_url : `http://localhost:3000${user.image_url}`} 
+                          src={user.image_url.startsWith("http") ? user.image_url : `${BASE_URL}${user.image_url}`} 
                           alt="User Avatar" 
                           style={{ 
                             width: 36, 
@@ -167,7 +168,7 @@ function Header() {
                               {user.image_url && (
                                 <div className="mb-2">
                                   <img 
-                                    src={user.image_url.startsWith("http") ? user.image_url : `http://localhost:3000${user.image_url}`} 
+                                    src={user.image_url.startsWith("http") ? user.image_url : `${BASE_URL}${user.image_url}`} 
                                     alt="User Avatar" 
                                     style={{ 
                                       width: 60, 
@@ -234,7 +235,7 @@ function Header() {
                 >
                   {user && user.image_url ? (
                     <img 
-                      src={user.image_url.startsWith("http") ? user.image_url : `http://localhost:3000${user.image_url}`} 
+                      src={user.image_url.startsWith("http") ? user.image_url : `${BASE_URL}${user.image_url}`} 
                       alt="User Avatar" 
                       style={{ 
                         width: 40, 
@@ -257,7 +258,7 @@ function Header() {
                           {user.image_url && (
                             <div className="mb-2">
                               <img 
-                                src={user.image_url.startsWith("http") ? user.image_url : `http://localhost:3000${user.image_url}`} 
+                                src={user.image_url.startsWith("http") ? user.image_url : `${BASE_URL}${user.image_url}`} 
                                 alt="User Avatar" 
                                 style={{ 
                                   width: 60, 

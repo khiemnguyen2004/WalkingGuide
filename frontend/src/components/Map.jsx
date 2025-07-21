@@ -6,6 +6,8 @@ import "../css/index.css";
 import hotelIconSvg from '../assets/hotel-marker.svg';
 import restaurantIconSvg from '../assets/restaurant-marker.svg';
 
+const BASE_URL = "https://walkingguide.onrender.com";
+
 const defaultIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconSize: [25, 41],
@@ -31,7 +33,7 @@ const createCustomIcon = (place) => {
   const iconAnchor = iconSize / 2;
   
   if (place.image_url) {
-    const imageUrl = place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`;
+    const imageUrl = place.image_url.startsWith('http') ? place.image_url : `${BASE_URL}${place.image_url}`;
     
     return new L.DivIcon({
       className: 'custom-marker',

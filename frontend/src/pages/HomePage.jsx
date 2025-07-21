@@ -21,6 +21,8 @@ import { useAuth } from '../contexts/AuthContext';
 import tourApi from '../api/tourApi';
 import hotelApi from '../api/hotelApi';
 import { AuthContext } from '../contexts/AuthContext';
+import axiosClient from '../api/axiosClient';
+const BASE_URL = "https://walkingguide.onrender.com";
 
 // Helper to chunk array into groups of 3
 function chunkArray(arr, size) {
@@ -75,7 +77,7 @@ function HomePage() {
       return imageUrl; // Already absolute URL
     }
     // Prepend backend URL for relative paths
-    return `http://localhost:3000${imageUrl}`;
+    return `${BASE_URL}${imageUrl}`;
   };
 
   const handleBookTour = async () => {
@@ -106,11 +108,11 @@ function HomePage() {
       try {
         setLoading(true);
         const [placesRes, toursRes, articlesRes, hotelsRes, restaurantsRes] = await Promise.all([
-          axios.get("http://localhost:3000/api/places"),
-          axios.get("http://localhost:3000/api/tours?adminOnly=true"),
-          axios.get("http://localhost:3000/api/articles"),
-          axios.get("http://localhost:3000/api/hotels"),
-          axios.get("http://localhost:3000/api/restaurants"),
+          axiosClient.get("/places"),
+          axiosClient.get("/tours?adminOnly=true"),
+          axiosClient.get("/articles"),
+          axiosClient.get("/hotels"),
+          axiosClient.get("/restaurants"),
         ]);
         setPlaces(placesRes.data);
         setTours(toursRes.data);
@@ -362,7 +364,7 @@ function HomePage() {
                         <div className="card h-100 shadow border-0 rounded-4 luxury-card">
                           <Link to={`/places/${p.id || p._id}`} className="text-decoration-none">
                             <img
-                              src={p.image_url ? (p.image_url.startsWith("http") ? p.image_url : `http://localhost:3000${p.image_url}`) : "/default-place.jpg"}
+                              src={p.image_url ? (p.image_url.startsWith("http") ? p.image_url : `${BASE_URL}${p.image_url}`) : undefined}
                               alt={p.name}
                               className="card-img-top luxury-img-top"
                               style={{
@@ -370,9 +372,15 @@ function HomePage() {
                                 objectFit: "cover",
                               }}
                               onError={(e) => {
-                                e.target.src = "/default-place.jpg";
+                                e.target.src = undefined;
                               }}
                             />
+                            {!p.image_url && (
+                              <div className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}>
+                                <i className="bi bi-geo-alt-fill"></i>
+                              </div>
+                            )}
                             <div className="card-body luxury-card-body">
                               <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{p.name}</h3>
                               {p.city && (
@@ -424,7 +432,7 @@ function HomePage() {
                                 <div className="card h-100 shadow border-0 rounded-4 luxury-card">
                                   <Link to={`/places/${p.id || p._id}`} className="text-decoration-none">
                                     <img
-                                      src={p.image_url ? (p.image_url.startsWith("http") ? p.image_url : `http://localhost:3000${p.image_url}`) : "/default-place.jpg"}
+                                      src={p.image_url ? (p.image_url.startsWith("http") ? p.image_url : `${BASE_URL}${p.image_url}`) : undefined}
                                       alt={p.name}
                                       className="card-img-top luxury-img-top"
                                       style={{
@@ -432,9 +440,15 @@ function HomePage() {
                                         objectFit: "cover",
                                       }}
                                       onError={(e) => {
-                                        e.target.src = "/default-place.jpg";
+                                        e.target.src = undefined;
                                       }}
                                     />
+                                    {!p.image_url && (
+                                      <div className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                        style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", fontSize: "3rem" }}>
+                                        <i className="bi bi-geo-alt-fill"></i>
+                                      </div>
+                                    )}
                                     <div className="card-body luxury-card-body">
                                       <h3 className="card-title mb-2" style={{ fontWeight: 600 }}>{p.name}</h3>
                                       {p.city && (
@@ -507,7 +521,7 @@ function HomePage() {
                           <Link to={`/tours/${tour.id}`} className="text-decoration-none">
                             {tour.image_url ? (
                               <img
-                                src={tour.image_url.startsWith("http") ? tour.image_url : `http://localhost:3000${tour.image_url}`}
+                                src={tour.image_url.startsWith("http") ? tour.image_url : `${BASE_URL}${tour.image_url}`}
                                 alt={tour.name}
                                 className="card-img-top luxury-img-top"
                                 style={{ height: 220, objectFit: "cover"}}
@@ -569,7 +583,7 @@ function HomePage() {
                                   <Link to={`/tours/${tour.id}`} className="text-decoration-none">
                                     {tour.image_url ? (
                                       <img
-                                        src={tour.image_url.startsWith("http") ? tour.image_url : `http://localhost:3000${tour.image_url}`}
+                                        src={tour.image_url.startsWith("http") ? tour.image_url : `${BASE_URL}${tour.image_url}`}
                                         alt={tour.name}
                                         className="card-img-top luxury-img-top"
                                         style={{ height: 220, objectFit: "cover" }}
@@ -665,7 +679,7 @@ function HomePage() {
                                           alt={image.caption || hotel.name}
                                           className="card-img-top luxury-img-top"
                                           style={{ height: 220, objectFit: "cover"}}
-                                          onError={(e) => { e.target.src = "/default-hotel.jpg"; }}
+                                          onError={(e) => { e.target.style.display = 'none'; }}
                                         />
                                       </div>
                                     ))}
@@ -757,7 +771,7 @@ function HomePage() {
                                                   alt={image.caption || hotel.name}
                                                   className="card-img-top luxury-img-top"
                                                   style={{ height: 220, objectFit: "cover" }}
-                                                  onError={(e) => { e.target.src = "/default-hotel.jpg"; }}
+                                                  onError={(e) => { e.target.style.display = 'none'; }}
                                                 />
                                               </div>
                                             ))}
@@ -863,36 +877,15 @@ function HomePage() {
                           <div className="card h-100 shadow border-0 rounded-4 luxury-card">
                             <div className="position-relative">
                               {restaurant.images && restaurant.images.length > 0 ? (
-                                <div id={`restaurantCarousel${restaurant.id}`} className="carousel slide" data-bs-ride="false">
-                                  <div className="carousel-inner">
-                                    {restaurant.images.map((image, index) => (
-                                      <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
-                                        <img
-                                          src={getImageUrl(image.image_url)}
-                                          alt={image.caption || restaurant.name}
-                                          className="card-img-top luxury-img-top"
-                                          style={{ height: 220, objectFit: "cover" }}
-                                          onError={(e) => { e.target.src = "/default-restaurant.jpg"; }}
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                  {restaurant.images.length > 1 && (
-                                    <>
-                                      <button className="carousel-control-prev" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="prev">
-                                        <span className="carousel-control-prev-icon"></span>
-                                      </button>
-                                      <button className="carousel-control-next" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="next">
-                                        <span className="carousel-control-next-icon"></span>
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
+                                <img
+                                  src={getImageUrl(restaurant.images[0].image_url)}
+                                  alt={restaurant.name}
+                                  className="card-img-top luxury-img-top"
+                                  style={{ height: 220, objectFit: "cover" }}
+                                />
                               ) : (
-                                <div 
-                                  className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
-                                  style={{ height: 220, background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}
-                                >
+                                <div className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
+                                  style={{ height: 220, borderTopLeftRadius: "1.5rem", borderTopRightRadius: "1.5rem", background: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)", color: "white", fontSize: "3rem" }}>
                                   <i className="bi bi-cup-hot"></i>
                                 </div>
                               )}
@@ -952,31 +945,12 @@ function HomePage() {
                                   <div className="card h-100 shadow border-0 rounded-4 luxury-card">
                                     <div className="position-relative">
                                       {restaurant.images && restaurant.images.length > 0 ? (
-                                        <div id={`restaurantCarousel${restaurant.id}`} className="carousel slide" data-bs-ride="false">
-                                          <div className="carousel-inner">
-                                            {restaurant.images.map((image, index) => (
-                                              <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
-                                                <img
-                                                  src={getImageUrl(image.image_url)}
-                                                  alt={image.caption || restaurant.name}
-                                                  className="card-img-top luxury-img-top"
-                                                  style={{ height: 220, objectFit: "cover" }}
-                                                  onError={(e) => { e.target.src = "/default-restaurant.jpg"; }}
-                                                />
-                                              </div>
-                                            ))}
-                                          </div>
-                                          {restaurant.images.length > 1 && (
-                                            <>
-                                              <button className="carousel-control-prev" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="prev">
-                                                <span className="carousel-control-prev-icon"></span>
-                                              </button>
-                                              <button className="carousel-control-next" type="button" data-bs-target={`#restaurantCarousel${restaurant.id}`} data-bs-slide="next">
-                                                <span className="carousel-control-next-icon"></span>
-                                              </button>
-                                            </>
-                                          )}
-                                        </div>
+                                        <img
+                                          src={getImageUrl(restaurant.images[0].image_url)}
+                                          alt={restaurant.name}
+                                          className="card-img-top luxury-img-top"
+                                          style={{ height: 220, objectFit: "cover" }}
+                                        />
                                       ) : (
                                         <div 
                                           className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
@@ -1047,7 +1021,7 @@ function HomePage() {
             
             {/* Fast Plan Banner Section with Winding Route and Random Places */}
             <section className="autoplanner-banner-section my-5 py-5 text-center rounded-4 shadow-lg" style={{
-              background: `url('/src/images/banner2.jpg') center/cover no-repeat`,
+              background: `url('/walking-guide/banner2.jpg') center/cover no-repeat`,
               position: 'relative',
               boxShadow: '0 8px 32px 0 rgba(125, 127, 167, 0.13)'
             }}>
@@ -1078,7 +1052,7 @@ function HomePage() {
                       <Link to={`/places/${place.id}`} key={place.id} className="route-stop d-flex flex-column align-items-center position-absolute text-decoration-none route-stop-link" style={{zIndex: 2, left: `${stopPositions[idx] / 10}%`, top: idx % 2 === 0 ? 0 : 60, minWidth: 80, cursor: 'pointer'}}>
                         <div className="route-img-wrapper mb-2 shadow-lg rounded-circle bg-white d-flex align-items-center justify-content-center" style={{width: 64, height: 64, overflow: 'hidden', border: '3px solid #fff', transition: 'box-shadow 0.2s, border-color 0.2s'}}>
                           {place.image_url ? (
-                            <img src={place.image_url.startsWith('http') ? place.image_url : `http://localhost:3000${place.image_url}`} alt={place.name} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                            <img src={place.image_url.startsWith('http') ? place.image_url : `${BASE_URL}${place.image_url}`} alt={place.name} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                           ) : (
                             <i className="bi bi-geo-alt-fill" style={{fontSize: 36, color: '#fff'}}></i>
                           )}
@@ -1113,7 +1087,7 @@ function HomePage() {
                                 <Link to={`/articles/${a.article_id}`} className="text-decoration-none">
                                   {a.image_url && (
                             <img
-                                      src={a.image_url.startsWith("http") ? a.image_url : `http://localhost:3000${a.image_url}`}
+                                      src={a.image_url.startsWith("http") ? a.image_url : `${BASE_URL}${a.image_url}`}
                               alt="Ảnh"
                               className="card-img-top luxury-img-top"
                                       style={{ height: 220, objectFit: "cover"}}
