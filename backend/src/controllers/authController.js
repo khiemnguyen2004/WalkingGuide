@@ -55,7 +55,7 @@ exports.register = async (req, res) => {
     await userRepository.save(newUser);
 
     // Send verification email
-    const verifyLink = `${process.env.FRONTEND_URL || "https://khiemnguyen2004.github.io/walking-guide"}/verify-email?token=${emailVerificationToken}`;
+    const verifyLink = `${process.env.FRONTEND_URL || "https://walking-guide.vercel.app"}/verify-email?token=${emailVerificationToken}`;
     await sendVerificationEmail(email, verifyLink);
 
     const message = isEmailConfigured() 
@@ -175,7 +175,7 @@ exports.resendVerificationEmail = async (req, res) => {
     await userRepository.save(user);
 
     // Send new verification email
-    const verifyLink = `${process.env.FRONTEND_URL || "https://khiemnguyen2004.github.io/walking-guide"}/verify-email?token=${emailVerificationToken}`;
+    const verifyLink = `${process.env.FRONTEND_URL || "https://walking-guide.vercel.app"}/verify-email?token=${emailVerificationToken}`;
     await sendVerificationEmail(email, verifyLink);
 
     res.json({ message: "Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư của bạn." });
