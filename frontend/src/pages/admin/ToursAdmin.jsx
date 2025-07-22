@@ -9,6 +9,9 @@ import tourStepApi from "../../api/tourStepApi";
 import { Modal, Button } from "react-bootstrap";
 import "../../css/AdminLayout.css";
 
+const BASE_URL = "https://walkingguide.onrender.com";
+
+
 function ToursAdmin() {
   const { user } = useContext(AuthContext);
   const [tours, setTours] = useState([]);

@@ -86,6 +86,10 @@
   margin: 0 !important;
   padding: 0 !important;
 }
+body.modal-open .luxury-header,
+body.modal-open .luxury-navbar {
+  display: none !important;
+}
 
 /* Ensure the main content is not hidden behind the fixed header */
 .luxury-home-container, .main-content-mobile {
@@ -129,6 +133,19 @@
 .route-img-wrapper:hover {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
   border-color: #5b9df9 !important;
+}
+
+.planner-modal-overlay {
+  position: fixed !important;
+  top: 20 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+  background: rgba(0,0,0,0.4) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* Responsive styles for tablets (<=1024px) */

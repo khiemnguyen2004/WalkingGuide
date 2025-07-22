@@ -451,7 +451,6 @@ const AutoPlanner = ({ noLayout }) => {
                   Ngân sách: {parseInt(total_cost).toLocaleString('vi-VN')} VNĐ
                 </div>
               )}
-              
               {/* Price Suggestions - only show when input is short and not a complete price */}
               {total_cost && total_cost.length > 0 && total_cost.length <= 3 && !total_cost.endsWith('000') && (
                 <div className="mt-2">
@@ -705,7 +704,7 @@ const AutoPlanner = ({ noLayout }) => {
 
       {/* Create Place Modal */}
       {showCreatePlaceModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.4)" }}>
+        <div className="planner-modal-overlay" tabIndex="-1">
           <div className="modal-dialog modal-lg">
             <div className="modal-content">
               <div className="modal-header">
