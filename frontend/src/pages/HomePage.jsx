@@ -22,6 +22,7 @@ import tourApi from '../api/tourApi';
 import hotelApi from '../api/hotelApi';
 import { AuthContext } from '../contexts/AuthContext';
 import axiosClient from '../api/axiosClient';
+import formatVND from '../utils/formatVND';
 const BASE_URL = "https://walkingguide.onrender.com";
 
 // Helper to chunk array into groups of 3
@@ -203,6 +204,13 @@ function HomePage() {
     e.preventDefault();
     setPlaceForDetailMap(null); // Show map with no specific place
     setShowPlaceDetailMap(true);
+  };
+
+  // In hotel card rendering, replace hotel.images[0].image_url with the main image logic:
+  const getMainHotelImage = (hotel) => {
+    if (!hotel.images || hotel.images.length === 0) return null;
+    const mainImg = hotel.images.find(img => img.is_primary) || hotel.images[0];
+    return mainImg.image_url;
   };
 
   return (
@@ -549,7 +557,7 @@ function HomePage() {
                               </div>
                               {tour.total_cost && (
                                 <p className="card-text text-muted small mb-0 luxury-rating">
-                                  <span className="luxury-money"><i className="bi bi-coin"></i></span> {tour.total_cost} VND
+                                  <span className="luxury-money"><i className="bi bi-coin"></i></span> {formatVND(tour.total_cost)}
                                 </p>
                               )}
                             </div>
@@ -611,7 +619,7 @@ function HomePage() {
                                       </div>
                                       {tour.total_cost && (
                                         <p className="card-text text-muted small mb-0 luxury-rating">
-                                          <span className="luxury-money"><i className="bi bi-coin"></i></span> {tour.total_cost} VND
+                                          <span className="luxury-money"><i className="bi bi-coin"></i></span> {formatVND(tour.total_cost)}
                                         </p>
                                       )}
                                     </div>
@@ -670,31 +678,13 @@ function HomePage() {
                           <Link to={`/hotels/${hotel.id}`} className="text-decoration-none" style={{ display: 'block', height: '100%' }}>
                             <div className="position-relative">
                               {hotel.images && hotel.images.length > 0 ? (
-                                <div id={`hotelCarousel${hotel.id}`} className="carousel slide" data-bs-ride="false">
-                                  <div className="carousel-inner">
-                                    {hotel.images.map((image, index) => (
-                                      <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
-                                        <img
-                                          src={getImageUrl(image.image_url)}
-                                          alt={image.caption || hotel.name}
-                                          className="card-img-top luxury-img-top"
-                                          style={{ height: 220, objectFit: "cover"}}
-                                          onError={(e) => { e.target.style.display = 'none'; }}
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                  {hotel.images.length > 1 && (
-                                    <>
-                                      <button className="carousel-control-prev" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="prev">
-                                        <span className="carousel-control-prev-icon"></span>
-                                      </button>
-                                      <button className="carousel-control-next" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="next">
-                                        <span className="carousel-control-next-icon"></span>
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
+                                <img
+                                  src={getImageUrl(getMainHotelImage(hotel))}
+                                  alt={hotel.name}
+                                  className="card-img-top luxury-img-top"
+                                  style={{ height: 220, objectFit: "cover" }}
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
                               ) : (
                                 <div 
                                   className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
@@ -725,8 +715,8 @@ function HomePage() {
                               <RatingStars id={hotel.id} type="hotel" />
                               {hotel.price_range && (
                                 <p className="card-text text-muted small mb-0">
-                                  <span className="luxury-money"><i className="bi bi-coin"></i></span> {hotel.price_range}
-                                  {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
+                                  <span className="luxury-money"><i className="bi bi-coin"></i></span> {formatVND(hotel.price_range)}
+                                  {hotel.min_price > 0 && ` (${formatVND(hotel.min_price)})`}
                                 </p>
                               )}
                             </div>
@@ -762,31 +752,13 @@ function HomePage() {
                                   <Link to={`/hotels/${hotel.id}`} className="text-decoration-none" style={{ display: 'block', height: '100%' }}>
                                     <div className="position-relative">
                                       {hotel.images && hotel.images.length > 0 ? (
-                                        <div id={`hotelCarousel${hotel.id}`} className="carousel slide" data-bs-ride="false">
-                                          <div className="carousel-inner">
-                                            {hotel.images.map((image, index) => (
-                                              <div className={`carousel-item${index === 0 ? ' active' : ''}`} key={image.id}>
-                                                <img
-                                                  src={getImageUrl(image.image_url)}
-                                                  alt={image.caption || hotel.name}
-                                                  className="card-img-top luxury-img-top"
-                                                  style={{ height: 220, objectFit: "cover" }}
-                                                  onError={(e) => { e.target.style.display = 'none'; }}
-                                                />
-                                              </div>
-                                            ))}
-                                          </div>
-                                          {hotel.images.length > 1 && (
-                                            <>
-                                              <button className="carousel-control-prev" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="prev">
-                                                <span className="carousel-control-prev-icon"></span>
-                                              </button>
-                                              <button className="carousel-control-next" type="button" data-bs-target={`#hotelCarousel${hotel.id}`} data-bs-slide="next">
-                                                <span className="carousel-control-next-icon"></span>
-                                              </button>
-                                            </>
-                                          )}
-                                        </div>
+                                        <img
+                                          src={getImageUrl(getMainHotelImage(hotel))}
+                                          alt={hotel.name}
+                                          className="card-img-top luxury-img-top"
+                                          style={{ height: 220, objectFit: "cover" }}
+                                          onError={(e) => { e.target.style.display = 'none'; }}
+                                        />
                                       ) : (
                                         <div 
                                           className="card-img-top luxury-img-top d-flex align-items-center justify-content-center"
@@ -817,8 +789,8 @@ function HomePage() {
                                       <RatingStars id={hotel.id} type="hotel" />
                                       {hotel.price_range && (
                                         <p className="card-text text-muted small mb-0">
-                                          <span className="luxury-money"><i className="bi bi-coin"></i></span> {hotel.price_range}
-                                          {hotel.min_price > 0 && ` (${hotel.min_price.toLocaleString()} VND)`}
+                                          <span className="luxury-money"><i className="bi bi-coin"></i></span> {formatVND(hotel.price_range)}
+                                          {hotel.min_price > 0 && ` (${formatVND(hotel.min_price)})`}
                                         </p>
                                       )}
                                     </div>
@@ -913,8 +885,8 @@ function HomePage() {
                               <RatingStars id={restaurant.id} type="restaurant" />
                               {restaurant.price_range && (
                                 <p className="card-text text-muted small mb-0">
-                                    <span className="luxury-money"><i className="bi bi-coin"></i></span> {restaurant.price_range}
-                                  {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
+                                    <span className="luxury-money"><i className="bi bi-coin"></i></span> {formatVND(restaurant.price_range)}
+                                  {restaurant.min_price > 0 && ` (${formatVND(restaurant.min_price)})`}
                                 </p>
                               )}
                             </div>
@@ -983,8 +955,8 @@ function HomePage() {
                                       <RatingStars id={restaurant.id} type="restaurant" />
                                       {restaurant.price_range && (
                                         <p className="card-text text-muted small mb-0">
-                                          <span className="luxury-money"><i className="bi bi-coin"></i></span> {restaurant.price_range}
-                                          {restaurant.min_price > 0 && ` (${restaurant.min_price.toLocaleString()} VND)`}
+                                          <span className="luxury-money"><i className="bi bi-coin"></i></span> {formatVND(restaurant.price_range)}
+                                          {restaurant.min_price > 0 && ` (${formatVND(restaurant.min_price)})`}
                                         </p>
                                       )}
                                     </div>

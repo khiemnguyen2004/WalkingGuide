@@ -76,8 +76,8 @@ function RestaurantsAdmin() {
   // Helper function to get proper image URL
   const getImageUrl = (imageUrl) => {
     if (!imageUrl) return null;
-    if (imageUrl.startsWith('http')) {
-      return imageUrl; // Already absolute URL
+    if (imageUrl.startsWith('http') || imageUrl.startsWith('blob:')) {
+      return imageUrl; // Already absolute URL or local preview
     }
     // Prepend backend URL for relative paths
     return `https://walkingguide.onrender.com${imageUrl}`;
@@ -178,12 +178,16 @@ function RestaurantsAdmin() {
   };
 
   const setPrimaryImage = (index) => {
-    const updatedImages = images.map((img, i) => ({
-      ...img,
-      is_primary: i === index
-    }));
-    setImages(updatedImages);
+    setImages(prevImages => {
+      if (index === 0) return prevImages.map((img, i) => ({ ...img, is_primary: i === 0 }));
+      const newImages = [...prevImages];
+      const [selected] = newImages.splice(index, 1);
+      newImages.unshift({ ...selected, is_primary: true });
+      return newImages.map((img, i) => ({ ...img, is_primary: i === 0 }));
+    });
   };
+
+  const moveImageToFirst = setPrimaryImage;
 
   // Drag and drop functionality
   const handleDragStart = (e, index) => {
@@ -1160,8 +1164,9 @@ function RestaurantsAdmin() {
                                      style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' }}>
                                   <div className="d-flex justify-content-between align-items-center">
                                     <button
+                                      type="button"
                                       className={`btn btn-sm ${image.is_primary ? 'btn-success' : 'btn-outline-success'}`}
-                                      onClick={() => setPrimaryImage(index)}
+                                      onClick={() => moveImageToFirst(index)}
                                       title={image.is_primary ? 'Đã là ảnh chính' : 'Đặt làm ảnh chính'}
                                     >
                                       <i className={`bi ${image.is_primary ? 'bi-star-fill' : 'bi-star'}`}></i>
@@ -1217,7 +1222,7 @@ function RestaurantsAdmin() {
                                     className="img-thumbnail"
                                     alt={`Nhà hàng ${index + 1}`}
                                     style={{ height: "100px", objectFit: "cover", cursor: 'pointer' }}
-                                    onClick={() => setSelectedImage(image)}
+                                    onClick={() => moveImageToFirst(index)}
                                     onError={(e) => {
                                       e.target.style.display = 'none';
                                     }}
@@ -1291,11 +1296,16 @@ function RestaurantsAdmin() {
                           <td>{restaurant.id}</td>
                           <td>
                             {restaurant.images && restaurant.images.length > 0 ? (
-                              <img
-                                src={getImageUrl(restaurant.images[0].image_url)}
-                                alt={restaurant.name}
-                                style={{ width: "50px", height: "50px", objectFit: "cover" }}
-                              />
+                              (() => {
+                                const mainImg = restaurant.images.find(img => img.is_primary) || restaurant.images[0];
+                                return (
+                                  <img
+                                    src={getImageUrl(mainImg.image_url)}
+                                    alt={restaurant.name}
+                                    style={{ width: "50px", height: "50px", objectFit: "cover" }}
+                                  />
+                                );
+                              })()
                             ) : (
                               <div style={{ width: "50px", height: "50px", backgroundColor: "#f8f9fa", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                 <i className="bi bi-cup-hot"></i>

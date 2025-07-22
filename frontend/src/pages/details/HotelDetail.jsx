@@ -8,6 +8,7 @@ import hotelApi from '../../api/hotelApi';
 import { Modal, Button, Form } from 'react-bootstrap';
 import { AuthContext } from '../../contexts/AuthContext';
 import RatingStars from '../../components/RatingStars';
+import formatVND from '../../utils/formatVND';
 
 const BASE_URL = "https://walkingguide.onrender.com";
 
@@ -21,7 +22,9 @@ const HotelDetail = () => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingCheckIn, setBookingCheckIn] = useState("");
   const [bookingCheckOut, setBookingCheckOut] = useState("");
+  const [bookingHotel, setBookingHotel] = useState(null);
   const [bookingStatus, setBookingStatus] = useState(null);
+  const [selectedRoomType, setSelectedRoomType] = useState('');
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
@@ -131,6 +134,25 @@ const HotelDetail = () => {
               <Form.Label>Ngày trả phòng</Form.Label>
               <Form.Control type="date" value={bookingCheckOut} onChange={e => setBookingCheckOut(e.target.value)} />
             </Form.Group>
+            {hotel && hotel.room_types && (
+              <Form.Group className="mb-3">
+                <Form.Label>Loại phòng</Form.Label>
+                <Form.Select value={selectedRoomType} onChange={e => setSelectedRoomType(e.target.value)}>
+                  <option value="">Chọn loại phòng</option>
+                  {Array.isArray(hotel.room_types)
+                    ? hotel.room_types.map((type, idx) => (
+                        typeof type === 'object'
+                          ? <option key={idx} value={type.type}>{type.type}</option>
+                          : <option key={idx} value={type}>{type}</option>
+                      ))
+                    : (JSON.parse(hotel.room_types || '[]')).map((type, idx) => (
+                        typeof type === 'object'
+                          ? <option key={idx} value={type.type}>{type.type}</option>
+                          : <option key={idx} value={type}>{type}</option>
+                      ))}
+                </Form.Select>
+              </Form.Group>
+            )}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -145,12 +167,13 @@ const HotelDetail = () => {
                 hotel_id: hotel.id,
                 check_in: bookingCheckIn,
                 check_out: bookingCheckOut,
+                room_type: selectedRoomType,
               });
               setBookingStatus('success');
             } catch {
               setBookingStatus('error');
             }
-          }} disabled={!bookingCheckIn || !bookingCheckOut}>
+          }} disabled={!bookingCheckIn || !bookingCheckOut || (Array.isArray(hotel.room_types) && hotel.room_types.length > 0 && !selectedRoomType)}>
             Xác nhận đặt phòng
           </Button>
         </Modal.Footer>
