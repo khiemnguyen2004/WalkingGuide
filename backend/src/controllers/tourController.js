@@ -137,8 +137,8 @@ module.exports = {
           place_id: step.place_id,
           step_order: step.step_order,
           stay_duration: step.stay_duration || 60,
-          start_time: step.start_time,
-          end_time: step.end_time,
+          start_time: step.start_time === "" ? null : step.start_time,
+          end_time: step.end_time === "" ? null : step.end_time,
           day: step.day || 1
         });
         savedSteps.push(saved);
