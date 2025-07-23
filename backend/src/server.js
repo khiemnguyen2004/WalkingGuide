@@ -20,6 +20,7 @@ const geocodingRoutes = require('./routes/geocodingRoutes');
 const siteSettingRoutes = require("./routes/siteSettingRoutes");
 
 const cors = require("cors");
+// Place CORS middleware at the very top, before any other middleware/routes
 app.use(cors({
   origin: [
     'https://khiemnguyen2004.github.io',
@@ -27,7 +28,17 @@ app.use(cors({
     'https://walking-guide.vercel.app',
     'http://localhost:5173', // for local dev
   ],
-  credentials: true
+  credentials: true,
+}));
+// Explicitly handle preflight requests for all routes
+app.options('*', cors({
+  origin: [
+    'https://khiemnguyen2004.github.io',
+    'https://khiemnguyen2004.github.io/walking-guide/',
+    'https://walking-guide.vercel.app',
+    'http://localhost:5173',
+  ],
+  credentials: true,
 }));
 
 app.use(express.json());
